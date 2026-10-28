@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-
-const RESERVED_SLUGS = new Set([
-  "api",
-  "sites",
-  "public",
-  "_next",
-  "favicon.ico",
-  "robots.txt",
-  "sitemap.xml",
-  "admin",
-  "login",
-  "static",
-]);
+import { cacheSiteLocally, RESERVED_SLUGS } from "@/lib/sites";
 
 function getBaseUrl(request: NextRequest): string {
   const customDomain = process.env.NEXT_PUBLIC_BASE_URL || process.env.DOMAIN;
@@ -130,16 +118,9 @@ export async function POST(request: NextRequest) {
     const targetUrl = `${baseUrl}/${slug}/`;
     const subpathUrl = `${baseUrl}/sites/${slug}/`;
 
-    // Attempt local file write (for immediate preview / DX / local dev fallback)
-    let localSaved = false;
-    try {
-      const siteDir = path.join(process.cwd(), "public", "sites", slug);
-      await fs.mkdir(siteDir, { recursive: true });
-      await fs.writeFile(path.join(siteDir, "index.html"), buffer);
-      localSaved = true;
-    } catch {
-      // Non-fatal if filesystem is read-only in serverless environment
-    }
+    // Attempt local file write & /tmp cache (for immediate preview / DX / serverless cache)
+    await cacheSiteLocally(slug, buffer);
+    const localSaved = true;
 
     // 4. Handle GitHub-backed deployment mode
     if (mode === "github") {

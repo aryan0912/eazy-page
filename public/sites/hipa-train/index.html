@@ -604,6 +604,25 @@ body.dlock{overflow:hidden}
 .gk ul{margin:6px 0 0;padding-left:18px;font-size:14px}
 .gk li{margin:3px 0}
 .gk.on{background:color-mix(in srgb,var(--c) 8%,var(--surface))}
+.fwrap{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+.fside{display:flex;flex-direction:column;gap:10px;align-items:stretch;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;position:sticky;top:80px}
+.fside .psqr{width:100%;height:auto;aspect-ratio:1/1}
+.fjoin{margin:0;text-align:center;display:flex;flex-direction:column;gap:2px}
+.fjoin a{color:var(--gold);font-weight:600;text-decoration:none;word-break:break-all}
+.fside .mini{text-align:center}
+.fframe{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.fframe iframe{display:block;width:100%;height:1250px;border:0}
+.fstage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;overflow:auto}
+.psqr.big{width:min(48vh,420px);height:min(48vh,420px)}
+.fbig{font-size:clamp(22px,3vw,36px);font-weight:700;color:#E3B341;margin:0}
+@media (max-width:860px){.fwrap{grid-template-columns:1fr}.fside{position:static}.fside .psqr{max-width:240px;margin:0 auto}}
+.lrhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:30px 0 6px}
+.lrhead h2{flex:1;min-width:220px}
+.lrcount{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.lrcount b{color:var(--ink);font-size:18px;font-variant-numeric:tabular-nums}
+.lrcount .dot{width:9px;height:9px;border-radius:50%;background:#E5484D;animation:vpulse 1.6s infinite}
+.lrerr{background:var(--goldsoft);border:1px solid var(--line);border-left:4px solid var(--goldfill);border-radius:12px;padding:12px 14px;font-size:14.5px;margin-bottom:12px}
+.lrerr iframe{display:block;width:100%;height:420px;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#fff}
 @media (max-width:720px){.segbody{padding:0 18px 18px}.seghead .t{min-width:82px}.two{grid-template-columns:1fr}.wordmark{display:none}.tbtn .lbl{display:none}}
 @media print{.bar,.tools{display:none}.seg .segbody{display:block}}
 </style>
@@ -2975,7 +2994,7 @@ var TEAM={"label": "The people behind Agility AI", "kind": "team", "intro": "Agi
 /* ===== LIVE POLL =====
    Paste your Google Apps Script web app URL between the quotes below.
    Leave it empty and the poll still works, but only on each person's own device. */
-var POLL_URL="";
+var POLL_URL="sheets";
 var SAME3=["Very confident","Somewhat confident","Not yet confident"];
 var INCL=["Just the request in one line","The request and some background","A structured instruction: role, context, task, format and constraints","I have not tried yet"];
 var PRIV=["Yes, it is fine","Not sure","No, never"];
@@ -3010,8 +3029,19 @@ try{poll.mine=JSON.parse(localStorage.getItem("hipa-poll-mine")||"{}")||{};}catc
 var VNAME="";try{VNAME=localStorage.getItem("hipa-vname")||"";}catch(e){}
 var VOTER=(function(){try{var v=localStorage.getItem("hipa-voter");if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("hipa-voter",v);}return v;}catch(e){return "anon"+Math.random();}})();
 function localTally(){var t={};POLLS.forEach(function(p){if(poll.mine[p.id]!=null){t[p.id]={};t[p.id][poll.mine[p.id]]=1;}});return t;}
-function fetchTally(){if(!POLL_URL){poll.tally=localTally();paintPoll();return;}
- fetch(POLL_URL+(POLL_URL.indexOf("?")>=0?"&":"?")+"t="+Date.now()).then(function(r){return r.json();}).then(function(d){poll.tally=d||{};poll.err=false;paintPoll();}).catch(function(){poll.err=true;paintPoll();});}
+/* Live results come from the Google Sheets linked to the two forms (shared as "anyone with the link can view"). */
+var SHEETS={Baseline:{id:"1q6qsQZfl6vjntsFfoFSlwX2y_RQhmYpE8SV8lw5Fcrs",gid:"1647249386"},Endline:{id:"1F3hBuSFJyKjMMgusZPzow8pjeODmWRCs8lJn61poh0I",gid:"2053090315"}};
+function gvizJsonp(id,gid){return new Promise(function(res,rej){var cb="gv"+Date.now()+Math.floor(Math.random()*1e5),sc=document.createElement("script"),t=setTimeout(function(){done();rej("timeout");},8000);function done(){clearTimeout(t);try{delete window[cb];}catch(e){window[cb]=undefined;}if(sc.parentNode)sc.parentNode.removeChild(sc);}window[cb]=function(d){done();if(d&&d.status==="error")rej("sheet");else res(d.table.rows.map(function(r){return (r.c||[]).map(function(c){return c?(c.v!=null?c.v:c.f):null;});}));};sc.onerror=function(){done();rej("blocked");};sc.src="https://docs.google.com/spreadsheets/d/"+id+"/gviz/tq?gid="+gid+"&headers=1&tqx=out:json;responseHandler:"+cb+"&_="+Date.now();document.head.appendChild(sc);});}
+function parseCSV(t){var rows=[],row=[],f="",q=false;for(var i=0;i<t.length;i++){var ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}else if(ch==='"')q=true;else if(ch===","){row.push(f);f="";}else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&t[i+1]==="\n")i++;row.push(f);rows.push(row);row=[];f="";}else f+=ch;}if(f!==""||row.length){row.push(f);rows.push(row);}return rows;}
+function gvizCsv(id,gid){return fetch("https://docs.google.com/spreadsheets/d/"+id+"/gviz/tq?tqx=out:csv&gid="+gid+"&_="+Date.now()).then(function(r){if(!r.ok)throw "http";return r.text();}).then(function(t){return parseCSV(t).slice(1);});}
+function nrm(x){return String(x==null?"":x).toLowerCase().replace(/[^a-z0-9]/g,"");}
+function optIndex(p,v){var a=nrm(v);if(!a)return -1;for(var i=0;i<p.o.length;i++){var b=nrm(p.o[i]),n=Math.min(6,a.length,b.length);if(a.slice(0,n)===b.slice(0,n))return i;}return -1;}
+function gviz(id,gid){return gvizJsonp(id,gid).catch(function(){return gvizCsv(id,gid);});}
+poll.counts={Baseline:0,Endline:0};
+function tallySet(set,rows){var qs=POLLS.filter(function(p){return p.set===set;}),n=0;qs.forEach(function(p){poll.tally[p.id]={};});
+ (rows||[]).forEach(function(c){if(!c||c[0]==null||String(c[0]).trim()==="")return;n++;qs.forEach(function(p,k){var ix=optIndex(p,c[k+1]);if(ix>=0)poll.tally[p.id][ix]=(poll.tally[p.id][ix]||0)+1;});});poll.counts[set]=n;}
+function fetchTally(){Promise.all(["Baseline","Endline"].map(function(k){return gviz(SHEETS[k].id,SHEETS[k].gid).then(function(rows){tallySet(k,rows);});})).then(function(){poll.err=false;poll.updated=new Date();paintPoll();},function(){poll.err=true;paintPoll();});}
+
 function vote(id,i){if(poll.mine[id]!=null||poll.busy[id])return;poll.busy[id]=true;
  var done=function(){poll.mine[id]=i;poll.busy[id]=false;try{localStorage.setItem("hipa-poll-mine",JSON.stringify(poll.mine));}catch(e){}fetchTally();};
  if(!POLL_URL){done();return;}
@@ -3021,7 +3051,7 @@ function pollCard(p){var t=poll.tally[p.id]||{},tot=0;if(p.set!==poll.set)return
  p.o.forEach(function(x,i){var n=+t[i]||0,pc=tot?Math.round(n/tot*100):0;
   h+=show?'<div class="pres'+(mine===i?" mine":"")+'"><i style="width:'+pc+'%"></i><span>'+esc(x)+(mine===i?' · your answer':'')+'</span><b>'+pc+'%</b></div>':'<button class="popt" data-vote="'+p.id+'" data-o="'+i+'"'+(poll.busy[p.id]?" disabled":"")+'>'+esc(x)+'</button>';});
  return h+'</div></div>';}
-function paintPoll(){paintStage();var cw=document.getElementById("cmpwrap");if(cw)cw.innerHTML=compareHtml(false)+signalsHtml(false);var el=document.getElementById("pollwrap");if(!el){var st0=document.getElementById("pollstat");if(st0)st0.textContent=POLL_URL?"Results update every few seconds.":"Results shown are from this device only.";return;}el.innerHTML=POLLS.map(pollCard).join("");var st=document.getElementById("pollstat");if(st)st.textContent=poll.err?"Could not reach the poll server. Your answer will be sent when you try again.":POLL_URL?"Results update every few seconds.":"Results shown are from this device only.";}
+function paintPoll(){paintStage();var ln=document.getElementById("lrn");if(ln)ln.textContent=poll.counts?poll.counts[poll.set]||0:0;var cw=document.getElementById("cmpwrap");if(cw)cw.innerHTML=compareHtml(false)+signalsHtml(false);var el=document.getElementById("pollwrap");if(!el){var st0=document.getElementById("pollstat");if(st0)st0.textContent=POLL_URL?"Results update every few seconds.":"Results shown are from this device only.";return;}el.innerHTML=POLLS.map(pollCard).join("");var lf=document.getElementById("lrfail");if(lf){var sh=SHEETS[poll.set==="Endline"?"Endline":"Baseline"];lf.innerHTML=poll.err?'<div class="lrerr"><b>Live charts could not load here.</b> This happens on the claude.ai preview, which blocks outside connections, or when the response sheet is not shared as “Anyone with the link can view”. The responses are shown directly from the sheet below.<iframe src="https://docs.google.com/spreadsheets/d/'+sh.id+'/htmlview?gid='+sh.gid+'&widget=false&headers=false&chrome=false" title="Responses"></iframe></div>':"";}var st=document.getElementById("pollstat");if(st)st.textContent=poll.err?"Could not load the live results just now. Retrying…":"Results update every 10 seconds"+(poll.updated?" · last updated "+poll.updated.toLocaleTimeString():"")+".";}
 function vMat(){return '<h2 class="sec" style="margin-top:6px">Session materials</h2><p class="lede">Presentations, sample documents and anything else shared for this session.</p>'+driveBox("session","Session materials");}
 
 function signalsHtml(big){var h='<div class="sig'+(big?" big":"")+'"><h3 class="bh">What participants tell us</h3><div class="siggrid">';SIGNALS.forEach(function(g){var p=POLLS.filter(function(x){return x.id===g.id;})[0],A=pct(p,g.g);h+='<div class="sigc"><b>'+(A.tot?A.pc+'%':'–')+'</b><span>'+esc(g.label)+'</span><small>'+esc(g.sub)+' · '+A.tot+' responses</small></div>';});return h+'</div></div>';}
@@ -3042,7 +3072,7 @@ function vPoll(){
 /* ===== POLL PRESENTER VIEW: big live results with a QR code to join ===== */
 var ps={open:false,i:0,timer:null};
 function psList(){var set=poll.set==="Endline"?"Endline":"Baseline",L=POLLS.filter(function(p){return p.set===set;}).map(function(p){return {p:p};});if(set==="Endline"||poll.set==="Compare")L.push({cmp:true});if(poll.set==="Compare")L=[{cmp:true}];return L;}
-function joinUrl(){var u=location.href.split("#")[0];return /^https?:/.test(u)?u+"#poll":"";}
+function joinUrl(){var k=poll.set==="Endline"||poll.set==="Compare"?"Endline":"Baseline";return FORMS[k].short;}
 function qrSvg(text){try{if(!window.qrcode||!text)return "";var q=window.qrcode(0,"M");q.addData(text);q.make();return q.createSvgTag({cellSize:6,margin:2,scalable:true});}catch(e){return "";}}
 function stageShell(){var el=document.getElementById("pollstage"),L=psList();ps.i=Math.min(ps.i,L.length-1);var it=L[ps.i],ju=joinUrl(),qr=qrSvg(ju);
  var head='<div class="psbar"><span class="pslogo"><img src="'+LOGO+'" alt="" width="30" height="30">'+(it.cmp?"Baseline and endline":(it.p.set+" poll"))+' · HIPA, 30 October 2026</span><span class="psnav"><button class="tbtn" data-ps="prev" aria-label="Previous"'+(ps.i===0?" disabled":"")+'>‹</button><b>'+(ps.i+1)+' / '+L.length+'</b><button class="tbtn" data-ps="next" aria-label="Next"'+(ps.i===L.length-1?" disabled":"")+'>›</button><button class="tbtn" data-ps="close">Close</button></span></div>';
@@ -3051,16 +3081,16 @@ function stageShell(){var el=document.getElementById("pollstage"),L=psList();ps.
  var p=it.p;
  el.innerHTML=head+'<div class="psbody"><div class="psmain"><div class="pswhen">'+p.set+' question</div><h1 class="psq">'+esc(p.q)+'</h1><div class="psbars">'+p.o.map(function(x,i){return '<div class="psrow" style="--c:'+VC[i%5]+'"><div class="pslab"><span>'+esc(x)+'</span><b data-psn="'+i+'">0%</b></div><div class="pstrack"><i data-psw="'+i+'"></i></div><small data-psc="'+i+'">0 votes</small></div>';}).join("")+'</div></div>'+side+'</div>';
  paintStage();}
-function paintStage(){var el=document.getElementById("pollstage");if(!ps.open||!el)return;var it=psList()[ps.i];var nt0=document.getElementById("psnote");if(nt0)nt0.textContent=poll.err?"Reconnecting to the poll server…":POLL_URL?"Updates every few seconds":"Poll server not connected: showing this device only";if(!it)return;if(it.cmp){var pc=document.getElementById("pscmp");if(pc)pc.innerHTML=compareHtml(true)+signalsHtml(true);return;}var p=it.p,t=poll.tally[p.id]||{},tot=0,max=0;p.o.forEach(function(x,i){var n=+t[i]||0;tot+=n;if(n>max)max=n;});
+function paintStage(){var el=document.getElementById("pollstage");if(!ps.open||!el)return;var it=psList()[ps.i];var nt0=document.getElementById("psnote");if(nt0)nt0.textContent=poll.err?"Reconnecting to the results sheet…":"Updates every few seconds";if(!it)return;if(it.cmp){var pc=document.getElementById("pscmp");if(pc)pc.innerHTML=compareHtml(true)+signalsHtml(true);return;}var p=it.p,t=poll.tally[p.id]||{},tot=0,max=0;p.o.forEach(function(x,i){var n=+t[i]||0;tot+=n;if(n>max)max=n;});
  p.o.forEach(function(x,i){var n=+t[i]||0,pc=tot?Math.round(n/tot*100):0,w=el.querySelector('[data-psw="'+i+'"]');if(!w)return;w.style.width=pc+"%";el.querySelector('[data-psn="'+i+'"]').textContent=pc+"%";el.querySelector('[data-psc="'+i+'"]').textContent=n+(n===1?" vote":" votes");w.parentNode.parentNode.classList.toggle("lead",n>0&&n===max);});
- var tt=document.getElementById("pstot");if(tt)tt.textContent=tot;var nt=document.getElementById("psnote");if(nt)nt.textContent=poll.err?"Reconnecting to the poll server…":POLL_URL?"Updates every few seconds":"Poll server not connected: showing this device only";}
-function openStage(){ps.open=true;var el=document.getElementById("pollstage");el.hidden=false;document.body.classList.add("dlock");stageShell();fetchTally();clearInterval(ps.timer);if(POLL_URL)ps.timer=setInterval(fetchTally,4000);try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(e){}}
-function closeStage(){ps.open=false;clearInterval(ps.timer);var el=document.getElementById("pollstage");el.hidden=true;document.body.classList.remove("dlock");try{document.fullscreenElement&&document.exitFullscreen();}catch(e){}}
-document.addEventListener("click",function(e){var b=e.target.closest("[data-pstage],[data-ps]");if(!b)return;if(b.dataset.pstage){ps.i=0;openStage();return;}var a=b.dataset.ps;if(a==="close")closeStage();else{ps.i=Math.max(0,Math.min(psList().length-1,ps.i+(a==="next"?1:-1)));stageShell();}});
+ var tt=document.getElementById("pstot");if(tt)tt.textContent=tot;var nt=document.getElementById("psnote");if(nt)nt.textContent=poll.err?"Reconnecting to the results sheet…":"Updates every few seconds";}
+function openStage(){ps.open=true;var el=document.getElementById("pollstage");el.hidden=false;document.body.classList.add("dlock");stageShell();fetchTally();clearInterval(ps.timer);ps.timer=setInterval(fetchTally,8000);try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(e){}}
+function closeStage(){ps.open=false;poll.set=fset;clearInterval(ps.timer);var el=document.getElementById("pollstage");el.hidden=true;document.body.classList.remove("dlock");try{document.fullscreenElement&&document.exitFullscreen();}catch(e){}}
+document.addEventListener("click",function(e){var c=e.target.closest("[data-cmpstage]");if(c){poll.set="Compare";ps.i=0;openStage();return;}var b=e.target.closest("[data-pstage],[data-ps]");if(!b)return;if(b.dataset.pstage){ps.i=0;openStage();return;}var a=b.dataset.ps;if(a==="close")closeStage();else{ps.i=Math.max(0,Math.min(psList().length-1,ps.i+(a==="next"?1:-1)));stageShell();}});
 document.addEventListener("keydown",function(e){if(!ps.open)return;if(e.key==="Escape")closeStage();else if(e.key==="ArrowRight"&&ps.i<psList().length-1){ps.i++;stageShell();}else if(e.key==="ArrowLeft"&&ps.i>0){ps.i--;stageShell();}});
 document.addEventListener("input",function(e){if(e.target.id==="vname"){VNAME=e.target.value.slice(0,60);try{localStorage.setItem("hipa-vname",VNAME);}catch(x){}}});
 
-function startPoll(){stopPoll();fetchTally();if(POLL_URL)poll.timer=setInterval(fetchTally,5000);}
+function startPoll(){stopPoll();fetchTally();poll.timer=setInterval(fetchTally,10000);}
 function stopPoll(){if(poll.timer){clearInterval(poll.timer);poll.timer=null;}}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-vote],[data-live],[data-pset]");if(!b)return;if(b.dataset.pset){poll.set=b.dataset.pset;render();return;}if(b.dataset.live){poll.live=!poll.live;render();return;}vote(b.dataset.vote,+b.dataset.o);paintPoll();});
 
@@ -3428,6 +3458,28 @@ function vGuard(){
  return h;}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-gk]");if(!b)return;gk[b.dataset.gk]=!gk[b.dataset.gk];var y=window.scrollY;render();window.scrollTo(0,y);});
 
+
+/* ===== LIVE POLL ON GOOGLE FORMS ===== */
+var FORMS={
+ Baseline:{title:"Baseline poll",when:"Start of the session",short:"https://forms.gle/aiA1bAiNeQScumGD6",id:"1FAIpQLSemiPhKWFw9JgKRVkYLAohTIISB5nZU3dUm8UmmdRyBBjnjWQ",n:5},
+ Endline:{title:"Endline poll",when:"End of the session",short:"https://forms.gle/mMZxUTRTfsqcuMey6",id:"1FAIpQLSc167oCDrYTh_4i9Ab5bmtuBi7bEQQAw7-TmKwPaDfvNTWwkw",n:9}};
+var fset="Baseline";
+function vForms(){var f=FORMS[fset],qr=qrSvg(f.short);
+ var h='<h2 class="sec" style="margin-top:6px">Live poll</h2><p class="lede">Two short polls: a baseline at the start of the session and an endline at the end, so we can see what changed. Each takes about a minute.</p>';
+ h+='<div class="pset" style="grid-template-columns:repeat(2,minmax(0,1fr))">'+["Baseline","Endline"].map(function(k){var x=FORMS[k];return '<button class="psetb'+(fset===k?" on":"")+'" data-fset="'+k+'"><b>'+x.title+'</b><span>'+x.when+' · '+x.n+' questions</span></button>';}).join("")+'</div>';
+ h+='<div class="fwrap"><div class="fside"><div class="psqr">'+qr+'</div><p class="fjoin"><b>Scan to answer</b><a href="'+f.short+'" target="_blank" rel="noopener">'+f.short.replace("https://","")+'</a></p><a class="mini prim" href="'+f.short+'" target="_blank" rel="noopener">Open the form in a new tab ↗</a><button class="mini" data-fstage="1">▶ Show QR full screen</button></div>';
+ h+='<div class="fframe"><iframe src="https://docs.google.com/forms/d/e/'+f.id+'/viewform?embedded=true" title="'+f.title+'" loading="lazy">Loading…</iframe></div></div>';
+ poll.set=fset;poll.live=true;
+ h+='<div class="lrhead"><h2 class="sec" style="margin:0">Live results: '+f.title.toLowerCase()+'</h2><span class="lrcount"><i class="dot"></i><b id="lrn">'+(poll.counts[fset]||0)+'</b> responses</span><button class="chip" data-lrrefresh="1">↻ Refresh now</button><button class="chip present" data-pstage="1">▶ Present live results</button></div><p class="hint" id="pollstat"></p><div id="lrfail"></div><div id="pollwrap"></div>';
+ h+='<div class="lrhead" style="margin-top:28px"><h2 class="sec" style="margin:0">Start of the session against the end</h2><button class="chip present" data-cmpstage="1">▶ Present the comparison</button></div><div id="cmpwrap">'+compareHtml(false)+signalsHtml(false)+'</div>';
+ return h;}
+function fStage(){var f=FORMS[fset],el=document.getElementById("pollstage");el.hidden=false;document.body.classList.add("dlock");
+ el.innerHTML='<div class="psbar"><span class="pslogo"><img src="'+LOGO+'" alt="" width="30" height="30">'+f.title+' · HIPA, 30 October 2026</span><span class="psnav"><button class="tbtn" data-fstagex="1">Close</button></span></div><div class="fstage"><div class="pswhen">'+f.when+'</div><h1 class="psq" style="text-align:center;max-width:none">Scan to answer the '+f.title.toLowerCase()+'</h1><div class="psqr big">'+qrSvg(f.short)+'</div><p class="fbig">'+f.short.replace("https://","")+'</p><p class="psnote">'+f.n+' quick questions · about one minute</p></div>';
+ try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(e){}}
+function fStageClose(){var el=document.getElementById("pollstage");el.hidden=true;document.body.classList.remove("dlock");try{document.fullscreenElement&&document.exitFullscreen();}catch(e){}}
+document.addEventListener("click",function(e){if(e.target.closest("[data-lrrefresh]")){var st=document.getElementById("pollstat");if(st)st.textContent="Refreshing…";fetchTally();return;}var b=e.target.closest("[data-fset],[data-fstage],[data-fstagex]");if(!b)return;if(b.dataset.fset){fset=b.dataset.fset;render();}else if(b.dataset.fstage)fStage();else fStageClose();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!document.getElementById("pollstage").hidden)fStageClose();});
+
 var TABS=[["overview","Overview"],["about","About Agility AI"]];
 
 var SEGS=[
@@ -3550,15 +3602,15 @@ function vAbout(){var T=TEAM;
 
 function render(){tabs();side();var h;
  if(ui.tab==="about")h=vAbout();
- else{var s=ui.sec;h=s==="glance"?vGlance():s==="refs"?vRefs():s==="poll"?vPoll():s==="materials"?vMat():s==="toolkit"?vToolkit():s==="prompts"?vPrompts():s==="safe"?vSafe():s==="before"?vPrep():vSeg(+s.slice(3));}
+ else{var s=ui.sec;h=s==="glance"?vGlance():s==="refs"?vRefs():s==="poll"?vForms():s==="materials"?vMat():s==="toolkit"?vToolkit():s==="prompts"?vPrompts():s==="safe"?vSafe():s==="before"?vPrep():vSeg(+s.slice(3));}
  document.getElementById("layout").classList.toggle("noside",ui.tab!=="overview");
- document.getElementById("view").innerHTML=h;paintVenns();if(ui.tab==="overview"&&ui.sec==="poll")startPoll();else stopPoll();}
+ document.getElementById("view").innerHTML=h;paintVenns();if(ui.tab==="overview"&&ui.sec==="poll"){startPoll();paintPoll();}else stopPoll();}
 function setHash(x){try{history.replaceState(null,"","#"+x);}catch(e){}}
 
 document.addEventListener("click",function(e){
  var t=e.target.closest("[data-go],[data-sec],[data-cat],[data-copy],[data-copyt]");if(!t)return;
  if(t.dataset.go){ui.tab=t.dataset.go;setHash(ui.tab==="overview"?ui.sec:ui.tab);render();window.scrollTo(0,0);}
- else if(t.dataset.sec){if(t.dataset.psetGo)poll.set=t.dataset.psetGo;ui.tab="overview";ui.sec=t.dataset.sec;setHash(ui.sec);render();window.scrollTo(0,0);}
+ else if(t.dataset.sec){if(t.dataset.psetGo)fset=t.dataset.psetGo;ui.tab="overview";ui.sec=t.dataset.sec;setHash(ui.sec);render();window.scrollTo(0,0);}
  else if(t.dataset.cat){ui.cat=t.dataset.cat;render();}
  else{var txt=t.dataset.copyt?TEMPLATE:PROMPTS[+t.dataset.copy].p;var ok=function(){t.textContent="Copied";t.classList.add("ok");setTimeout(function(){t.textContent="Copy";t.classList.remove("ok");},1500);};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,function(){fallback(txt);ok();});}else{fallback(txt);ok();}}
@@ -3601,7 +3653,7 @@ function buildHipaDeck(Pptx,picks,LOGOSRC){
  function agenda(){S();kicker("The session");heading("75 minutes, six parts");SEGS.forEach(function(g,i){var y=1.75+i*0.68;box(0.6,y,12.1,0.58);T(String(i+1).padStart(2,"0"),{x:0.8,y:y,w:0.7,h:0.58,fontSize:18,bold:true,color:C.gold,valign:"middle"});T(g.title,{x:1.6,y:y,w:6,h:0.58,fontSize:15,bold:true,valign:"middle",fit:"shrink"});T(g.t+"  ·  "+g.min+" min",{x:7.8,y:y,w:4.7,h:0.58,fontSize:13,color:C.muted,valign:"middle",align:"right"});});}
  function segTitle(i,lede){var g=SEGS[i];S();T(String(i+1).padStart(2,"0"),{x:0.6,y:1.3,w:3,h:1.5,fontSize:88,bold:true,color:C.gold});T(g.title,{x:0.6,y:3.0,w:11.5,h:1.3,fontSize:36,bold:true,fit:"shrink"});T(lede||g.meta,{x:0.6,y:4.4,w:11,h:0.9,fontSize:18,color:C.muted,fit:"shrink"});T(g.t+"  ·  "+g.min+" minutes",{x:0.6,y:5.4,w:11,h:0.4,fontSize:14,color:C.gold});}
  function cover2(i){S();kicker(SEGS[i].title);heading("What we cover");bullets(SEGS[i].pts,{x:0.6,y:1.8,w:12,h:4.6,fontSize:18});}
- function polls(set){S();kicker(set+" poll");heading(set==="Baseline"?"Where are we starting from?":"What has changed?");POLLS.filter(function(q){return q.set===set;}).forEach(function(q,i){var y=1.75+i*0.95;box(0.6,y,12.1,0.82);T(String(i+1),{x:0.8,y:y,w:0.5,h:0.82,fontSize:18,bold:true,color:C.gold,valign:"middle"});T(q.q,{x:1.4,y:y+0.06,w:11.1,h:0.4,fontSize:14,bold:true,fit:"shrink"});T(q.o.join("   ·   "),{x:1.4,y:y+0.46,w:11.1,h:0.3,fontSize:10.5,color:C.muted,fit:"shrink"});});T("Answer on the session page under Live poll.",{x:0.6,y:6.55,w:12,h:0.3,fontSize:11,color:C.muted});}
+ function polls(set){S();kicker(set+" poll");heading(set==="Baseline"?"Where are we starting from?":"What has changed?");POLLS.filter(function(q){return q.set===set;}).forEach(function(q,i){var y=1.75+i*0.95;box(0.6,y,12.1,0.82);T(String(i+1),{x:0.8,y:y,w:0.5,h:0.82,fontSize:18,bold:true,color:C.gold,valign:"middle"});T(q.q,{x:1.4,y:y+0.06,w:11.1,h:0.4,fontSize:14,bold:true,fit:"shrink"});T(q.o.join("   ·   "),{x:1.4,y:y+0.46,w:11.1,h:0.3,fontSize:10.5,color:C.muted,fit:"shrink"});});T([{text:"Answer here: "+FORMS[set].short.replace("https://",""),options:{hyperlink:{url:FORMS[set].short}}}],{x:0.6,y:6.5,w:12,h:0.35,fontSize:13,bold:true,color:C.gold});}
  function depthS(){S();kicker("The tools, briefly");heading("Each of these tools is a subject on its own");T("Claude alone would take at least a full day to learn in depth. Beyond the simple chat, it has artifacts, projects, skills, connectors, research and much more. The same is true of ChatGPT and Gemini.",{x:0.6,y:1.9,w:12,h:1.4,fontSize:20,fit:"shrink"});box(0.6,3.7,12.1,1.3,C.card,C.gold);T("So in the next hour we focus on what you can do straight away, not on everything these tools can do.",{x:0.9,y:3.7,w:11.6,h:1.3,fontSize:20,bold:true,color:C.gold,valign:"middle",fit:"shrink"});}
  function big3S(){S();kicker("The tools, briefly");heading("Inside the big three");BIG3.forEach(function(t,c){var x=0.6+c*4.1,col=t.color.replace("#","");box(x,1.65,3.9,4.75,C.card,col);T(t.name,{x:x+0.25,y:1.8,w:3.4,h:0.45,fontSize:20,bold:true,color:col});T(t.maker,{x:x+0.25,y:2.25,w:3.4,h:0.3,fontSize:11,color:C.muted});T(t.f.map(function(g,i){return {text:g[0]+(g[2]?"   · today":""),options:{bullet:{indent:12},breakLine:i<t.f.length-1,paraSpaceAfter:5,color:g[2]?C.gold:C.ink,bold:g[2]}};}),{x:x+0.25,y:2.7,w:3.45,h:3.9,fontSize:13,fit:"shrink"});});T("Features marked today are the ones used in this session.",{x:0.6,y:6.55,w:12,h:0.3,fontSize:11,color:C.muted});}
  function goodBad(){S();kicker("The tools, briefly");heading("Where AI helps, and where it fails");T("GOOD AT",{x:0.6,y:1.7,w:5.9,h:0.3,fontSize:12,bold:true,color:C.green});T("WATCH OUT FOR",{x:6.8,y:1.7,w:5.9,h:0.3,fontSize:12,bold:true,color:C.red});[GOOD,BAD].forEach(function(L,c){L.forEach(function(g,i){var x=0.6+c*6.2,y=2.1+i*0.92;box(x,y,5.9,0.8,C.card,c?C.red:C.green);T(g[0],{x:x+0.2,y:y+0.08,w:5.5,h:0.3,fontSize:14,bold:true});T(g[1],{x:x+0.2,y:y+0.4,w:5.5,h:0.35,fontSize:12,color:C.muted,fit:"shrink"});});});}

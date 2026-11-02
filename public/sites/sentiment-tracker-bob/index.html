@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bank of Baroda – Sentiment &amp; Performance Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22><text y=%229%22 font-size=%228%22>🏦</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--ink:#14213d;--mut:#5b667a;--line:#dde2ea;--navy:#0b2447;--red:#e4002b;--pos:#2f7d5b;--neu:#d99a1c;--neg:#c62828;--sb:#8a96a8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1420;--card:#16202f;--ink:#e8edf5;--mut:#9aa7bb;--line:#2a3649;--navy:#0a1730;--pos:#4cb185;--neu:#e5ae3a;--neg:#ef6a6a}}
+:root[data-theme="dark"]{--bg:#0d1420;--card:#16202f;--ink:#e8edf5;--mut:#9aa7bb;--line:#2a3649;--navy:#0a1730;--pos:#4cb185;--neu:#e5ae3a;--neg:#ef6a6a}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Arial,sans-serif}
+header{background:var(--navy);color:#fff;padding:22px 20px 14px;border-bottom:4px solid var(--red)}
+.wrap{max-width:1180px;margin:0 auto}h1{margin:0;font:600 24px/1.2 Georgia,"Times New Roman",serif}header p{margin:4px 0 0;color:#c5cfe0;font-size:13px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+nav .wrap{display:flex;gap:2px;padding:0 12px;align-items:center}nav a{padding:12px 11px;font-size:13px;color:var(--mut);text-decoration:none;font-weight:600}nav a:hover{color:var(--red)}
+nav button{margin-left:auto}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:30}
+section{padding:26px 16px 4px}h2{font:600 19px Georgia,serif;margin:0 0 4px;color:var(--navy)}@media(prefers-color-scheme:dark){h2{color:#fff}}
+.sub{color:var(--mut);font-size:13px;margin:0 0 14px}
+.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.card h3{margin:0 0 2px;font-size:14px}.q{font-size:12px;color:var(--mut);margin:0 0 8px}
+.kpi b{display:block;font-size:26px;font-family:Georgia,serif;margin:4px 0 0}.kpi small{color:var(--mut)}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.3px;text-transform:uppercase}
+.t-o{background:#e1f0e9;color:#1d5c40}.t-c{background:#e2e9f7;color:#1f3f8a}.t-i{background:#fff0d1;color:#8a5a00}.t-n{background:#eee;color:#555}
+.bar{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:14px;font-size:13px}
+select,button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);cursor:pointer}
+button.p{background:var(--red);color:#fff;border-color:var(--red)}label{display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+.cv{position:relative;height:280px}.cv.s{height:240px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--navy);color:#fff;font-weight:600}
+.scroll{overflow-x:auto}.hm td{text-align:center;color:#fff;font-weight:700;border:2px solid var(--card)}
+.warn{border-left:4px solid var(--neu);background:var(--card);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:14px}
+ul{margin:4px 0 0;padding-left:18px;font-size:13px}li{margin:3px 0}.sw h3{color:var(--red)}
+footer{padding:24px 16px 40px;font-size:12px;color:var(--mut)}
+@media print{nav,.bar,button{display:none!important}body::before{display:none}.card{break-inside:avoid}}
+</style></head><body>
+<header><div class="wrap"><h1>Bank of Baroda · Sentiment &amp; Performance Tracker</h1>
+<p>Chairman’s review dashboard · Financials: FY 2024–25 (year ended 31 Mar 2025) · Sentiment: illustrative demonstration data</p></div></header>
+<nav><div class="wrap"><a href="#overview">Overview</a><a href="#sentiment">Sentiment</a><a href="#risk">Risk</a><a href="#finance">Benchmark</a><a href="#swot">SWOT</a><a href="#actions">Actions</a><a href="#roadmap">Roadmap</a><a href="#method">Methodology</a>
+<button class="p" onclick="window.print()">Print / PDF</button><button onclick="toggleTheme()" title="Toggle light/dark">◐</button></div></nav>
+
+<div class="wrap">
+<section id="overview">
+<div class="warn"><b>Data status.</b> <span class="tag t-o">Official financial data</span> reported results for FY 2024–25. <span class="tag t-c">Calculated KPI</span> derived from reported figures. <span class="tag t-i">Illustrative sentiment</span> sample values that demonstrate the dashboard only; they are <b>not</b> actual Bank of Baroda customer sentiment. Financial performance is shown separately and is never used to compute sentiment.</div>
+<h2>Executive overview</h2><p class="sub">Financial headline figures (BoB, standalone/global as labelled) and sentiment indicators for the selected period.</p>
+<div class="bar"><label>Period <select id="period"><option value="3">Last 3 months</option><option value="6">Last 6 months</option><option value="12" selected>Last 12 months</option></select></label>
+<span>Sentiment shown:</span><label><input type="checkbox" class="sf" value="0" checked> Positive</label><label><input type="checkbox" class="sf" value="1" checked> Neutral</label><label><input type="checkbox" class="sf" value="2" checked> Negative</label>
+<label>Touchpoint <select id="tp"></select></label></div>
+<div class="grid g4" id="kpis"></div></section>
+
+<section id="sentiment"><h2>Customer &amp; brand sentiment</h2><p class="sub"><span class="tag t-i">Illustrative sentiment data</span> Nov 2025 – Oct 2026 sample series.</p>
+<div class="grid g2">
+<div class="card"><h3>Sentiment distribution</h3><p class="q">What share of feedback is favourable?</p><div class="cv s"><canvas id="cDonut"></canvas></div></div>
+<div class="card"><h3>Monthly sentiment trend</h3><p class="q">Is sentiment improving or deteriorating?</p><div class="cv s"><canvas id="cTrend"></canvas></div></div>
+<div class="card"><h3>Sentiment by customer touchpoint</h3><p class="q">Which touchpoints drive negative experience?</p><div class="cv"><canvas id="cTp"></canvas></div></div>
+<div class="card"><h3>Complaint categories</h3><p class="q">What should service teams fix first? (share of complaints, %)</p><div class="cv"><canvas id="cCmp"></canvas></div></div>
+</div></section>
+
+<section id="risk"><h2>Reputation risk monitor</h2><p class="sub"><span class="tag t-i">Illustrative</span> Negative-sentiment share (%) by touchpoint and quarter. Darker red = higher risk; alert at ≥30%.</p>
+<div class="card scroll"><table class="hm" id="heat"></table></div></section>
+
+<section id="finance"><h2>Financial benchmarking: Bank of Baroda vs SBI</h2><p class="sub"><span class="tag t-o">Official</span> FY 2024–25 reported figures. Financial performance is context for sentiment, not a driver of the sentiment score.</p>
+<div class="bar"><label>Metric group <select id="grp"></select></label><label><input type="checkbox" id="sbi" checked> Compare with SBI</label></div>
+<div class="grid g2"><div class="card"><h3 id="fT"></h3><p class="q" id="fQ"></p><div class="cv"><canvas id="cFin"></canvas></div></div>
+<div class="card scroll"><h3>Reported figures, FY 2024–25</h3><p class="q">“Data Not Available” = not retrieved/verified; not estimated.</p><table id="ft"></table></div></div></section>
+
+<section id="swot"><h2>SWOT – Bank of Baroda</h2><p class="sub">Strengths/Weaknesses are drawn from the reported figures above. Opportunities/Threats are <i>analytical interpretations</i>, not documented facts.</p>
+<div class="grid g2">
+<div class="card sw"><h3>Strengths <span class="tag t-o">Fact</span></h3><ul><li>Record standalone net profit ₹19,581 cr, up 10.1% YoY</li><li>ROA 1.16%; ROE 16.96%</li><li>GNPA improved to 2.26%</li><li>Retail loans up 19.4% YoY; global deposits up 10.3%</li></ul></div>
+<div class="card sw"><h3>Weaknesses <span class="tag t-o">Fact</span></h3><ul><li>Global NIM 3.02%, down from 3.18% in FY24</li><li>GNPA 2.26% vs SBI 1.82%; ROE below SBI’s 19.87%</li><li>Scale is smaller than SBI (total business about 28% of SBI’s, calculated)</li></ul></div>
+<div class="card sw"><h3>Opportunities <span class="tag t-n">Interpretation</span></h3><ul><li>Digital self-service quality, if measured, can lift satisfaction at the highest-volume touchpoints</li><li>Retail growth gives a larger customer base to listen to systematically</li></ul></div>
+<div class="card sw"><h3>Threats <span class="tag t-n">Interpretation</span></h3><ul><li>Margin pressure across the sector may limit investment capacity</li><li>Unaddressed digital-failure complaints could escalate into public reputation issues</li></ul></div>
+</div></section>
+
+<section id="actions"><h2>Improvement priorities</h2><p class="sub">Impact vs effort for the tracker itself; every item has a KPI and a measurement method.</p>
+<div class="card scroll"><table><tr><th>Quadrant</th><th>Improvement</th><th>Why it matters</th><th>KPI · Measurement</th></tr>
+<tr><td><b>High impact / Low effort</b></td><td>Source every figure to the annual report; add reporting-period labels</td><td>Chairman-level credibility</td><td>100% sourced figures · audit checklist</td></tr>
+<tr><td><b>High impact / Low effort</b></td><td>Separate sentiment from financial KPIs</td><td>Avoids misleading causation</td><td>0 mixed metrics · design review</td></tr>
+<tr><td><b>High impact / High effort</b></td><td>Ingest real feedback (complaints, app-store reviews, surveys) with documented classification</td><td>Replaces illustrative with actual sentiment</td><td>Sample size, classifier accuracy vs human-labelled set</td></tr>
+<tr><td><b>Low impact / Low effort</b></td><td>Export/print, consistent colour coding</td><td>Presentation readiness</td><td>Board pack produced in &lt;1 hr</td></tr>
+<tr><td><b>Low impact / High effort</b></td><td>Predictive models before ≥24 months of history exist</td><td>Premature without data</td><td>Defer · revisit at Phase 3</td></tr></table></div></section>
+
+<section id="roadmap"><h2>Implementation roadmap</h2><p class="sub">No real-time feature is claimed; this build runs on static data.</p>
+<div class="card scroll"><table><tr><th>Phase</th><th>Timeline</th><th>Activities · Deliverables</th><th>Owner</th><th>Success indicator</th></tr>
+<tr><td><b>1 Foundation</b></td><td>0–6 weeks</td><td>Validate financials against annual-report PDFs; finalise KPI definitions; deploy this dashboard</td><td>Strategy &amp; Finance analysts</td><td>All figures reconciled and signed off</td></tr>
+<tr><td><b>2 Analytics</b></td><td>2–4 months</td><td>Connect complaint and survey data; taxonomy; monthly benchmarking vs SBI and peers; alert thresholds</td><td>CX / Digital Banking / Risk</td><td>First real sentiment month published</td></tr>
+<tr><td><b>3 Advanced</b></td><td>6–12 months</td><td>Automated scheduled ingestion; AI-assisted classification with human audit; trend forecasting if history suffices</td><td>IT &amp; Data Science, with Compliance</td><td>Classifier accuracy target met; scheduled refresh stable</td></tr></table></div></section>
+
+<section id="eval"><h2>Evaluation of existing tracker</h2>
+<div class="warn"><b>Provisional – not scored.</b> The original tracker file was not available (the file shared was an unrelated NDDB HR brochure), so no rating out of 10 is given rather than an invented one. Once supplied, it will be scored on the weighted rubric below.</div>
+<div class="card scroll"><table><tr><th>Dimension</th><th>Weight</th><th>Score</th></tr>
+<tr><td>Strategic relevance</td><td>15%</td><td>Pending</td></tr><tr><td>Data accuracy and reliability</td><td>20%</td><td>Pending</td></tr><tr><td>Analytical depth</td><td>15%</td><td>Pending</td></tr><tr><td>Visual design</td><td>15%</td><td>Pending</td></tr><tr><td>Dashboard usability</td><td>10%</td><td>Pending</td></tr><tr><td>Executive presentation quality</td><td>10%</td><td>Pending</td></tr><tr><td>Technical implementation</td><td>10%</td><td>Pending</td></tr><tr><td>Actionability</td><td>5%</td><td>Pending</td></tr></table></div></section>
+
+<section id="method"><h2>Methodology &amp; sources</h2>
+<div class="card"><ul>
+<li><b>Reported (official results, FY 2024–25):</b> BoB – net profit ₹19,581 cr, operating profit ₹32,435 cr, global advances ₹12,30,461 cr, global deposits ₹14,72,035 cr, global NIM 3.02%, ROA 1.16%, ROE 16.96%, GNPA 2.26%, CRAR 17.19% (Mar 2025). SBI – net profit ₹70,901 cr, operating profit ₹1,10,579 cr, gross advances ₹42,20,703 cr, deposits ₹53,82,190 cr, whole-bank NIM 3.09%, ROA 1.10%, ROE 19.87%, GNPA 1.82%, NNPA 0.47% (Mar 2025).</li>
+<li><b>Calculated:</b> Total business = advances + deposits (BoB ₹27.02 lakh cr; SBI ₹96.03 lakh cr, using gross advances). BoB/SBI ratio = 27.02 ÷ 96.03. Net sentiment = positive % − negative %, weighted by monthly volume.</li>
+<li><b>Not available:</b> BoB NNPA, SBI CRAR, NII for both banks, customer base, digital-transaction volumes, financial inclusion and ESG metrics were not verified for this build.</li>
+<li><b>Caveat:</b> Figures were taken from published results coverage (Bajaj Broking, Angel One, Finology, Hello Banker, Business Standard, Morung Express) and should be reconciled against the official Annual Reports (bankofbaroda.bank.in; sbi.co.in) before the Chairman’s presentation. BoB NIM is global; SBI is whole-bank; definitions are close but not identical.</li>
+<li><b>Sentiment:</b> all values are illustrative and generated for demonstration. No survey, rating or customer feedback has been collected.</li></ul></div></section>
+</div>
+<footer><div class="wrap">Bank of Baroda sentiment tracker – prepared for management review. Illustrative sentiment values must not be quoted as actual customer sentiment.</div></footer>
+
+<script>
+(function(){
+"use strict";
+var C={pos:"#2f7d5b",neu:"#d99a1c",neg:"#c62828",bob:"#e4002b",sbi:"#0b2447"};
+var months=["Nov 25","Dec 25","Jan 26","Feb 26","Mar 26","Apr 26","May 26","Jun 26","Jul 26","Aug 26","Sep 26","Oct 26"];
+var pos=[52,53,51,54,55,54,56,55,57,56,58,57],neg=[24,23,25,22,21,22,20,21,19,20,18,19];
+var neu=pos.map(function(p,i){return 100-p-neg[i]});
+var vol=[980,1010,1040,1000,1060,1090,1120,1070,1130,1150,1180,1200];
+var tps=[["Branch",[48,28,24]],["ATM",[44,26,30]],["Mobile app",[58,22,20]],["Internet banking",[54,24,22]],["Customer support",[41,27,32]],["Brand / trust",[60,25,15]]];
+var cmp=[["Digital transaction failures",26],["Support responsiveness",21],["ATM / cash availability",17],["Branch service",15],["Charges / fees",12],["Fraud / security",9]];
+var heat=[[25,24,23,24],[31,30,29,30],[22,21,20,20],[23,22,22,21],[34,33,32,32],[17,16,15,15]];
+var N=null;
+var fin={
+"Profitability & margin (%)":{u:"%",q:"How efficiently does each bank earn on assets and lending?",r:[["ROA",1.16,1.10],["Net interest margin",3.02,3.09]]},
+"Return & capital (%)":{u:"%",q:"Shareholder return and capital strength",r:[["ROE",16.96,19.87],["CRAR (Mar 2025)",17.19,N]]},
+"Asset quality (%)":{u:"%",q:"How much of the loan book is stressed?",r:[["Gross NPA",2.26,1.82],["Net NPA",N,0.47]]},
+"Earnings (₹ thousand crore)":{u:"₹ ’000 cr",q:"Absolute earnings; SBI is a much larger bank, so read alongside ratios",r:[["Net profit",19.58,70.90],["Operating profit",32.44,110.58]]},
+"Scale (₹ lakh crore)":{u:"₹ lakh cr",q:"Balance-sheet size (advances: BoB global, SBI gross)",r:[["Deposits",14.72,53.82],["Advances",12.30,42.21],["Total business (calc.)",27.02,96.03]]}};
+var ch={},css=getComputedStyle(document.documentElement);
+function txt(){return getComputedStyle(document.documentElement).getPropertyValue("--mut").trim()||"#5b667a"}
+function mk(id,cfg){if(ch[id])ch[id].destroy();cfg.options=cfg.options||{};cfg.options.maintainAspectRatio=false;cfg.options.responsive=true;
+ Chart.defaults.color=txt();ch[id]=new Chart(document.getElementById(id),cfg)}
+function $(s){return document.querySelector(s)}
+function sel(){var n=+$("#period").value;var a=[];var f=[].slice.call(document.querySelectorAll(".sf")).map(function(x){return x.checked});return {n:n,f:f}}
+function tpIdx(){return +$("#tp").value}
+function avg(arr,n){var w=vol.slice(-n),s=0,t=0;arr.slice(-n).forEach(function(v,i){s+=v*w[i];t+=w[i]});return s/t}
+function dist(n){var t=tpIdx();if(t<0)return [avg(pos,n),avg(neu,n),avg(neg,n)];var d=tps[t][1];return d.slice()}
+function badge(k,t){return '<span class="tag t-'+k+'">'+t+'</span>'}
+function kpis(){var s=sel(),d=dist(s.n),tot=vol.slice(-s.n).reduce(function(a,b){return a+b},0),net=d[0]-d[2];
+ var risk=d[2]>=30?["High",C.neg]:d[2]>=22?["Moderate",C.neu]:["Low",C.pos];
+ var h=[
+ ["Net sentiment score",(net>0?"+":"")+net.toFixed(1)+" pts","Positive − negative",badge("i","Illustrative")],
+ ["Positive / Neutral / Negative",d.map(function(x){return x.toFixed(0)+"%"}).join(" · "),"Share of feedback",badge("i","Illustrative")],
+ ["Feedback analysed",tot.toLocaleString("en-IN"),"Sample items, selected period",badge("i","Illustrative")],
+ ["Reputation risk indicator",'<span style="color:'+risk[1]+'">'+risk[0]+'</span>',"Negative share "+d[2].toFixed(0)+"% (alert ≥30%)",badge("i","Illustrative")],
+ ["Net profit FY25","₹19,581 cr","Standalone, +10.1% YoY",badge("o","Official")],
+ ["Return on assets","1.16%","FY 2024–25",badge("o","Official")],
+ ["Gross NPA","2.26%","31 Mar 2025",badge("o","Official")],
+ ["Total business","₹27.02 lakh cr","Advances + deposits, global",badge("c","Calculated")]];
+ $("#kpis").innerHTML=h.map(function(k){return '<div class="card kpi">'+k[3]+'<small style="display:block;margin-top:6px">'+k[0]+'</small><b>'+k[1]+'</b><small>'+k[2]+'</small></div>'}).join("")}
+function sentiment(){var s=sel(),d=dist(s.n),L=["Positive","Neutral","Negative"],col=[C.pos,C.neu,C.neg];
+ var idx=[0,1,2].filter(function(i){return s.f[i]});
+ mk("cDonut",{type:"doughnut",data:{labels:idx.map(function(i){return L[i]}),datasets:[{data:idx.map(function(i){return +d[i].toFixed(1)}),backgroundColor:idx.map(function(i){return col[i]}),borderWidth:0}]},
+  options:{cutout:"62%",plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:function(c){return c.label+": "+c.parsed+"%"}}}}}});
+ var m=months.slice(-s.n),src=[pos,neu,neg];
+ mk("cTrend",{type:"line",data:{labels:m,datasets:idx.map(function(i){return {label:L[i]+" %",data:src[i].slice(-s.n),borderColor:col[i],backgroundColor:col[i],tension:.3,pointRadius:3}})},
+  options:{scales:{y:{min:0,max:100,title:{display:true,text:"% of feedback"}}},plugins:{legend:{position:"bottom"}}}});
+ mk("cTp",{type:"bar",data:{labels:tps.map(function(t){return t[0]}),datasets:idx.map(function(i){return {label:L[i],data:tps.map(function(t){return t[1][i]}),backgroundColor:col[i]}})},
+  options:{indexAxis:"y",scales:{x:{stacked:true,max:100,title:{display:true,text:"% of feedback"}},y:{stacked:true}},plugins:{legend:{position:"bottom"}}}});
+ mk("cCmp",{type:"bar",data:{labels:cmp.map(function(c){return c[0]}),datasets:[{label:"% of complaints",data:cmp.map(function(c){return c[1]}),backgroundColor:"#0b2447"}]},
+  options:{indexAxis:"y",plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.x+"% of complaints"}}}},scales:{x:{beginAtZero:true,title:{display:true,text:"%"}}}}})}
+function heatmap(){var q=["Q4 25","Q1 26","Q2 26","Q3 26"];
+ $("#heat").innerHTML="<tr><th>Touchpoint</th>"+q.map(function(x){return "<th>"+x+"</th>"}).join("")+"</tr>"+tps.map(function(t,i){return "<tr><td style='text-align:left;color:inherit'><b>"+t[0]+"</b></td>"+heat[i].map(function(v){var a=Math.min(1,(v-12)/24);return "<td style='background:rgba(198,40,40,"+(0.25+a*0.75).toFixed(2)+")' title='"+t[0]+": "+v+"% negative'>"+v+"%</td>"}).join("")+"</tr>"}).join("")}
+function finance(){var g=$("#grp").value,f=fin[g],both=$("#sbi").checked;
+ $("#fT").textContent=g;$("#fQ").textContent=f.q;
+ var ds=[{label:"Bank of Baroda",data:f.r.map(function(r){return r[1]}),backgroundColor:C.bob}];
+ if(both)ds.push({label:"SBI",data:f.r.map(function(r){return r[2]}),backgroundColor:C.sbi});
+ mk("cFin",{type:"bar",data:{labels:f.r.map(function(r){return r[0]}),datasets:ds},
+  options:{scales:{y:{beginAtZero:true,title:{display:true,text:f.u}}},plugins:{legend:{position:"bottom"},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+(c.raw==null?"Data Not Available":c.raw+" "+f.u)}}}}},
+  plugins:[{id:"na",afterDatasetsDraw:function(c){var x=c.ctx;c.data.datasets.forEach(function(d,di){var m=c.getDatasetMeta(di);d.data.forEach(function(v,i){var b=m.data[i];x.save();x.fillStyle=txt();x.font="11px sans-serif";x.textAlign="center";
+   if(v==null){x.fillText("N/A",b.x,c.scales.y.getPixelForValue(0)-6)}else{x.fillText(v,b.x,b.y-4)}x.restore()})})}}]});
+ var rows=[["Net profit (₹ cr)","19,581","70,901"],["Operating profit (₹ cr)","32,435","1,10,579"],["Global advances (₹ cr)","12,30,461","42,20,703 (gross)"],["Deposits (₹ cr)","14,72,035","53,82,190"],["NIM","3.02% (global)","3.09% (whole bank)"],["ROA / ROE","1.16% / 16.96%","1.10% / 19.87%"],["GNPA / NNPA","2.26% / Data Not Available","1.82% / 0.47%"],["CRAR","17.19%","Data Not Available"],["Net interest income","Data Not Available","Data Not Available"],["Customer base, digital, inclusion, ESG","Data Not Available","Data Not Available"]];
+ $("#ft").innerHTML="<tr><th>Metric</th><th>BoB</th><th>"+(both?"SBI":"")+"</th></tr>"+rows.map(function(r){return "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+(both?r[2]:"")+"</td></tr>"}).join("")}
+function init(){
+ $("#tp").innerHTML='<option value="-1">All touchpoints</option>'+tps.map(function(t,i){return '<option value="'+i+'">'+t[0]+'</option>'}).join("");
+ $("#grp").innerHTML=Object.keys(fin).map(function(k){return "<option>"+k+"</option>"}).join("");
+ ["#period","#tp"].forEach(function(s){$(s).addEventListener("change",function(){kpis();sentiment()})});
+ document.querySelectorAll(".sf").forEach(function(c){c.addEventListener("change",function(){if(!document.querySelectorAll(".sf:checked").length){c.checked=true}kpis();sentiment()})});
+ ["#grp","#sbi"].forEach(function(s){$(s).addEventListener("change",finance)});
+ kpis();sentiment();heatmap();finance()}
+window.toggleTheme=function(){var r=document.documentElement,d=r.dataset.theme==="dark"||(!r.dataset.theme&&matchMedia("(prefers-color-scheme:dark)").matches);r.dataset.theme=d?"light":"dark";sentiment();finance()};
+init();
+})();
+</script></body></html>

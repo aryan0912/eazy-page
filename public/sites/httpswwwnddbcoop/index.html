@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NDDB Annual Report 2024-25: Chairman Briefing</title>
+<style>
+:root{--bg:#F8F3EA;--card:#fff;--line:#E6DCCB;--ink:#2B2B2B;--mute:#7A6A62;--brown:#4A2C2A;--gold:#B8862B;--green:#3E7C59;--red:#A33A2B;--soft:#C9B79A;--hero:#4A2C2A;--herotx:#fff;--herosub:#E9D9B8;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1613;--card:#2a201c;--line:#4a3a33;--ink:#efe7dc;--mute:#b3a396;--brown:#e9d9b8;--gold:#d9a84a;--green:#6fbf90;--red:#e57a69;--soft:#8a7a66;--hero:#2f1d1b;color-scheme:dark}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Calibri,"Segoe UI",system-ui,sans-serif;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3,.big{font-family:Georgia,"Times New Roman",serif}
+.hero{background:var(--hero);color:var(--herotx);padding:56px 24px 48px}
+.wrap{max-width:980px;margin:0 auto}
+.hero small{letter-spacing:.2em;text-transform:uppercase;color:var(--herosub);font-size:13px}
+.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:12px 0 14px}
+.hero p{color:var(--herosub);margin:0}
+.hero hr{width:70px;border:0;height:4px;background:var(--gold);margin:20px 0;border-radius:2px}
+section{padding:40px 24px;border-bottom:1px solid var(--line)}
+h2{color:var(--brown);font-size:clamp(22px,3.5vw,30px);margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 22px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.two{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+.stat{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--gold);border-radius:6px;padding:14px 16px}
+.stat .big{font-size:28px;font-weight:700;color:var(--brown);line-height:1.15}
+.stat.g{border-left-color:var(--green)}.stat.g .big{color:var(--green)}
+.stat.b{border-left-color:var(--brown)}
+.stat.y .big{color:var(--gold)}
+.stat span{font-size:14px}
+.chart{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+.chart h3{margin:0 0 12px;font-size:16px;color:var(--brown)}
+.row{display:grid;grid-template-columns:minmax(90px,38%) 1fr;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.track{background:color-mix(in srgb,var(--line) 60%,transparent);border-radius:4px;height:24px;position:relative}
+.bar{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#fff;font-size:12px;font-weight:700;min-width:max-content;white-space:nowrap}
+.bar.out{color:var(--ink);justify-content:flex-start;padding:0 0 0 6px;background:none!important}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--mute);margin-bottom:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.note{font-size:12.5px;color:var(--mute);margin-top:10px}
+.v2047{display:grid;grid-template-columns:1.4fr 1fr 40px 1fr;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin-bottom:10px}
+.v2047 b{color:var(--brown)}.v2047 .big{font-size:22px;font-weight:700;text-align:center}
+.v2047 .now{color:var(--mute)}.v2047 .tgt{color:var(--green)}.v2047 .ar{color:var(--gold);font-size:24px;text-align:center}
+@media(max-width:560px){.v2047{grid-template-columns:1fr 1fr;}.v2047 .ar{display:none}.v2047 b{grid-column:1/-1}}
+.banner{background:var(--hero);color:var(--herotx);padding:16px 18px;border-radius:6px;margin-top:14px}
+.eval{display:grid;gap:24px;grid-template-columns:220px 1fr 1fr;align-items:start}
+@media(max-width:760px){.eval{grid-template-columns:1fr}}
+.score{width:190px;height:190px;border-radius:50%;background:var(--hero);border:5px solid var(--gold);color:var(--herotx);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto}
+.score .big{font-size:58px;font-weight:700;line-height:1}.score span{color:var(--herosub)}
+.eval h3{margin:0 0 8px;font-size:18px}.eval ul{margin:0;padding-left:20px}.eval li{margin-bottom:8px}
+.cap{text-align:center;font-style:italic;color:var(--mute);font-size:14px;margin-top:12px}
+.recs{counter-reset:r;display:grid;gap:12px}
+.rec{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:start}
+.rec:before{counter-increment:r;content:counter(r);width:44px;height:44px;border-radius:50%;background:var(--gold);color:#fff;font:700 20px Georgia,serif;display:flex;align-items:center;justify-content:center}
+.rec b{color:var(--brown);font-size:17px;display:block}
+footer{padding:24px;color:var(--mute);font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <small>National Dairy Development Board</small>
+  <h1>Annual Report 2024-25: Performance, Evaluation and Way Forward</h1>
+  <hr>
+  <p>Briefing for the Chairman &nbsp;|&nbsp; Diamond Jubilee Year (60 years of NDDB)</p>
+</div></header>
+
+<section><div class="wrap">
+  <h2>Indian dairy: a strong year on a very large base</h2>
+  <p class="sub">Favourable climate, remunerative farm prices and easing feed costs</p>
+  <div class="grid">
+    <div class="stat b"><div class="big">250 MT</div><span>Milk production, 2024-25 (projected); ~25% of world output</span></div>
+    <div class="stat g"><div class="big">490 g/day</div><span>Per capita availability (projected)</span></div>
+    <div class="stat y"><div class="big">~6% p.a.</div><span>Production growth over the past 10 years</span></div>
+    <div class="stat b"><div class="big">982.5 MT</div><span>World milk output 2024, +1.6% on 2023, led by India</span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Cooperatives held steady; commodity prices firmed</h2>
+  <p class="sub">Procurement grew faster than sales, leaving stocks to manage</p>
+  <div class="two">
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="stat b"><div class="big">676 LKgPD</div><span>Cooperative milk procurement (+2%)</span></div>
+      <div class="stat b"><div class="big">444 LLPD</div><span>Average liquid milk sales (+1%)</span></div>
+      <div class="stat y"><div class="big">₹247/kg</div><span>SMP price, March 2025 (+5%)</span></div>
+      <div class="stat y"><div class="big">₹414/kg</div><span>White butter price, March 2025 (+21%)</span></div>
+    </div>
+    <div class="chart"><h3>Global Dairy Trade prices (USD per MT)</h3>
+      <div class="legend"><span><i style="background:var(--soft)"></i>Apr 2024</span><span><i style="background:var(--brown)"></i>Mar 2025</span></div>
+      <div id="c-prices"></div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>The NDDB group is a significant economic engine</h2>
+  <p class="sub">Subsidiary turnover, FY 2024-25 (₹ crore)</p>
+  <div class="two">
+    <div class="chart"><h3>Turnover (₹ crore)</h3><div id="c-turn"></div>
+      <p class="note">*Combined turnover of 23 Milk Producer Organisations supported by NDDB Dairy Services; not directly comparable with single companies.</p></div>
+    <div class="grid" style="grid-template-columns:1fr">
+      <div class="stat g"><div class="big">+16%</div><span>Mother Dairy F&amp;V turnover growth</span></div>
+      <div class="stat y"><div class="big">16 of 23</div><span>MPOs women-led; 74% of members are women</span></div>
+      <div class="stat b"><div class="big">₹18.63 cr</div><span>NDDB CALF turnover; 1 lakh+ samples tested</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Genetics: indigenous tech cuts cost, but uptake lags</h2>
+  <p class="sub">GauSort and the sexed-semen programme under Rashtriya Gokul Mission</p>
+  <div class="two">
+    <div class="chart"><h3>Sex-sorted semen cost (₹ per dose)</h3><div id="c-semen"></div></div>
+    <div class="chart"><h3>Sexed semen programme (lakh)</h3><div id="c-prog"></div></div>
+  </div>
+  <p style="margin-top:16px">GauSort: ~90% accuracy for female calves, 75% lower cost. Only ~18% of doses supplied had been used in recorded inseminations by March 2025.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Sustainability and animal health: measurable gains</h2>
+  <p class="sub">Reported reductions from NDDB demonstration units and milk union programmes</p>
+  <div class="two">
+    <div class="chart"><h3>Reduction achieved (%)</h3><div id="c-sus"></div><p class="note">*2017-18 to 2022-23 period</p></div>
+    <div class="grid" style="grid-template-columns:1fr">
+      <div class="stat y"><div class="big">16-18%</div><span>Methane cut from feed additives (in-vitro)</span></div>
+      <div class="stat b"><div class="big">11 lakh+</div><span>Ethnoveterinary interventions, &gt;80% success</span></div>
+      <div class="stat g"><div class="big">1,000+</div><span>Farmers in carbon-credit biogas programme</span></div>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Vision 2047 and White Revolution 2.0: the ambition</h2>
+  <p class="sub">Where we are today versus the 2047 target</p>
+  <div class="v2047"><b>Productivity per animal</b><div class="big now">2,080 kg</div><div class="ar">➜</div><div class="big tgt">5,200 kg</div></div>
+  <div class="v2047"><b>Villages with organised dairy</b><div class="big now">1.7 lakh</div><div class="ar">➜</div><div class="big tgt">3.5 lakh</div></div>
+  <div class="v2047"><b>Value-added share in co-ops</b><div class="big now">25%</div><div class="ar">➜</div><div class="big tgt">50%</div></div>
+  <div class="banner">White Revolution 2.0: ~75,000 new DCS/MDCS/MPACS and ~46,000 existing societies strengthened with AMCS, testing equipment and bulk coolers.</div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Critical evaluation</h2>
+  <p class="sub">Assessment of 2024-25 performance, based on the annual report</p>
+  <div class="eval">
+    <div><div class="score"><div class="big">7.5</div><span>out of 10</span></div>
+      <p class="cap">Strong on innovation and policy delivery; weaker on measurable outcomes and reach</p></div>
+    <div><h3 style="color:var(--green)">What worked</h3><ul>
+      <li>Indigenous tech (GauSort, GAUCHIP, Shashthi) cuts import dependence</li>
+      <li>Procurement kept growing despite large stocks</li>
+      <li>First carbon-credit payments to dairy farmers</li>
+      <li>Mother Dairy F&amp;V +16% turnover</li></ul></div>
+    <div><h3 style="color:var(--red)">Where it falls short</h3><ul>
+      <li>Co-op procurement +2% vs ~6% sector growth: share is slipping</li>
+      <li>Sexed semen: 3.65 of 20.06 lakh doses used (~18%)</li>
+      <li>White Revolution 2.0 progress against 75,000 target not reported</li>
+      <li>Carbon credits at pilot scale (1,000+ farmers)</li></ul></div>
+  </div>
+  <p class="note">The rating and gap analysis are an analytical judgement, not statements from NDDB.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Priorities for the year ahead</h2>
+  <p class="sub">Recommended actions to close the gaps</p>
+  <div class="recs">
+    <div class="rec"><div><b>Publish a White Revolution 2.0 dashboard</b>Quarterly count of new and upgraded societies against the 75,000 / 46,000 targets.</div></div>
+    <div class="rec"><div><b>Convert sexed-semen supply into inseminations</b>Track doses-to-AI conversion by union; fix field-service bottlenecks.</div></div>
+    <div class="rec"><div><b>Defend cooperative share of procurement</b>Pair price stability with AMCS, bulk coolers and payment transparency.</div></div>
+    <div class="rec"><div><b>Scale carbon and biogas pilots</b>Move from 1,000+ farmers to union-level programmes with NABARD and SPEF finance.</div></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">Source: NDDB Annual Report 2024-25. All figures from the report unless noted.</div></footer>
+
+<script>
+function bars(id, rows, o){
+  o=o||{};var el=document.getElementById(id);
+  var max=o.max||Math.max.apply(null,rows.map(function(r){return Math.max.apply(null,r.v)}));
+  el.innerHTML=rows.map(function(r){
+    var inner=r.v.map(function(v,i){
+      var pct=Math.max(v/max*100,0.5), small=pct<18, c=(o.colors&&o.colors[i])||r.c||'var(--brown)';
+      var txt=(o.fmt?o.fmt(v):v.toLocaleString('en-IN'));
+      return '<div class="track" style="margin:'+(i?'4px 0 0':'0')+'"><div class="bar'+(small?' out':'')+'" style="width:'+pct+'%;background:'+c+'">'+txt+'</div></div>';
+    }).join('');
+    return '<div class="row"><div>'+r.l+'</div><div>'+inner+'</div></div>';
+  }).join('');
+}
+bars('c-prices',[{l:'SMP',v:[2546,2737]},{l:'Butter',v:[6569,7622]}],{colors:['var(--soft)','var(--brown)']});
+bars('c-turn',[{l:'Mother Dairy F&amp;V',v:[17386]},{l:'NDS-promoted MPOs*',v:[9637]},{l:'Indian Immunologicals',v:[1453]},{l:'IDMC (total income)',v:[882]}]);
+bars('c-semen',[{l:'Imported',v:[1000],c:'var(--soft)'},{l:'GauSort',v:[250],c:'var(--green)'}]);
+bars('c-prog',[{l:'5-year target',v:[51.63]},{l:'Doses supplied',v:[20.06]},{l:'Inseminations done',v:[3.65]}],{fmt:function(v){return v.toFixed(2)}});
+bars('c-sus',[{l:'Antibiotic doses, Bengaluru MU*',v:[70]},{l:'Antibiotic use, Kolhapur MU*',v:[68]},{l:'GHG: manure management',v:[41.4]},{l:'GHG: renewable energy',v:[17.5]}],{max:100,colors:['var(--green)'],fmt:function(v){return v+'%'}});
+</script>
+</body>
+</html>

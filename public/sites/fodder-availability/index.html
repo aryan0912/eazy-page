@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NDDB Fodder Availability & Farmer Sentiment Tracker</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --navy: #0b3158;
+      --blue: #1f5f99;
+      --sky: #eaf3fb;
+      --green: #2f7d4a;
+      --amber: #b87416;
+      --red: #b42318;
+      --ink: #152536;
+      --muted: #64748b;
+      --surface: #ffffff;
+      --line: #dce5ee;
+      --bg: #f4f8fb;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background:
+        radial-gradient(circle at 8% 0%, rgba(31,95,153,.08), transparent 28%),
+        linear-gradient(180deg, #f8fbfd 0%, #f2f7fa 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .card {
+      background: rgba(255,255,255,.96);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(24, 58, 91, .06);
+    }
+    .kpi-card { min-height: 150px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 999px; display:inline-block; }
+    .pulse { animation: pulse 1.9s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.45; transform:scale(.9);} }
+    #map { height: 460px; border-radius: 16px; z-index: 1; }
+    .leaflet-popup-content-wrapper { border-radius: 14px; }
+    .leaflet-control-attribution { font-size: 9px; }
+    .phase-pill.active { background: var(--navy); color: white; border-color: var(--navy); }
+    .phase-section { scroll-margin-top: 95px; }
+    .alert-item { border-left: 4px solid transparent; }
+    .alert-critical { border-left-color: #b42318; }
+    .alert-warning { border-left-color: #d28b21; }
+    .alert-info { border-left-color: #2563eb; }
+    .scrollbar-thin::-webkit-scrollbar { width: 8px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #c8d4df; border-radius: 999px; }
+    .stress-severe { color: #9d1c14; background:#fff0ee; }
+    .stress-high { color: #a14f06; background:#fff5e8; }
+    .stress-moderate { color: #725800; background:#fff9d9; }
+    .stress-good { color: #216c40; background:#ecf9f0; }
+    .metric-label { letter-spacing:.02em; text-transform:uppercase; font-weight:700; font-size:.72rem; color:#627286; }
+    .section-title { font-size:1.1rem; font-weight:800; color:#15375a; }
+    .focus-ring:focus { outline: 3px solid rgba(31,95,153,.22); outline-offset: 2px; }
+    .canvas-wrap { position:relative; height:320px; }
+    .compact-canvas { position:relative; height:250px; }
+    .sentiment-bar { height: 12px; border-radius:999px; background:#e7edf3; overflow:hidden; }
+    .sentiment-fill { height:100%; border-radius:inherit; transition: width .35s ease; }
+    .no-print { }
+    @media print {
+      body { background:#fff; }
+      .no-print { display:none !important; }
+      .card { box-shadow:none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div class="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3 lg:px-6">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0b3158] text-sm font-black tracking-wide text-white shadow-sm">NDDB</div>
+          <div class="min-w-0">
+            <h1 class="truncate text-base font-extrabold text-slate-900 sm:text-lg" data-i18n="appTitle">Fodder Availability & Farmer Sentiment Tracker</h1>
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+              <span class="status-dot pulse bg-emerald-500"></span>
+              <span data-i18n="prototypeLabel">Interactive frontend prototype · simulated data</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 no-print">
+          <button id="langToggle" class="focus-ring rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">हिंदी</button>
+          <button id="exportBtn" class="focus-ring rounded-xl bg-[#0b3158] px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#174b7c]" data-i18n="exportBrief">Generate PDF Brief</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="reportArea" class="mx-auto max-w-[1600px] px-4 py-5 lg:px-6">
+      <section class="mb-5 card p-4 sm:p-5">
+        <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+          <div>
+            <p class="metric-label" data-i18n="commandCentre">NDDB Command Centre</p>
+            <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900" data-i18n="oneGlance">One-glance fodder intelligence for faster field action</h2>
+            <p class="mt-2 max-w-4xl text-sm leading-6 text-slate-600" data-i18n="heroSub">Combines farmer voice, cooperative pulse, seasonal stress, milk procurement signals and intervention tracking into a single actionable view.</p>
+          </div>
+          <div class="grid min-w-full grid-cols-2 gap-2 sm:min-w-[440px] sm:grid-cols-4 lg:min-w-[520px]">
+            <button class="phase-pill active focus-ring rounded-xl border border-slate-300 px-3 py-2 text-xs font-extrabold" data-target="overview" data-i18n="overview">Overview</button>
+            <button class="phase-pill focus-ring rounded-xl border border-slate-300 px-3 py-2 text-xs font-extrabold" data-target="empathize" data-i18n="empathize">Empathize</button>
+            <button class="phase-pill focus-ring rounded-xl border border-slate-300 px-3 py-2 text-xs font-extrabold" data-target="define" data-i18n="define">Define</button>
+            <button class="phase-pill focus-ring rounded-xl border border-slate-300 px-3 py-2 text-xs font-extrabold" data-target="ideate" data-i18n="ideate">Ideate</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="overview" class="phase-section grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article class="card kpi-card p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="farmersSurveyed">Farmers Surveyed</p>
+              <p id="kpiFarmers" class="mt-3 text-3xl font-black text-slate-900">24,860</p>
+            </div>
+            <div class="rounded-2xl bg-blue-50 p-3 text-xl">👥</div>
+          </div>
+          <p class="mt-4 text-xs text-slate-500" data-i18n="farmersSub">Across IVR, SMS, field tablets & VDCS reports</p>
+        </article>
+
+        <article class="card kpi-card p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="overallSentiment">Overall Sentiment</p>
+              <p id="kpiSentiment" class="mt-3 text-3xl font-black text-amber-700">62%</p>
+            </div>
+            <div class="rounded-2xl bg-amber-50 p-3 text-xl">◔</div>
+          </div>
+          <div class="mt-4 sentiment-bar"><div id="kpiSentimentBar" class="sentiment-fill bg-amber-500" style="width:62%"></div></div>
+          <p id="kpiSentimentNote" class="mt-2 text-xs text-slate-500">Moderate stress · -4 pts vs last month</p>
+        </article>
+
+        <article class="card kpi-card p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="criticalDistricts">Critical Districts</p>
+              <p id="kpiCritical" class="mt-3 text-3xl font-black text-red-700">5</p>
+            </div>
+            <div class="rounded-2xl bg-red-50 p-3 text-xl">⚠</div>
+          </div>
+          <p class="mt-4 text-xs font-semibold text-red-700" data-i18n="criticalSub">Immediate fodder-bank / procurement review recommended</p>
+        </article>
+
+        <article class="card kpi-card p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="deficitEstimate">Fodder Deficit Estimate</p>
+              <p id="kpiDeficit" class="mt-3 text-3xl font-black text-slate-900">18.6%</p>
+            </div>
+            <div class="rounded-2xl bg-emerald-50 p-3 text-xl">🌱</div>
+          </div>
+          <p class="mt-4 text-xs text-slate-500" data-i18n="deficitSub">Mock blended estimate from availability, price & farmer voice</p>
+        </article>
+      </section>
+
+      <section class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <article class="card p-4 sm:p-5">
+          <div class="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <p class="metric-label" data-i18n="geoSpatial">Geo-Spatial Fodder Stress</p>
+              <h3 class="section-title" data-i18n="mapTitle">State & district stress signals</h3>
+            </div>
+            <div class="flex flex-wrap gap-2 no-print">
+              <select id="stateFilter" class="focus-ring rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+                <option value="ALL">All States</option>
+              </select>
+              <select id="districtFilter" class="focus-ring rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+                <option value="ALL">All Districts</option>
+              </select>
+            </div>
+          </div>
+          <div id="map"></div>
+          <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-600">
+            <span><i class="mr-1 inline-block h-3 w-3 rounded-full bg-[#9d1c14]"></i> Severe</span>
+            <span><i class="mr-1 inline-block h-3 w-3 rounded-full bg-[#db6c1e]"></i> High</span>
+            <span><i class="mr-1 inline-block h-3 w-3 rounded-full bg-[#d9b123]"></i> Moderate</span>
+            <span><i class="mr-1 inline-block h-3 w-3 rounded-full bg-[#2f7d4a]"></i> Adequate</span>
+          </div>
+        </article>
+
+        <aside class="card flex max-h-[570px] flex-col p-4 sm:p-5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="liveAlertFeed">Live Alert Feed</p>
+              <h3 class="section-title" data-i18n="actionAlerts">Actionable alerts</h3>
+            </div>
+            <span class="rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-extrabold text-red-700">LIVE · MOCK</span>
+          </div>
+          <div id="alertFeed" class="scrollbar-thin mt-4 space-y-3 overflow-y-auto pr-1"></div>
+        </aside>
+      </section>
+
+      <section id="define" class="phase-section mt-4 grid gap-4 xl:grid-cols-2">
+        <article class="card p-4 sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <p class="metric-label" data-i18n="seasonalTrend">Seasonal & Temporal Trend</p>
+              <h3 class="section-title" data-i18n="trendTitle">Farmer sentiment vs milk procurement</h3>
+            </div>
+            <span class="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">Kharif · Rabi · Zaid</span>
+          </div>
+          <div class="canvas-wrap"><canvas id="trendChart"></canvas></div>
+        </article>
+
+        <article class="card p-4 sm:p-5">
+          <div class="mb-4">
+            <p class="metric-label" data-i18n="cooperativePulse">Cooperative Society Pulse</p>
+            <h3 class="section-title" data-i18n="stressIndex">VDCS Cooperative Stress Index</h3>
+          </div>
+          <div id="stressTable" class="space-y-3"></div>
+        </article>
+      </section>
+
+      <section id="empathize" class="phase-section mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <article class="card p-4 sm:p-5">
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="voiceLog">Voice-to-Text Sentiment Log</p>
+              <h3 class="section-title" data-i18n="farmerVoices">Recent farmer voices</h3>
+            </div>
+            <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-extrabold text-blue-700">IVR + SMS + FIELD</span>
+          </div>
+          <div id="voiceLogs" class="space-y-3"></div>
+        </article>
+
+        <article class="card p-4 sm:p-5">
+          <p class="metric-label" data-i18n="inputMix">Data Ingestion Mix</p>
+          <h3 class="section-title" data-i18n="sourceCoverage">Source coverage</h3>
+          <div class="compact-canvas mt-3"><canvas id="sourceChart"></canvas></div>
+          <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-600">
+            <strong class="text-slate-800" data-i18n="prototypeNote">Prototype note:</strong>
+            <span data-i18n="sourceNote"> In production, IVR audio, SMS, field-worker forms and cooperative records should be timestamped, consent-aware and traceable back to their source system.</span>
+          </div>
+        </article>
+      </section>
+
+      <section id="ideate" class="phase-section mt-4 grid gap-4 xl:grid-cols-2">
+        <article class="card p-4 sm:p-5">
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p class="metric-label" data-i18n="interventionTracker">Intervention Impact Tracker</p>
+              <h3 class="section-title" data-i18n="beforeAfter">Before vs after sentiment shift</h3>
+            </div>
+            <select id="interventionSelect" class="focus-ring rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold no-print"></select>
+          </div>
+          <div class="compact-canvas"><canvas id="interventionChart"></canvas></div>
+          <div id="interventionSummary" class="mt-4 grid grid-cols-3 gap-3"></div>
+        </article>
+
+        <article class="card p-4 sm:p-5">
+          <p class="metric-label" data-i18n="scenarioPlanner">AI-Driven What-If Scenario Planner</p>
+          <h3 class="section-title" data-i18n="scenarioTitle">Subsidized fodder block deployment</h3>
+          <p class="mt-2 text-sm text-slate-600" data-i18n="scenarioSub">Adjust a mock increase in subsidized fodder block availability and view projected sentiment and milk procurement recovery.</p>
+
+          <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-center justify-between gap-4">
+              <label for="scenarioSlider" class="text-sm font-bold text-slate-800" data-i18n="increaseSupply">Increase fodder block supply</label>
+              <span id="scenarioPercent" class="rounded-lg bg-white px-3 py-1.5 text-sm font-black text-[#0b3158] shadow-sm">20%</span>
+            </div>
+            <input id="scenarioSlider" type="range" min="0" max="50" value="20" step="5" class="mt-4 w-full accent-[#0b3158] no-print" />
+            <div class="mt-2 flex justify-between text-[11px] font-semibold text-slate-500"><span>0%</span><span>25%</span><span>50%</span></div>
+          </div>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl bg-blue-50 p-4">
+              <p class="metric-label" data-i18n="projectedSentiment">Projected Sentiment</p>
+              <p id="projSentiment" class="mt-2 text-2xl font-black text-blue-800">68%</p>
+            </div>
+            <div class="rounded-2xl bg-emerald-50 p-4">
+              <p class="metric-label" data-i18n="procurementRecovery">Procurement Recovery</p>
+              <p id="projProcurement" class="mt-2 text-2xl font-black text-emerald-800">+4.8%</p>
+            </div>
+            <div class="rounded-2xl bg-amber-50 p-4">
+              <p class="metric-label" data-i18n="stressReduction">Stress Reduction</p>
+              <p id="projStress" class="mt-2 text-2xl font-black text-amber-800">-9 pts</p>
+            </div>
+          </div>
+          <p id="scenarioRecommendation" class="mt-4 rounded-2xl border border-[#bcd2e6] bg-[#eef6fc] p-4 text-sm font-semibold leading-6 text-[#174b7c]"></p>
+        </article>
+      </section>
+
+      <section class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <article class="card p-4 sm:p-5">
+          <div class="mb-4">
+            <p class="metric-label" data-i18n="milkCorrelation">Sentiment vs Milk Procurement Correlation</p>
+            <h3 class="section-title" data-i18n="impactTitle">District impact matrix</h3>
+          </div>
+          <div class="compact-canvas"><canvas id="correlationChart"></canvas></div>
+        </article>
+
+        <article class="card p-4 sm:p-5">
+          <p class="metric-label" data-i18n="recommendedActions">Recommended NDDB Actions</p>
+          <h3 class="section-title" data-i18n="nextBestAction">Next-best actions from current signals</h3>
+          <div id="recommendedActionsList" class="mt-4 space-y-3"></div>
+        </article>
+      </section>
+
+      <footer class="mt-5 flex flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center">
+        <span data-i18n="footerMock">Prototype only. All farmer counts, prices, procurement values and sentiment scores are illustrative mock data.</span>
+        <span>NDDB Fodder Availability & Farmer Sentiment Tracker · v0.1</span>
+      </footer>
+    </main>
+  </div>
+
+<script>
+// ---------------------------------------------------------------------------
+// MOCK DATA — illustrative only, not official NDDB figures.
+// ---------------------------------------------------------------------------
+const mockData = {
+  meta: {
+    farmersSurveyed: 24860,
+    overallSentiment: 62,
+    fodderDeficitPct: 18.6
+  },
+  locations: [
+    { state:'Gujarat', district:'Mehsana', lat:23.5880, lng:72.3693, sentiment:44, stress:86, milk:6.9, fodderPrice:12.8, issue:'Wheat straw prices rising; dry fodder availability constrained', vdcs:'Mehsana Milk Union cluster', farmers:3120 },
+    { state:'Gujarat', district:'Anand', lat:22.5645, lng:72.9289, sentiment:58, stress:67, milk:7.4, fodderPrice:10.9, issue:'Green fodder supply tight ahead of summer', vdcs:'Anand cooperative cluster', farmers:2840 },
+    { state:'Rajasthan', district:'Bhilwara', lat:25.3463, lng:74.6364, sentiment:41, stress:88, milk:5.7, fodderPrice:13.5, issue:'Low crop residue availability and transport cost pressure', vdcs:'Bhilwara VDCS network', farmers:2380 },
+    { state:'Rajasthan', district:'Udaipur', lat:24.5854, lng:73.7125, sentiment:52, stress:74, milk:5.9, fodderPrice:12.1, issue:'Seasonal dry matter shortage in tribal dairy pockets', vdcs:'Udaipur dairy cluster', farmers:1820 },
+    { state:'Maharashtra', district:'Ahmednagar', lat:19.0948, lng:74.7480, sentiment:47, stress:82, milk:6.1, fodderPrice:12.9, issue:'Water stress affecting green fodder cultivation', vdcs:'Ahmednagar cooperative cluster', farmers:2510 },
+    { state:'Maharashtra', district:'Pune', lat:18.5204, lng:73.8567, sentiment:69, stress:48, milk:7.1, fodderPrice:10.6, issue:'Moderate price pressure; supply largely stable', vdcs:'Pune district cluster', farmers:1920 },
+    { state:'Uttar Pradesh', district:'Meerut', lat:28.9845, lng:77.7064, sentiment:66, stress:51, milk:7.0, fodderPrice:9.8, issue:'Straw availability adequate; green fodder demand rising', vdcs:'Meerut milk shed', farmers:2010 },
+    { state:'Uttar Pradesh', district:'Varanasi', lat:25.3176, lng:82.9739, sentiment:61, stress:58, milk:6.4, fodderPrice:10.4, issue:'Localized feed cost increase reported', vdcs:'Varanasi milk shed', farmers:1460 },
+    { state:'Punjab', district:'Ludhiana', lat:30.9010, lng:75.8573, sentiment:78, stress:34, milk:8.2, fodderPrice:8.9, issue:'Fodder availability adequate after harvest', vdcs:'Ludhiana cooperative cluster', farmers:1980 },
+    { state:'Haryana', district:'Karnal', lat:29.6857, lng:76.9905, sentiment:74, stress:39, milk:7.9, fodderPrice:9.2, issue:'Stable dry fodder supply; green fodder improving', vdcs:'Karnal dairy cluster', farmers:1610 },
+    { state:'Karnataka', district:'Kolar', lat:13.1362, lng:78.1291, sentiment:49, stress:81, milk:5.8, fodderPrice:13.2, issue:'High green fodder prices and rainfall variability', vdcs:'Kolar milk union cluster', farmers:1860 },
+    { state:'Tamil Nadu', district:'Erode', lat:11.3410, lng:77.7172, sentiment:64, stress:56, milk:6.5, fodderPrice:10.7, issue:'Transport cost affecting roughage affordability', vdcs:'Erode dairy cluster', farmers:1350 }
+  ],
+  monthly: {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    sentiment: [71,69,66,61,55,52,58,64,68,72,70,67],
+    procurement: [119,117,113,108,102,99,104,110,115,121,120,116]
+  },
+  voiceLogs: [
+    { channel:'IVR', place:'Mehsana, Gujarat', text:'Dry fodder is available, but prices have increased sharply this week. Small farmers are cutting concentrate use.', sentiment:'Severe', score:37, time:'11:24' },
+    { channel:'Field Tablet', place:'Anand, Gujarat', text:'Green fodder is getting tight in two villages. Farmers are asking for early fodder seed support before summer.', sentiment:'High', score:52, time:'10:55' },
+    { channel:'SMS', place:'Karnal, Haryana', text:'Availability is stable after harvest and farmers are comfortable for the next few weeks.', sentiment:'Adequate', score:78, time:'10:41' },
+    { channel:'IVR', place:'Kolar, Karnataka', text:'Water shortage is reducing our ability to grow green fodder. Purchased fodder is costly.', sentiment:'Severe', score:42, time:'10:18' },
+    { channel:'VDCS Secretary', place:'Meerut, Uttar Pradesh', text:'Straw stocks are adequate, but prices may rise if transport costs increase.', sentiment:'Moderate', score:65, time:'09:52' }
+  ],
+  alerts: [
+    { level:'critical', place:'Mehsana, Gujarat', text:'Negative sentiment spike linked to wheat straw price increase.', action:'Recommend fodder-bank activation & supplier verification.', time:'11:31' },
+    { level:'critical', place:'Bhilwara, Rajasthan', text:'Dry matter stress crossed critical threshold in 3 VDCS clusters.', action:'Prioritize baled residue / silage movement.', time:'11:08' },
+    { level:'warning', place:'Kolar, Karnataka', text:'Green fodder affordability declined for second consecutive week.', action:'Review seed/minikit support and irrigation advisories.', time:'10:46' },
+    { level:'warning', place:'Ahmednagar, Maharashtra', text:'Milk procurement down 5.1% in water-stressed pockets.', action:'Cross-check fodder and water support requirements.', time:'10:22' },
+    { level:'info', place:'Ludhiana, Punjab', text:'Fodder stress eased after harvest; sentiment improved 7 points.', action:'Monitor; no immediate intervention required.', time:'09:44' }
+  ],
+  interventions: [
+    { name:'Fodder Seed Distribution', district:'Anand', before:54, after:68, farmers:3200, cost:28, duration:'6 weeks' },
+    { name:'Silage Training Camps', district:'Ahmednagar', before:46, after:63, farmers:1850, cost:19, duration:'8 weeks' },
+    { name:'Mineral + Ration Advisory', district:'Meerut', before:61, after:70, farmers:2700, cost:14, duration:'5 weeks' },
+    { name:'Mobile Fodder Bank Support', district:'Bhilwara', before:39, after:57, farmers:2100, cost:36, duration:'4 weeks' }
+  ]
+};
+
+const translations = {
+  en: {
+    appTitle:'Fodder Availability & Farmer Sentiment Tracker', prototypeLabel:'Interactive frontend prototype · simulated data', exportBrief:'Generate PDF Brief', commandCentre:'NDDB Command Centre', oneGlance:'One-glance fodder intelligence for faster field action', heroSub:'Combines farmer voice, cooperative pulse, seasonal stress, milk procurement signals and intervention tracking into a single actionable view.', overview:'Overview', empathize:'Empathize', define:'Define', ideate:'Ideate', farmersSurveyed:'Farmers Surveyed', farmersSub:'Across IVR, SMS, field tablets & VDCS reports', overallSentiment:'Overall Sentiment', criticalDistricts:'Critical Districts', criticalSub:'Immediate fodder-bank / procurement review recommended', deficitEstimate:'Fodder Deficit Estimate', deficitSub:'Mock blended estimate from availability, price & farmer voice', geoSpatial:'Geo-Spatial Fodder Stress', mapTitle:'State & district stress signals', liveAlertFeed:'Live Alert Feed', actionAlerts:'Actionable alerts', seasonalTrend:'Seasonal & Temporal Trend', trendTitle:'Farmer sentiment vs milk procurement', cooperativePulse:'Cooperative Society Pulse', stressIndex:'VDCS Cooperative Stress Index', voiceLog:'Voice-to-Text Sentiment Log', farmerVoices:'Recent farmer voices', inputMix:'Data Ingestion Mix', sourceCoverage:'Source coverage', prototypeNote:'Prototype note:', sourceNote:' In production, IVR audio, SMS, field-worker forms and cooperative records should be timestamped, consent-aware and traceable back to their source system.', interventionTracker:'Intervention Impact Tracker', beforeAfter:'Before vs after sentiment shift', scenarioPlanner:'AI-Driven What-If Scenario Planner', scenarioTitle:'Subsidized fodder block deployment', scenarioSub:'Adjust a mock increase in subsidized fodder block availability and view projected sentiment and milk procurement recovery.', increaseSupply:'Increase fodder block supply', projectedSentiment:'Projected Sentiment', procurementRecovery:'Procurement Recovery', stressReduction:'Stress Reduction', milkCorrelation:'Sentiment vs Milk Procurement Correlation', impactTitle:'District impact matrix', recommendedActions:'Recommended NDDB Actions', nextBestAction:'Next-best actions from current signals', footerMock:'Prototype only. All farmer counts, prices, procurement values and sentiment scores are illustrative mock data.'
+  },
+  hi: {
+    appTitle:'चारा उपलब्धता एवं किसान भावना ट्रैकर', prototypeLabel:'इंटरैक्टिव फ्रंटएंड प्रोटोटाइप · सिम्युलेटेड डेटा', exportBrief:'PDF संक्षिप्त रिपोर्ट', commandCentre:'NDDB कमांड सेंटर', oneGlance:'तेज़ फील्ड कार्रवाई के लिए एक नज़र में चारा इंटेलिजेंस', heroSub:'किसानों की आवाज़, सहकारी संकेत, मौसमी दबाव, दुग्ध संकलन और हस्तक्षेप प्रभाव को एक ही कार्रवाई योग्य दृश्य में जोड़ता है।', overview:'अवलोकन', empathize:'किसान आवाज़', define:'समस्या विश्लेषण', ideate:'हस्तक्षेप', farmersSurveyed:'सर्वेक्षित किसान', farmersSub:'IVR, SMS, फील्ड टैबलेट और VDCS रिपोर्ट से', overallSentiment:'समग्र भावना', criticalDistricts:'गंभीर जिले', criticalSub:'तत्काल चारा बैंक / संकलन समीक्षा की अनुशंसा', deficitEstimate:'चारा कमी अनुमान', deficitSub:'उपलब्धता, कीमत और किसान आवाज़ पर आधारित मॉक अनुमान', geoSpatial:'भौगोलिक चारा तनाव', mapTitle:'राज्य एवं जिला तनाव संकेत', liveAlertFeed:'लाइव अलर्ट फ़ीड', actionAlerts:'कार्रवाई योग्य अलर्ट', seasonalTrend:'मौसमी एवं समय प्रवृत्ति', trendTitle:'किसान भावना बनाम दुग्ध संकलन', cooperativePulse:'सहकारी सोसायटी पल्स', stressIndex:'VDCS सहकारी तनाव सूचकांक', voiceLog:'वॉइस-टू-टेक्स्ट भावना लॉग', farmerVoices:'हाल की किसान आवाज़ें', inputMix:'डेटा स्रोत मिश्रण', sourceCoverage:'स्रोत कवरेज', prototypeNote:'प्रोटोटाइप नोट:', sourceNote:' प्रोडक्शन में IVR ऑडियो, SMS, फील्ड-वर्कर फॉर्म और सहकारी रिकॉर्ड समय-मुद्रित, सहमति-सचेत और स्रोत प्रणाली तक ट्रेस करने योग्य होने चाहिए।', interventionTracker:'हस्तक्षेप प्रभाव ट्रैकर', beforeAfter:'हस्तक्षेप से पहले और बाद की भावना', scenarioPlanner:'AI आधारित क्या-हो-अगर योजना', scenarioTitle:'सब्सिडी वाले चारा ब्लॉक की तैनाती', scenarioSub:'चारा ब्लॉक उपलब्धता में मॉक वृद्धि समायोजित करें और अनुमानित भावना व दुग्ध संकलन सुधार देखें।', increaseSupply:'चारा ब्लॉक आपूर्ति बढ़ाएँ', projectedSentiment:'अनुमानित भावना', procurementRecovery:'संकलन सुधार', stressReduction:'तनाव में कमी', milkCorrelation:'भावना बनाम दुग्ध संकलन संबंध', impactTitle:'जिला प्रभाव मैट्रिक्स', recommendedActions:'अनुशंसित NDDB कार्रवाई', nextBestAction:'वर्तमान संकेतों से अगली सर्वोत्तम कार्रवाई', footerMock:'यह केवल प्रोटोटाइप है। किसान संख्या, कीमतें, संकलन मान और भावना स्कोर सभी उदाहरणात्मक मॉक डेटा हैं।'
+  }
+};
+
+let currentLang = 'en';
+let map;
+let districtLayer;
+let trendChart;
+let sourceChart;
+let interventionChart;
+let correlationChart;
+
+function stressColor(stress) {
+  if (stress >= 82) return '#9d1c14';
+  if (stress >= 70) return '#db6c1e';
+  if (stress >= 55) return '#d9b123';
+  return '#2f7d4a';
+}
+
+function stressClass(stress) {
+  if (stress >= 82) return 'stress-severe';
+  if (stress >= 70) return 'stress-high';
+  if (stress >= 55) return 'stress-moderate';
+  return 'stress-good';
+}
+
+function sentimentLabel(score) {
+  if (score < 50) return 'Severe stress';
+  if (score < 60) return 'High stress';
+  if (score < 70) return 'Moderate stress';
+  return 'Adequate';
+}
+
+function initFilters() {
+  const states = [...new Set(mockData.locations.map(x => x.state))].sort();
+  const stateFilter = document.getElementById('stateFilter');
+  states.forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s; stateFilter.appendChild(o);
+  });
+  refreshDistrictFilter();
+  stateFilter.addEventListener('change', () => { refreshDistrictFilter(); renderMapLayer(); renderStressTable(); updateKPIs(); });
+  document.getElementById('districtFilter').addEventListener('change', () => { renderMapLayer(); renderStressTable(); updateKPIs(); });
+}
+
+function refreshDistrictFilter() {
+  const state = document.getElementById('stateFilter').value;
+  const districtFilter = document.getElementById('districtFilter');
+  districtFilter.innerHTML = '<option value="ALL">All Districts</option>';
+  mockData.locations.filter(x => state === 'ALL' || x.state === state).forEach(x => {
+    const o = document.createElement('option'); o.value = x.district; o.textContent = x.district; districtFilter.appendChild(o);
+  });
+}
+
+function getFilteredLocations() {
+  const state = document.getElementById('stateFilter')?.value || 'ALL';
+  const district = document.getElementById('districtFilter')?.value || 'ALL';
+  return mockData.locations.filter(x => (state === 'ALL' || x.state === state) && (district === 'ALL' || x.district === district));
+}
+
+function updateKPIs() {
+  const locs = getFilteredLocations();
+  if (!locs.length) return;
+  const farmers = locs.reduce((a,b)=>a+b.farmers,0);
+  const avgSentiment = Math.round(locs.reduce((a,b)=>a+b.sentiment,0)/locs.length);
+  const critical = locs.filter(x=>x.stress>=82).length;
+  const deficit = Math.max(4, (100-avgSentiment)*0.49).toFixed(1);
+  document.getElementById('kpiFarmers').textContent = farmers.toLocaleString('en-IN');
+  document.getElementById('kpiSentiment').textContent = avgSentiment+'%';
+  document.getElementById('kpiSentimentBar').style.width = avgSentiment+'%';
+  document.getElementById('kpiSentimentNote').textContent = sentimentLabel(avgSentiment)+' · mock filtered view';
+  document.getElementById('kpiCritical').textContent = critical;
+  document.getElementById('kpiDeficit').textContent = deficit+'%';
+}
+
+function initMap() {
+  map = L.map('map', { zoomControl:true, scrollWheelZoom:false }).setView([22.9, 79.1], 4.55);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  districtLayer = L.layerGroup().addTo(map);
+  renderMapLayer();
+}
+
+function renderMapLayer() {
+  if (!districtLayer) return;
+  districtLayer.clearLayers();
+  const locs = getFilteredLocations();
+  locs.forEach(x => {
+    const radius = 10 + Math.max(0, x.stress - 35) * 0.28;
+    const marker = L.circleMarker([x.lat, x.lng], {
+      radius, color:'#ffffff', weight:2, fillColor:stressColor(x.stress), fillOpacity:.86
+    }).bindPopup(`
+      <div style="min-width:220px;font-family:system-ui">
+        <strong style="font-size:14px;color:#15375a">${x.district}, ${x.state}</strong>
+        <div style="margin-top:8px;font-size:12px;line-height:1.65">
+          <b>Sentiment:</b> ${x.sentiment}/100<br/>
+          <b>Stress Index:</b> ${x.stress}/100<br/>
+          <b>Fodder price:</b> ₹${x.fodderPrice}/kg (mock)<br/>
+          <b>Milk procurement index:</b> ${x.milk}<br/>
+          <b>Key pain point:</b> ${x.issue}
+        </div>
+      </div>`);
+    marker.addTo(districtLayer);
+  });
+  if (locs.length === 1) map.setView([locs[0].lat, locs[0].lng], 8);
+  else if (locs.length > 1 && locs.length < mockData.locations.length) {
+    const group = L.featureGroup(districtLayer.getLayers());
+    map.fitBounds(group.getBounds().pad(.4));
+  } else map.setView([22.9,79.1],4.55);
+}
+
+function renderAlerts() {
+  const feed = document.getElementById('alertFeed');
+  feed.innerHTML = mockData.alerts.map(a => `
+    <div class="alert-item alert-${a.level} rounded-xl bg-slate-50 p-3">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs font-extrabold text-slate-800">${a.place}</p>
+          <p class="mt-1 text-sm leading-5 text-slate-700">${a.text}</p>
+        </div>
+        <span class="text-[10px] font-bold text-slate-400">${a.time}</span>
+      </div>
+      <p class="mt-2 text-xs font-semibold text-[#174b7c]">→ ${a.action}</p>
+    </div>`).join('');
+}
+
+function renderStressTable() {
+  const target = document.getElementById('stressTable');
+  const locs = getFilteredLocations().sort((a,b)=>b.stress-a.stress).slice(0,7);
+  target.innerHTML = locs.map(x => `
+    <div class="rounded-2xl border border-slate-200 p-3.5">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm font-extrabold text-slate-900">${x.district}, ${x.state}</p>
+          <p class="mt-1 text-xs text-slate-500">${x.vdcs}</p>
+        </div>
+        <span class="rounded-full px-2.5 py-1 text-xs font-extrabold ${stressClass(x.stress)}">${x.stress}/100</span>
+      </div>
+      <div class="mt-3 sentiment-bar"><div class="sentiment-fill" style="width:${x.stress}%;background:${stressColor(x.stress)}"></div></div>
+      <div class="mt-2 flex justify-between gap-3 text-[11px] font-semibold text-slate-500"><span>Sentiment ${x.sentiment}</span><span>₹${x.fodderPrice}/kg mock fodder price</span></div>
+    </div>`).join('');
+}
+
+function renderVoiceLogs() {
+  const root = document.getElementById('voiceLogs');
+  root.innerHTML = mockData.voiceLogs.map((v,idx)=>`
+    <div class="rounded-2xl border border-slate-200 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-extrabold text-blue-700">${v.channel}</span>
+          <span class="text-xs font-bold text-slate-700">${v.place}</span>
+        </div>
+        <span class="text-[10px] font-bold text-slate-400">${v.time}</span>
+      </div>
+      <p class="mt-3 text-sm leading-6 text-slate-700">“${v.text}”</p>
+      <div class="mt-3 flex items-center justify-between gap-3">
+        <span class="rounded-full px-2.5 py-1 text-xs font-extrabold ${v.score<50?'stress-severe':v.score<60?'stress-high':v.score<70?'stress-moderate':'stress-good'}">${v.sentiment} · ${v.score}/100</span>
+        <div class="flex items-center gap-1 no-print" aria-label="Field worker feedback">
+          <span class="mr-1 text-[10px] font-semibold text-slate-400">Accurate?</span>
+          <button class="feedbackBtn focus-ring rounded-lg border border-slate-200 px-2 py-1 text-sm hover:bg-emerald-50" data-id="${idx}" data-val="up">👍</button>
+          <button class="feedbackBtn focus-ring rounded-lg border border-slate-200 px-2 py-1 text-sm hover:bg-red-50" data-id="${idx}" data-val="down">👎</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.querySelectorAll('.feedbackBtn').forEach(btn=>btn.addEventListener('click', e=>{
+    const group = e.currentTarget.parentElement;
+    group.querySelectorAll('button').forEach(b=>b.classList.remove('bg-emerald-100','bg-red-100'));
+    e.currentTarget.classList.add(e.currentTarget.dataset.val==='up'?'bg-emerald-100':'bg-red-100');
+    const label = group.querySelector('span');
+    label.textContent = e.currentTarget.dataset.val==='up' ? 'Marked accurate' : 'Flagged for review';
+  }));
+}
+
+function initCharts() {
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  Chart.defaults.color = '#5b6b7c';
+
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type:'line',
+    data:{ labels:mockData.monthly.labels, datasets:[
+      { label:'Farmer Sentiment Score', data:mockData.monthly.sentiment, borderColor:'#b87416', backgroundColor:'rgba(184,116,22,.12)', yAxisID:'y', tension:.35, pointRadius:3, fill:true },
+      { label:'Milk Procurement Index', data:mockData.monthly.procurement, borderColor:'#1f5f99', backgroundColor:'rgba(31,95,153,.10)', yAxisID:'y1', tension:.35, pointRadius:3 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, plugins:{legend:{position:'bottom'}}, scales:{
+      y:{ min:40,max:90,title:{display:true,text:'Sentiment / 100'}, grid:{color:'#edf1f5'} },
+      y1:{ min:90,max:130,position:'right',title:{display:true,text:'Milk Procurement Index'}, grid:{drawOnChartArea:false} },
+      x:{grid:{display:false}}
+    }}
+  });
+
+  sourceChart = new Chart(document.getElementById('sourceChart'), {
+    type:'doughnut',
+    data:{ labels:['IVR','SMS','Field Tablets','VDCS Reports'], datasets:[{ data:[38,21,26,15], backgroundColor:['#0b3158','#1f5f99','#3d8a5a','#d18b22'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{position:'bottom',labels:{boxWidth:12,usePointStyle:true}}} }
+  });
+
+  correlationChart = new Chart(document.getElementById('correlationChart'), {
+    type:'scatter',
+    data:{ datasets:[{ label:'Districts', data:mockData.locations.map(x=>({x:x.sentiment,y:x.milk,label:x.district})), backgroundColor:mockData.locations.map(x=>stressColor(x.stress)), pointRadius:7, pointHoverRadius:9 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>`${ctx.raw.label}: Sentiment ${ctx.raw.x}, Milk index ${ctx.raw.y}`}}}, scales:{x:{min:35,max:85,title:{display:true,text:'Farmer Sentiment Score'}},y:{min:5,max:9,title:{display:true,text:'Milk Procurement / Yield Index'}}} }
+  });
+}
+
+function initInterventions() {
+  const select = document.getElementById('interventionSelect');
+  mockData.interventions.forEach((x,i)=>{ const o=document.createElement('option');o.value=i;o.textContent=`${x.name} · ${x.district}`;select.appendChild(o); });
+  select.addEventListener('change', renderIntervention);
+  renderIntervention();
+}
+
+function renderIntervention() {
+  const x = mockData.interventions[+document.getElementById('interventionSelect').value || 0];
+  if (interventionChart) interventionChart.destroy();
+  interventionChart = new Chart(document.getElementById('interventionChart'), {
+    type:'bar',
+    data:{ labels:['Before','After'], datasets:[{ label:'Sentiment Score', data:[x.before,x.after], backgroundColor:['#d8e0e8','#2f7d4a'], borderRadius:10, barThickness:58 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{min:0,max:100,ticks:{stepSize:20},grid:{color:'#edf1f5'}},x:{grid:{display:false}}} }
+  });
+  const delta = x.after-x.before;
+  document.getElementById('interventionSummary').innerHTML = `
+    <div class="rounded-2xl bg-emerald-50 p-3"><p class="metric-label">Sentiment Lift</p><p class="mt-1 text-xl font-black text-emerald-800">+${delta} pts</p></div>
+    <div class="rounded-2xl bg-blue-50 p-3"><p class="metric-label">Farmers Covered</p><p class="mt-1 text-xl font-black text-blue-800">${x.farmers.toLocaleString('en-IN')}</p></div>
+    <div class="rounded-2xl bg-slate-100 p-3"><p class="metric-label">Mock Cost</p><p class="mt-1 text-xl font-black text-slate-800">₹${x.cost} L</p></div>`;
+}
+
+function updateScenario() {
+  const pct = +document.getElementById('scenarioSlider').value;
+  document.getElementById('scenarioPercent').textContent = pct+'%';
+  const sentiment = Math.min(82, Math.round(62 + pct*0.30));
+  const procurement = (pct*0.24).toFixed(1);
+  const stress = Math.round(pct*0.45);
+  document.getElementById('projSentiment').textContent = sentiment+'%';
+  document.getElementById('projProcurement').textContent = '+'+procurement+'%';
+  document.getElementById('projStress').textContent = '-'+stress+' pts';
+  const action = pct < 15 ? 'Pilot in the two highest-stress districts first; current increase may be too small for measurable impact.' : pct < 35 ? 'Recommended prototype scenario: prioritize Mehsana, Bhilwara and Ahmednagar, paired with price monitoring and VDCS verification.' : 'High-intensity scenario: phase deployment to avoid excess inventory and validate local storage, transport and beneficiary targeting.';
+  document.getElementById('scenarioRecommendation').textContent = action;
+}
+
+function renderRecommendedActions() {
+  const actions = [
+    ['Activate fodder-bank readiness in Mehsana & Bhilwara','Trigger only after VDCS confirmation of physical stock and supplier price.'],
+    ['Deploy targeted silage / dry fodder support','Focus on water-stressed and high-price clusters rather than state-wide distribution.'],
+    ['Validate sentiment with field workers','Prioritize records where AI sentiment is severe but procurement decline is not yet visible.'],
+    ['Pre-position summer advisory campaigns','Use IVR/SMS for ration balancing, fodder conservation and seed planning ahead of May–June stress.']
+  ];
+  document.getElementById('recommendedActionsList').innerHTML = actions.map((a,i)=>`
+    <div class="flex gap-3 rounded-2xl border border-slate-200 p-3.5">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#0b3158] text-xs font-black text-white">${i+1}</div>
+      <div><p class="text-sm font-extrabold text-slate-900">${a[0]}</p><p class="mt-1 text-xs leading-5 text-slate-500">${a[1]}</p></div>
+    </div>`).join('');
+}
+
+function initPhaseNav() {
+  document.querySelectorAll('.phase-pill').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.phase-pill').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+}
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.dataset.i18n;
+    if (translations[currentLang][key]) el.textContent = translations[currentLang][key];
+  });
+  document.getElementById('langToggle').textContent = currentLang === 'en' ? 'हिंदी' : 'English';
+  document.documentElement.lang = currentLang === 'en' ? 'en' : 'hi';
+}
+
+async function exportPDF() {
+  const btn = document.getElementById('exportBtn');
+  const oldText = btn.textContent;
+  btn.textContent = currentLang === 'en' ? 'Preparing…' : 'तैयार हो रहा है…';
+  btn.disabled = true;
+  try {
+    const target = document.getElementById('reportArea');
+    const canvas = await html2canvas(target,{scale:1.2,useCORS:true,backgroundColor:'#f8fbfd',windowWidth:1600});
+    const imgData = canvas.toDataURL('image/jpeg',.92);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const pageWidth = 210, pageHeight = 297, margin = 8;
+    const usableW = pageWidth - margin*2;
+    const imgH = canvas.height * usableW / canvas.width;
+    let y = margin;
+    let remaining = imgH;
+    pdf.addImage(imgData,'JPEG',margin,y,usableW,imgH);
+    remaining -= (pageHeight - margin*2);
+    while (remaining > 0) {
+      pdf.addPage();
+      y = margin - (imgH - remaining);
+      pdf.addImage(imgData,'JPEG',margin,y,usableW,imgH);
+      remaining -= (pageHeight - margin*2);
+    }
+    pdf.save('NDDB_Fodder_Sentiment_Tracker_Brief.pdf');
+  } catch(err) {
+    console.error(err);
+    alert('PDF export could not be completed in this browser. Please use Print → Save as PDF as a fallback.');
+  } finally {
+    btn.textContent = oldText; btn.disabled = false;
+  }
+}
+
+function boot() {
+  initFilters();
+  initMap();
+  renderAlerts();
+  renderStressTable();
+  renderVoiceLogs();
+  initCharts();
+  initInterventions();
+  updateScenario();
+  renderRecommendedActions();
+  initPhaseNav();
+  updateKPIs();
+
+  document.getElementById('scenarioSlider').addEventListener('input', updateScenario);
+  document.getElementById('langToggle').addEventListener('click',()=>{ currentLang=currentLang==='en'?'hi':'en'; applyLanguage(); });
+  document.getElementById('exportBtn').addEventListener('click',exportPDF);
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>

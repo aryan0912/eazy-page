@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NDDB Crisis Risk Dashboard</title>
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--tx:#1d2a24;--mu:#5d6b64;--bd:#dfe4de;--ac:#1f6f50;--crit:#c0392b;--high:#e67e22;--med:#e8c547;--low:#7fb77e;--ct:#fff;--mt:#2b2400;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a17;--card:#1d2621;--tx:#e8eee9;--mu:#9baba3;--bd:#2f3b35;--ac:#4cc38a}}
+:root[data-theme="dark"]{--bg:#141a17;--card:#1d2621;--tx:#e8eee9;--mu:#9baba3;--bd:#2f3b35;--ac:#4cc38a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:24px;margin:0}h2{font-size:17px;margin:0 0 12px}
+.sub{color:var(--mu);margin:4px 0 20px}
+.g{display:grid;gap:12px}.k{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+.kp{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+.kp b{display:block;font-size:26px}.kp span{color:var(--mu);font-size:13px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+.hm{display:grid;grid-template-columns:28px repeat(5,1fr);gap:4px}
+.cell{min-height:52px;border-radius:6px;display:flex;flex-wrap:wrap;gap:3px;align-items:center;justify-content:center;padding:3px}
+.ax{font-size:12px;color:var(--mu);display:flex;align-items:center;justify-content:center}
+.chip{width:24px;height:24px;border-radius:50%;background:var(--tx);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:0;cursor:pointer}
+.chip.on{outline:3px solid var(--ac)}
+.cr{background:var(--crit)}.hi{background:var(--high)}.me{background:var(--med)}.lo{background:var(--low)}
+.tag{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;color:var(--ct)}
+.tag.me{color:var(--mt)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--bd);font-size:14px;vertical-align:top}
+th{color:var(--mu);font-weight:600;font-size:12px}tr.on{background:rgba(76,195,138,.15)}
+.bar{height:8px;border-radius:4px;background:var(--bd);min-width:60px}.bar i{display:block;height:100%;border-radius:4px}
+.f{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.f button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:99px;padding:4px 12px;cursor:pointer;font:inherit;font-size:13px}
+.f button.a{background:var(--ac);color:#fff;border-color:var(--ac)}
+.ph{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.ph div{border-left:4px solid var(--ac);background:var(--bg);padding:10px 12px;border-radius:6px;font-size:14px}
+.ph b{display:block}.ph small{color:var(--mu)}
+ul{margin:0;padding-left:18px}li{margin:3px 0}
+</style></head><body><div class="w">
+<h1>NDDB Crisis Risk Dashboard</h1>
+<p class="sub">Likelihood and impact on a 1–5 scale; priority = L × I. Starting judgement, to be calibrated by the Crisis Management Committee.</p>
+<div class="g k" id="kpi"></div>
+<div class="two" style="margin-top:16px">
+<div class="c"><h2>Heat map</h2><div class="hm" id="hm"></div>
+<p class="sub" style="margin:10px 0 0;font-size:13px">Tap a number to highlight the risk. Rows: likelihood. Columns: impact.</p></div>
+<div class="c"><h2>Response protocol</h2><div class="ph">
+<div><b>1 · Detect</b><small>0–1 h</small><br>Verify facts, rate severity L1–L3</div>
+<div><b>2 · Mobilise</b><small>1–3 h</small><br>Convene committee, holding statement</div>
+<div><b>3 · Respond</b><small>3–24 h</small><br>Brief staff, co-ops, then media</div>
+<div><b>4 · Manage</b><small>24 h +</small><br>Scheduled updates, fix misinformation</div>
+<div><b>5 · Review</b><small>within 2 wks</small><br>Lessons learned, retrain</div></div></div></div>
+<div class="c"><h2>Risk register</h2><div class="f" id="fl"></div>
+<div class="tw"><table><thead><tr><th>#</th><th>Risk</th><th>L</th><th>I</th><th>Priority</th><th>Rating</th><th>Lead owner</th></tr></thead><tbody id="tb"></tbody></table></div></div>
+<div class="two"><div class="c"><h2>Crisis team</h2><ul>
+<li><b>Chairman / CEO:</b> final authority</li><li><b>Crisis Lead (Head of Communications):</b> owns the narrative</li>
+<li><b>Chief and Technical Spokespersons:</b> one voice</li><li><b>Legal, Quality, Animal Health, Finance, HR, IT heads:</b> facts and decisions</li>
+<li><b>Media, Digital, Regional and Government liaisons:</b> execution</li><li><b>Documentation Officer:</b> timestamped crisis log</li></ul></div>
+<div class="c"><h2>Media golden rules</h2><ul>
+<li>Acknowledge fast; silence breeds rumour</li><li>One authorised voice</li><li>Facts only; never speculate or blame</li>
+<li>Empathy first, then facts, then action</li><li>Never “no comment”; give a time for the answer</li><li>Same facts in every outlet and language</li></ul></div></div>
+</div>
+<script>
+var R=[[1,"Product safety or adulteration allegation",4,5,"Head of Quality"],[2,"Viral misinformation or deepfake",5,3,"Digital Media Manager"],[3,"Animal disease outbreak",3,5,"Head of Animal Health"],[4,"Governance or financial allegation",3,5,"Head of Finance / Vigilance"],[5,"Farmer unrest",3,4,"Cooperative and Farmer Liaison"],[6,"Cyber attack or data breach",3,4,"Head of IT / Cyber Security"],[7,"Policy or political controversy",3,3,"Government Liaison"],[8,"Operational or safety incident",2,4,"Head of Operations"],[9,"Leadership or employee misconduct",2,4,"HR Head"],[10,"Natural disaster",3,3,"Head of Operations"]];
+function band(s){return s>=20?["cr","Critical"]:s>=12?["hi","High"]:s>=6?["me","Medium"]:["lo","Low"]}
+var sel=0,flt="All";
+function kpi(){var n={Critical:0,High:0,Medium:0,Low:0};R.forEach(function(r){n[band(r[2]*r[3])[1]]++});
+var h='<div class="kp"><b>'+R.length+'</b><span>Risks tracked</span></div>';
+["Critical","High","Medium"].forEach(function(k){h+='<div class="kp"><b>'+n[k]+'</b><span>'+k+'</span></div>'});
+document.getElementById("kpi").innerHTML=h}
+function hm(){var h="";for(var l=5;l>=1;l--){h+='<div class="ax">'+l+'</div>';for(var i=1;i<=5;i++){var b=band(l*i)[0];
+h+='<div class="cell '+b+'">'+R.filter(function(r){return r[2]==l&&r[3]==i}).map(function(r){return '<button class="chip'+(sel==r[0]?' on':'')+'" data-i="'+r[0]+'" aria-label="'+r[1]+'">'+r[0]+'</button>'}).join("")+'</div>'}}
+h+='<div></div>';for(i=1;i<=5;i++)h+='<div class="ax">'+i+'</div>';
+var e=document.getElementById("hm");e.innerHTML=h;
+e.querySelectorAll(".chip").forEach(function(c){c.onclick=function(){sel=sel==+c.dataset.i?0:+c.dataset.i;draw()}})}
+function tb(){var h="";R.filter(function(r){return flt=="All"||band(r[2]*r[3])[1]==flt}).sort(function(a,b){return b[2]*b[3]-a[2]*a[3]}).forEach(function(r){var s=r[2]*r[3],b=band(s);
+h+='<tr class="'+(sel==r[0]?'on':'')+'"><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td><div class="bar"><i class="'+b[0]+'" style="width:'+s*4+'%"></i></div>'+s+'</td><td><span class="tag '+b[0]+'">'+b[1]+'</span></td><td>'+r[4]+'</td></tr>'});
+document.getElementById("tb").innerHTML=h}
+function fl(){var f=document.getElementById("fl");f.innerHTML=["All","Critical","High","Medium"].map(function(k){return '<button class="'+(k==flt?'a':'')+'">'+k+'</button>'}).join("");
+f.querySelectorAll("button").forEach(function(b){b.onclick=function(){flt=b.textContent;draw()}})}
+function draw(){hm();tb();fl()}
+kpi();draw();
+</script></body></html>

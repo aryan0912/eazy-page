@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NDDB Dairy Farmer Price Sentiment Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--b:#0b4f9c;--bd:#083a75;--g:#2e9e6a;--r:#d9534f;--y:#e6a23c;--bg:#f2f6fa;--t:#1c2b3a;--m:#5d6d7e;--l:#d9e2ec}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 "Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--t)}
+header{background:linear-gradient(90deg,var(--bd),var(--b));color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+header h1{margin:0;font-size:20px}header p{margin:2px 0 0;font-size:12px;opacity:.85}
+header select{padding:5px;border-radius:4px}
+#banner{background:#fff3cd;color:#7a5b00;border-bottom:1px solid #f0d98a;padding:6px 20px;font-weight:600;font-size:12px}
+nav{background:#fff;border-bottom:1px solid var(--l);display:flex;flex-wrap:wrap;padding:0 12px;position:sticky;top:0;z-index:5}
+nav button{border:0;background:none;padding:11px 12px;cursor:pointer;font-size:13px;color:var(--m);border-bottom:3px solid transparent}
+nav button.on{color:var(--b);border-color:var(--g);font-weight:600}
+#fb{display:flex;flex-wrap:wrap;gap:10px;padding:10px 20px;background:#fff;border-bottom:1px solid var(--l)}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--m);gap:3px}
+select,input,textarea{font:inherit;padding:6px 8px;border:1px solid #b9c6d3;border-radius:4px;background:#fff;color:var(--t);min-width:120px}
+main{padding:16px 20px;max-width:1400px;margin:auto}.tab{display:none}.tab.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:14px}
+.kpi,.card{background:#fff;border:1px solid var(--l);border-radius:6px;padding:12px}
+.kpi span{font-size:12px;color:var(--m);display:block}.kpi b{font-size:24px;color:var(--bd)}.kpi small{display:block;color:var(--m);font-size:11px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}.wide{grid-column:1/-1}
+.card h3{margin:0 0 8px;font-size:14px;color:var(--bd)}.cv{position:relative;height:280px}
+.tw{overflow:auto;max-height:420px}table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--l);text-align:left;white-space:nowrap}th{background:#eef3f8;cursor:pointer;position:sticky;top:0}
+tr.ck{cursor:pointer}tr.ck:hover{background:#f0f7ff}
+button.p{background:var(--b);color:#fff;border:0;border-radius:4px;padding:8px 14px;cursor:pointer}button.s{background:#fff;color:var(--b);border:1px solid var(--b);border-radius:4px;padding:7px 12px;cursor:pointer}
+button.p:hover{background:var(--bd)}.row{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+.empty{background:#fff;border:1px dashed #9db0c3;padding:30px;text-align:center;color:var(--m);border-radius:6px}
+.note{font-size:12px;color:var(--m);background:#eef6f1;border-left:3px solid var(--g);padding:6px 10px;margin:8px 0}
+.pill{padding:2px 8px;border-radius:10px;color:#fff;font-size:12px}.Green{background:var(--g)}.Yellow{background:var(--y)}.Orange{background:#e8742a}.Red{background:var(--r)}
+fieldset{border:1px solid var(--l);border-radius:6px;margin:0 0 12px;background:#fff}legend{font-weight:600;color:var(--bd);padding:0 6px}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.opt{display:flex;flex-direction:row;gap:6px;align-items:center;font-size:13px;color:var(--t)}.opt input{min-width:0}
+.q{margin:10px 0}.q>b{display:block;margin-bottom:4px}.err{color:#b02a2a;background:#fdecec;padding:8px;border-radius:4px;margin:8px 0}.ok{color:#1d6b46;background:#e6f6ee;padding:8px;border-radius:4px;margin:8px 0}
+#toast{position:fixed;bottom:16px;right:16px;background:#1c2b3a;color:#fff;padding:10px 14px;border-radius:6px;display:none;z-index:9}
+@media print{header,nav,#fb,button,.noprint{display:none!important}.tab{display:none!important}#t-rep{display:block!important}}
+</style></head><body>
+<header><div><h1>NDDB: DAIRY FARMER PRICE SENTIMENT TRACKER</h1><p>National Dairy Development Board, India. Listening to Farmers. Understanding Prices. Strengthening Dairy Livelihoods.</p></div>
+<label style="color:#fff">Role (placeholder)<select id="role"><option>Administrator</option><option>National Analyst</option><option>State Analyst</option><option>Data Entry Operator</option></select></label></header>
+<div id="banner"></div>
+<nav id="nav"></nav><div id="fb"></div>
+<main>
+<section class="tab" id="t-dash"><div id="dempty" class="empty" hidden>No farmer responses match these filters. Widen the reporting period or clear a filter.</div>
+<div id="dbody"><div class="kpis" id="kpis"></div><div class="grid">
+<div class="card"><h3>Overall farmer sentiment</h3><div class="cv"><canvas id="c1"></canvas></div></div>
+<div class="card"><h3>State-wise farmer sentiment (% of responses)</h3><div class="cv"><canvas id="c2"></canvas></div></div>
+<div class="card"><h3>Monthly sentiment movement (%)</h3><div class="cv"><canvas id="c3"></canvas></div></div>
+<div class="card"><h3>Farmer-reported milk price movement (₹/litre)</h3><div class="cv"><canvas id="c4"></canvas></div></div>
+<div class="card"><h3>Sentiment by milk type (%)</h3><div class="cv"><canvas id="c5"></canvas></div></div>
+<div class="card"><h3>Top five farmer concerns (selections)</h3><div class="cv"><canvas id="c6"></canvas></div></div>
+<div class="card wide"><h3>Geographic sentiment: state table (click a state for detail)</h3><div class="tw" id="dst"></div></div></div></div></section>
+
+<section class="tab" id="t-voice"><h2>Farmer Voice</h2><div class="note">Authorised users enter feedback here. Entries are stored in this browser (localStorage) and labelled as entered records, separate from demo data.</div><form id="vf" novalidate></form></section>
+
+<section class="tab" id="t-price"><h2>Milk Procurement Price Tracker</h2>
+<div class="note">Cow and buffalo prices are recorded against their own fat/SNF basis and are not directly comparable. Compare each milk type with itself.</div>
+<div class="row"><label>Compare with<select id="pcmp"><option value="7">Previous week</option><option value="30" selected>Previous month</option><option value="90">Previous quarter</option><option value="365">Previous year</option></select></label>
+<label>View by<select id="pgrp"><option value="s">State</option><option value="d">District</option><option value="u">Dairy union</option></select></label>
+<label>Import price CSV<input type="file" id="pcsv" accept=".csv"></label><label>&nbsp;<button class="s" id="ptpl">Download CSV template</button></label></div>
+<div id="pmsg"></div><div class="kpis" id="pk"></div>
+<div class="grid"><div class="card"><h3>Historical price movement (monthly average, standard basis)</h3><div class="cv"><canvas id="c7"></canvas></div></div>
+<div class="card"><h3>Fat band price difference (farmer-reported prices)</h3><div class="tw" id="pfat"></div></div>
+<div class="card wide"><h3>Procurement prices by selected level</h3><div class="tw" id="ptb"></div></div></div></section>
+
+<section class="tab" id="t-econ"><h2>Farmer Economic Impact</h2>
+<div class="note">All figures are ESTIMATED DAIRY SURPLUS (revenue less listed dairy expenses). They are not total household income or audited profit.</div>
+<div class="grid"><div class="card"><h3>Compare two periods (edit values)</h3><div id="ecin"></div></div>
+<div class="card"><h3>Cost versus revenue, daily (₹)</h3><div class="cv"><canvas id="c8"></canvas></div></div>
+<div class="card wide"><h3>Farmer categories from dataset (records with expenses entered)</h3><div class="tw" id="ecat"></div></div></div></section>
+
+<section class="tab" id="t-sent"><h2>Sentiment Analysis Engine</h2>
+<div class="note">Primary sentiment comes from the structured survey answers (Q1, Q3, Q4). Comment analysis is a simple keyword prototype, not AI. Records are marked Auto or Verified.</div>
+<div class="kpis" id="sk"></div><div class="grid"><div class="card"><h3>Recurring topics in comments</h3><div class="cv"><canvas id="c9"></canvas></div></div>
+<div class="card"><h3>Sentiment movement over time (%)</h3><div class="cv"><canvas id="c10"></canvas></div></div>
+<div class="card wide"><h3>Review and correct comments</h3><input id="sq" placeholder="Search comments" oninput="TB.st.q=this.value.toLowerCase();drawT('st')"><div class="tw" id="st"></div></div></div></section>
+
+<section class="tab" id="t-reg"><h2>State-wise and Regional Intelligence</h2>
+<div class="note">States are listed alphabetically. Compare states only where response counts are adequate; low-sample states are flagged.</div>
+<div class="card"><div class="tw" id="rst"></div></div><div id="rdet"></div></section>
+
+<section class="tab" id="t-alert"><h2>Early Warning and Alerts</h2><div id="alsum"></div><div class="card"><div class="tw" id="alt"></div></div><div class="note" id="alnote"></div></section>
+
+<section class="tab" id="t-rep"><h2>Reports and Management Insights</h2>
+<div class="row noprint"><label>Report<select id="rsel"></select></label><label>&nbsp;<button class="s" id="rcsv">Download report CSV</button></label><label>&nbsp;<button class="s" id="rfil">Download filtered data</button></label><label>&nbsp;<button class="p" onclick="window.print()">Print report</button></label></div>
+<div class="card" id="rsum"></div><div class="card" style="margin-top:12px"><h3 id="rtt"></h3><div class="tw" id="rtb"></div></div></section>
+
+<section class="tab" id="t-admin"><h2>Administration and Data Management</h2><div id="adm"></div></section>
+</main><div id="toast"></div>
+<script>
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],DAY=864e5,NOW=Date.now();
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IN=(n,d=1)=>Number(n).toLocaleString('en-IN',{maximumFractionDigits:d});
+const RS=n=>'₹'+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const p2=n=>String(n).padStart(2,'0'),fd=t=>{const d=new Date(t);return p2(d.getDate())+'-'+p2(d.getMonth()+1)+'-'+d.getFullYear()};
+const ft=t=>fd(t)+' '+p2(new Date(t).getHours())+':'+p2(new Date(t).getMinutes());
+const pdt=s=>{s=String(s||'').trim();let m=s.match(/^(\d{4})-(\d\d)-(\d\d)/);if(m)return new Date(+m[1],m[2]-1,+m[3]).getTime();m=s.match(/^(\d\d)[-\/](\d\d)[-\/](\d{4})/);return m?new Date(+m[3],m[2]-1,+m[1]).getTime():NaN};
+const mk=t=>{const d=new Date(t);return d.getFullYear()*12+d.getMonth()},ml=k=>p2(k%12+1)+'-'+Math.floor(k/12);
+const months=n=>{const k=mk(NOW);return Array.from({length:n},(_,i)=>k-n+1+i)};
+let toastT;const toast=m=>{const e=$('#toast');e.textContent=m;e.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>e.style.display='none',3500)};
+/* Storage layer: replace load/save with calls to a secure backend API (fetch) and a central database later. */
+const Store={load:k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},save:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('Browser storage is full or blocked. Data was not saved.');return false}}};
+let GEO=Store.load('nddb_geo')||{Gujarat:{Anand:'Amul Dairy',Mehsana:'Dudhsagar Dairy',Banaskantha:'Banas Dairy'},Maharashtra:{Pune:'Katraj Dairy',Kolhapur:'Gokul Union',Ahmednagar:'Rajhans Union'},Rajasthan:{Jaipur:'Saras Dairy',Alwar:'Alwar Union',Jodhpur:'Marwar Union'},'Uttar Pradesh':{Lucknow:'Lucknow Union',Meerut:'Meerut Union',Varanasi:'Varanasi Union'},Karnataka:{Bengaluru:'Bamul',Mysuru:'Mymul',Belagavi:'Belagavi Union'},'Tamil Nadu':{Erode:'Erode Union',Salem:'Salem Union',Madurai:'Madurai Union'},Punjab:{Ludhiana:'Ludhiana Union',Amritsar:'Amritsar Union',Patiala:'Patiala Union'},Bihar:{Patna:'Patna Union',Muzaffarpur:'Tirhut Union',Gaya:'Magadh Union'}};
+const BIAS={Gujarat:.7,Maharashtra:.1,Rajasthan:0,'Uttar Pradesh':-.6,Karnataka:.5,'Tamil Nadu':.2,Punjab:.1,Bihar:-1},BASE={Gujarat:[37,58],Maharashtra:[33,52],Rajasthan:[35,54],'Uttar Pradesh':[32,50],Karnataka:[35,50],'Tamil Nadu':[38,48],Punjab:[36,56],Bihar:[31,47]};
+const L5=['Very Satisfied','Satisfied','Neutral','Dissatisfied','Very Dissatisfied'];
+const Q=[{id:'q1',t:'Q1. How do you feel about the current milk procurement price?',o:L5},
+{id:'q2',t:'Q2. Compared to the last three months, how has the price changed?',o:['Increased','Remained the same','Decreased','Fluctuating frequently','Not aware']},
+{id:'q3',t:'Q3. Is the current milk price fair considering your production costs?',o:['Yes, completely fair','Somewhat fair','Neither fair nor unfair','Not fair','Not sure']},
+{id:'q4',t:'Q4. How have recent price fluctuations affected your household income?',o:['Income increased','No significant impact','Income decreased slightly','Income decreased significantly']},
+{id:'q6',t:'Q6. Are you satisfied with the payment system of your dairy cooperative?',o:L5},
+{id:'q7',t:'Q7. Does the cooperative adequately communicate price changes?',o:['Always','Often','Sometimes','Rarely','Never']},
+{id:'q8',t:'Q8. Are you considering reducing milk production or leaving dairy farming?',o:['No','Maybe','Yes, considering reducing production','Yes, considering leaving dairy farming']}];
+const F5=['Cattle feed prices','Green fodder expenses','Dry fodder expenses','Veterinary and medicine expenses','Labour costs','Transportation costs','Electricity and water expenses','Low milk procurement prices','Irregular milk payments','Other'];
+const sc=r=>{const s=(2-r.q1)+[1,.5,0,-1,0][r.q3]+[1,0,-.5,-1][r.q4];return s>=1.5?'Positive':s<=-1?'Negative':'Neutral'};
+const sent=r=>r.man||r.auto;
+const PW=['good','happy','better','improved','fair','timely','support','increased','satisfied','sustainable','helped','regular'],NW=['low','delayed','unfair','expensive','losses','rising','dropped','difficult','selling','nobody','late','high'];
+const kw=t=>{const w=String(t||'').toLowerCase().match(/[a-z]+/g)||[];const s=w.filter(x=>PW.includes(x)).length-w.filter(x=>NW.includes(x)).length;return s>0?'Positive':s<0?'Negative':'Neutral'};
+const TOP={'Low milk prices':['too low','low price','low rate','dropped'],'Rising cattle feed prices':['feed'],'High production costs':['production cost','expensive','losses','not earning'],'Delayed payments':['delayed','late payment'],'Unfair pricing':['unfair'],'Cooperative support':['cooperative support'],'Better farmer income':['income is better','income increased','improved','better'],'Satisfaction with collection services':['collection service'],'Government support':['government'],'Dairy farming sustainability':['sustainable','selling my animals']};
+const POSTOP=['Cooperative support','Better farmer income','Satisfaction with collection services','Government support','Dairy farming sustainability'];
+const topics=t=>{t=String(t||'').toLowerCase();return Object.keys(TOP).filter(k=>TOP[k].some(x=>t.includes(x)))};
+/* ---------- demo data ---------- */
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function genFB(n){const R=rng(7),pk=a=>a[Math.floor(R()*a.length)],cl=(x,a,b)=>Math.max(a,Math.min(b,x)),S=Object.keys(GEO),out=[];
+const CP=['Cooperative support is good and income is better now','Happy with the milk collection service and timely payment','Price has improved this year and dairy is sustainable for us','Government support for fodder helped us','Fair rate, my family income increased'],
+CN=['Milk price is too low and feed prices keep rising','Payment from the society is delayed every month','The price is unfair compared to our production cost','Cattle feed is very expensive, we are not earning enough','Nobody tells us why the rate dropped','Considering selling my animals due to losses'],
+CU=['Price is okay, nothing special','Rates change often, hard to plan','Collection service is fine'],
+SG=['Increase price in line with feed cost','Provide subsidised cattle feed','Pay every week without delay','Share the price slab clearly with farmers','Support for fodder development','Better veterinary camps'];
+const W=[5,3,2,2,2,1,1,4,2,1];
+for(let i=0;i<n;i++){const st=pk(S),di=pk(Object.keys(GEO[st])),age=R()*730,milk=pk(['Cow','Cow','Buffalo','Buffalo','Mixed']),cat=pk(['Marginal','Small','Small','Medium','Large']);
+const L=BIAS[st]+.75+(R()-.5)*1.8-.5*(1-age/730);const bp=milk==='Buffalo'?BASE[st][1]:BASE[st][0];
+const fat=+(milk==='Buffalo'?6+R()*1.8:3.4+R()*1.2).toFixed(1),cur=+(bp*(.92+R()*.16)).toFixed(2),prev=+(cur/(1+L*.04+(R()-.5)*.04)).toFixed(2);
+const qty={Marginal:4+R()*5,Small:8+R()*8,Medium:18+R()*15,Large:40+R()*40}[cat],ch=cur/prev-1;
+let q5=[];while(q5.length<1+Math.floor(R()*3)){let x=R()*W.reduce((a,b)=>a+b),j=0;while(x>W[j]){x-=W[j];j++}if(!q5.includes(j))q5.push(j)}
+const r={id:'D-'+String(10000+i),t:Math.round(NOW-age*DAY),s:st,d:di,u:GEO[st][di],v:pk(['Rampur','Shivpur','Lakshmipur','Devgaon','Kheda','Sundarpur']),g:pk(['Female','Male','']),a:pk(['25-35','36-50','51+']),x:Math.floor(2+R()*25),an:Math.round(qty/7)+1,m:milk,c:cat,cur,prev,fat,snf:+(8+R()*.9).toFixed(1),pt:Math.round(NOW-age*DAY),qty:+qty.toFixed(1),
+dcost:Math.round(qty*cur*(.85-L*.06+(R()-.5)*.4)),q1:cl(Math.round(2-L+(R()-.5)),0,4),q2:R()<.12?3:R()<.05?4:ch<-.01?2:ch>.01?0:1,q3:L>1?0:L>.3?1:L>-.3?2:R()<.85?3:4,q4:L>1.2?0:L>0?1:L>-1?2:3,q5,q6:cl(Math.round(2-L*.8+(R()-.5)*1.5),0,4),q7:cl(Math.round(2-L*.8+(R()-.5)*2),0,4),
+q8:L<-1?pk([0,1,1,2,2,3]):L<-.2?pk([0,0,1,2]):pk([0,0,0,0,1]),anon:true,demo:true,man:null};
+r.auto=sc(r);let cs=r.auto;if(R()<.15)cs=pk(['Positive','Neutral','Negative']);r.c9=pk(cs==='Positive'?CP:cs==='Negative'?CN:CU);r.c10=pk(SG);out.push(r)}return out}
+function genPR(){const R=rng(11),out=[];for(const st in GEO)for(const di in GEO[st])for(const m of['Cow','Buffalo']){let p=BASE[st][m==='Cow'?0:1]*(.97+R()*.06);for(let w=0;w<60;w++){if(R()<.12)p+=(R()-.5)*1.2+BIAS[st]*.15;out.push({s:st,d:di,u:GEO[st][di],m,f:m==='Cow'?4:6.5,n:m==='Cow'?8.5:9,p:+p.toFixed(2),t:NOW-(59-w)*7*DAY,demo:true})}}return out}
+let DB={fb:Store.load('nddb_fb'),pr:Store.load('nddb_pr')},CFG=Store.load('nddb_cfg')||{neg:40,dneg:10,price:5,cost:30,exit:20,minN:10};
+if(!DB.fb||!DB.pr){DB.fb=genFB(1000);DB.pr=genPR();Store.save('nddb_fb',DB.fb);Store.save('nddb_pr',DB.pr)}
+const saveAll=()=>{Store.save('nddb_fb',DB.fb);Store.save('nddb_pr',DB.pr);Store.save('nddb_cfg',CFG);Store.save('nddb_geo',GEO)};
+/* ---------- filters ---------- */
+const F={p:90,s:'',d:'',u:'',m:'',c:''};
+const base=r=>(!F.s||r.s===F.s)&&(!F.d||r.d===F.d)&&(!F.u||r.u===F.u)&&(!F.m||r.m===F.m)&&(!F.c||r.c===F.c);
+const cur=()=>DB.fb.filter(r=>base(r)&&r.t>=NOW-F.p*DAY),prv=()=>DB.fb.filter(r=>base(r)&&r.t<NOW-F.p*DAY&&r.t>=NOW-2*F.p*DAY);
+const opts=(a,v,all)=>(all?'<option value="">'+all+'</option>':'')+a.map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('');
+const uniq=a=>[...new Set(a)];
+function unions(){return F.d&&F.s?[GEO[F.s][F.d]]:F.s?uniq(Object.values(GEO[F.s])):uniq(Object.values(GEO).flatMap(o=>Object.values(o)))}
+function fbar(){$('#fb').innerHTML=`<label>Reporting period<select id="fp">${[[7,'Last 7 days'],[30,'Last 30 days'],[90,'Last 90 days'],[180,'Last 6 months'],[365,'Last 1 year']].map(x=>`<option value="${x[0]}"${x[0]==F.p?' selected':''}>${x[1]}</option>`).join('')}</select></label>
+<label>State<select id="fs">${opts(Object.keys(GEO),F.s,'All states')}</select></label><label>District<select id="fd">${opts(F.s?Object.keys(GEO[F.s]):uniq(Object.values(GEO).flatMap(o=>Object.keys(o))),F.d,'All districts')}</select></label>
+<label>Dairy union<select id="fu">${opts(unions(),F.u,'All unions')}</select></label><label>Milk type<select id="fm">${opts(['Cow','Buffalo','Mixed'],F.m,'All')}</select></label><label>Farmer category<select id="fc">${opts(['Marginal','Small','Medium','Large'],F.c,'All')}</select></label>
+<label>&nbsp;<button class="s" id="fclr">Clear filters</button></label>`}
+$('#fb').addEventListener('change',e=>{const i=e.target.id;if(i==='fp')F.p=+e.target.value;if(i==='fs'){F.s=e.target.value;F.d='';F.u=''}if(i==='fd'){F.d=e.target.value;F.u=''}if(i==='fu')F.u=e.target.value;if(i==='fm')F.m=e.target.value;if(i==='fc')F.c=e.target.value;fbar();render()});
+$('#fb').addEventListener('click',e=>{if(e.target.id==='fclr'){Object.assign(F,{p:90,s:'',d:'',u:'',m:'',c:''});fbar();render()}});
+/* ---------- helpers ---------- */
+const stat=d=>{const n=d.length,c=x=>d.filter(r=>sent(r)===x).length,p=x=>n?c(x)*100/n:0;return{n,pos:p('Positive'),neu:p('Neutral'),neg:p('Negative'),dis:n?d.filter(r=>r.q1>=3).length*100/n:0,pr:n?d.reduce((a,r)=>a+r.cur,0)/n:0,chg:n?d.reduce((a,r)=>a+(r.cur/r.prev-1)*100,0)/n:0}};
+const cnt=(d,f)=>{const m={};d.forEach(r=>{const k=f(r);(Array.isArray(k)?k:[k]).forEach(x=>m[x]=(m[x]||0)+1)});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+const topC=d=>{const c=cnt(d,r=>r.q5.map(i=>F5[i]));return c.length?c[0][0]:'n/a'};
+const C={};function ch(id,type,data,o){if(C[id])C[id].destroy();C[id]=new Chart($('#'+id),{type,data,options:Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}},o||{})})}
+const COL={Positive:'#2e9e6a',Neutral:'#9aa7b5',Negative:'#d9534f'},BL='#0b4f9c';
+const csv=rows=>'\ufeff'+rows.map(r=>r.map(x=>{x=String(x??'');return/[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}).join(',')).join('\n');
+const dl=(name,rows)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv(rows)],{type:'text/csv'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+const TB={};function mkTable(id,cols,rows,o){const T=TB[id]=TB[id]||{sort:-1,dir:1,q:''};T.cols=cols;T.rows=rows;T.o=o||{};drawT(id)}
+function drawT(id){const T=TB[id],el=$('#'+id);let rs=T.rows.map(r=>[r,T.cols.map(c=>c[1](r)),T.cols.map(c=>c[2]?c[2](r):c[1](r))]);
+if(T.q)rs=rs.filter(x=>x[1].join(' ').toLowerCase().includes(T.q));
+if(T.sort>=0)rs.sort((a,b)=>{const x=a[2][T.sort],y=b[2][T.sort];return(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y)))*T.dir});
+if(!rs.length){el.innerHTML='<div class="empty">No rows to show.</div>';return}
+const lim=T.o.limit||300;el.innerHTML='<table><thead><tr>'+T.cols.map((c,i)=>`<th data-i="${i}">${c[0]}${T.sort===i?(T.dir>0?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead><tbody>'+rs.slice(0,lim).map((x,i)=>`<tr data-i="${i}"${T.o.click?' class="ck"':''}>`+x[1].map(v=>`<td>${v}</td>`).join('')+'</tr>').join('')+'</tbody></table>'+(rs.length>lim?`<div class="note">Showing first ${lim} of ${rs.length} rows. Use search to narrow.</div>`:'');
+el.querySelectorAll('th').forEach(h=>h.onclick=()=>{const i=+h.dataset.i;T.dir=T.sort===i?-T.dir:1;T.sort=i;drawT(id)});
+if(T.o.click)el.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>T.o.click(rs[+tr.dataset.i][0]))}
+/* ---------- navigation ---------- */
+const TABS=[['dash','Executive Overview'],['voice','Farmer Voice'],['price','Price Tracker'],['econ','Economic Impact'],['sent','Sentiment Engine'],['reg','Regional Intelligence'],['alert','Early Warnings'],['rep','Reports'],['admin','Administration']];
+const NOFILT=['voice','econ','admin','price'];let TAB='dash',RSEL='';
+function roleTabs(){const r=$('#role').value;return TABS.filter(t=>r==='Data Entry Operator'?t[0]==='voice':t[0]==='admin'?r==='Administrator':true)}
+function drawNav(){const ts=roleTabs();if(!ts.some(t=>t[0]===TAB))TAB=ts[0][0];$('#nav').innerHTML=ts.map(t=>`<button data-t="${t[0]}" class="${t[0]===TAB?'on':''}">${t[1]}</button>`).join('')}
+$('#nav').onclick=e=>{if(e.target.dataset.t)show(e.target.dataset.t)};$('#role').onchange=()=>{drawNav();show(TAB)};
+function show(t){TAB=t;drawNav();$$('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));$('#fb').style.display=NOFILT.includes(t)&&t!=='price'?'none':'flex';render()}
+const R={};function render(){banner();R[TAB]&&R[TAB]()}
+function banner(){const dm=DB.fb.filter(r=>r.demo).length,en=DB.fb.length-dm;$('#banner').textContent='DEMO DATA: NOT ACTUAL NDDB DATA. Fictional demo records: '+IN(dm,0)+'. Records entered by users: '+IN(en,0)+'.'}
+/* ---------- dashboard ---------- */
+function monthly(recs,fn){return months(12).map(k=>{const x=recs.filter(r=>mk(r.t)===k);return x.length>=3?fn(x):null})}
+R.dash=()=>{const d=cur(),p=prv();$('#dempty').hidden=d.length>0;$('#dbody').hidden=!d.length;if(!d.length)return;
+const a=stat(d),b=stat(p),av=x=>x.length?RS(stat(x).pr):'n/a',d2=(x,y)=>p.length?`${x-y>=0?'+':''}${(x-y).toFixed(1)} pts vs previous period`:'No previous period data';
+const k=(l,v,s)=>`<div class="kpi"><span>${l}</span><b>${v}</b><small>${s}</small></div>`;
+$('#kpis').innerHTML=k('Total Farmer Responses',IN(a.n,0),'Last '+F.p+' days')+k('Positive Sentiment',a.pos.toFixed(1)+'%',d2(a.pos,b.pos))+k('Negative Sentiment',a.neg.toFixed(1)+'%',d2(a.neg,b.neg))+k('Neutral Sentiment',a.neu.toFixed(1)+'%',d2(a.neu,b.neu))+k('Avg Procurement Price (reported)',RS(a.pr),'Cow '+av(d.filter(r=>r.m==='Cow'))+' | Buffalo '+av(d.filter(r=>r.m==='Buffalo')))+k('Farmers Reporting Price Decline',(d.filter(r=>r.q2===2).length*100/a.n).toFixed(1)+'%','Answered "Decreased" in Q2');
+ch('c1','doughnut',{labels:['Positive','Neutral','Negative'],datasets:[{data:['Positive','Neutral','Negative'].map(x=>d.filter(r=>sent(r)===x).length),backgroundColor:Object.values(COL)}]});
+const sts=Object.keys(GEO).filter(s=>d.some(r=>r.s===s));
+ch('c2','bar',{labels:sts.map(s=>s+' (n='+d.filter(r=>r.s===s).length+')'),datasets:['Positive','Neutral','Negative'].map(x=>({label:x,backgroundColor:COL[x],data:sts.map(s=>{const z=d.filter(r=>r.s===s);return+(z.filter(r=>sent(r)===x).length*100/z.length).toFixed(1)})}))},{indexAxis:'y',plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,max:100},y:{stacked:true}}});
+const rec=DB.fb.filter(base),ms=months(12);
+ch('c3','line',{labels:ms.map(ml),datasets:['Positive','Negative'].map(x=>({label:x,borderColor:COL[x],spanGaps:true,tension:.25,data:monthly(rec,z=>+(z.filter(r=>sent(r)===x).length*100/z.length).toFixed(1))}))},{scales:{y:{min:0,max:100}}});
+ch('c4','line',{labels:ms.map(ml),datasets:['Cow','Buffalo','Mixed'].map((m,i)=>({label:m,borderColor:['#0b4f9c','#2e9e6a','#e6a23c'][i],spanGaps:true,tension:.25,data:monthly(rec.filter(r=>r.m===m),z=>+stat(z).pr.toFixed(2))}))});
+ch('c5','bar',{labels:['Cow','Buffalo','Mixed'],datasets:['Positive','Neutral','Negative'].map(x=>({label:x,backgroundColor:COL[x],data:['Cow','Buffalo','Mixed'].map(m=>{const z=d.filter(r=>r.m===m);return z.length?+(z.filter(r=>sent(r)===x).length*100/z.length).toFixed(1):0})}))});
+const tc=cnt(d,r=>r.q5.map(i=>F5[i])).slice(0,5);
+ch('c6','bar',{labels:tc.map(x=>x[0]),datasets:[{label:'Farmers selecting',data:tc.map(x=>x[1]),backgroundColor:BL}]},{indexAxis:'y',plugins:{legend:{display:false}}});
+stateTable('dst',d)};
+function stateTable(id,d){const rows=Object.keys(GEO).map(s=>{const z=d.filter(r=>r.s===s);return{s,z,...stat(z)}}).filter(r=>r.n);
+mkTable(id,[['State',r=>esc(r.s)],['Responses',r=>IN(r.n,0),r=>r.n],['Positive %',r=>r.pos.toFixed(1),r=>r.pos],['Neutral %',r=>r.neu.toFixed(1),r=>r.neu],['Negative %',r=>r.neg.toFixed(1),r=>r.neg],['Dissatisfied %',r=>r.dis.toFixed(1),r=>r.dis],['Avg reported price',r=>RS(r.pr),r=>r.pr],['Price change %',r=>r.chg.toFixed(1),r=>r.chg],['Main concern',r=>esc(topC(r.z))],['Data quality',r=>r.n<CFG.minN?'Low sample':'Adequate']],rows,{click:r=>{RSEL=r.s;show('reg')}})}
+/* ---------- farmer voice ---------- */
+function initVoice(){const o=(a)=>a.map(x=>`<option>${esc(x)}</option>`).join('');
+$('#vf').innerHTML=`<fieldset><legend>Consent</legend><label class="opt"><input type="checkbox" id="vcons"> The farmer has given informed consent for this feedback to be recorded and used for NDDB analysis.</label><label class="opt"><input type="checkbox" id="vanon" checked> Submit anonymously (an anonymised ID is generated)</label></fieldset>
+<fieldset><legend>Farmer information</legend><div class="fg"><label>Anonymised Farmer ID (optional)<input id="vid"></label><label>State *<select id="vs"><option value="">Select</option>${o(Object.keys(GEO))}</select></label><label>District *<select id="vd"><option value="">Select state first</option></select></label><label>Dairy cooperative / union<input id="vu" readonly></label><label>Village<input id="vv"></label><label>Gender (optional)<select id="vg"><option value="">Prefer not to say</option>${o(['Female','Male','Other'])}</select></label><label>Age group (optional)<select id="va"><option value="">Not stated</option>${o(['Below 25','25-35','36-50','51+'])}</select></label><label>Farmer category *<select id="vc"><option value="">Select</option>${o(['Small','Marginal','Medium','Large'])}</select></label><label>Dairy experience (years)<input id="vx" type="number" min="0" max="70"></label><label>Number of milch animals<input id="van" type="number" min="0" max="500"></label><label>Main milk type *<select id="vm"><option value="">Select</option><option value="Cow">Cow</option><option value="Buffalo">Buffalo</option><option value="Mixed">Both</option></select></label></div></fieldset>
+<fieldset><legend>Milk price information</legend><div class="fg"><label>Current price (₹/litre) *<input id="vcur" type="number" step="0.01" min="0"></label><label>Previous price (₹/litre) *<input id="vprev" type="number" step="0.01" min="0"></label><label>Fat %<input id="vfat" type="number" step="0.1" min="0" max="12"></label><label>SNF %<input id="vsnf" type="number" step="0.1" min="0" max="12"></label><label>Date of price change<input id="vpt" type="date"></label><label>Milk supplied per day (litres) *<input id="vqty" type="number" step="0.1" min="0"></label><label>Daily dairy expenses (₹, optional)<input id="vdc" type="number" min="0"></label></div></fieldset>
+<fieldset><legend>Questionnaire (all required except Q9, Q10)</legend>${Q.slice(0,4).map(qh).join('')}<div class="q"><b>Q5. Which factors put the most pressure on your dairy income? (select all that apply)</b>${F5.map((f,i)=>`<label class="opt"><input type="checkbox" name="q5" value="${i}">${f}</label>`).join('')}</div>${Q.slice(4).map(qh).join('')}
+<div class="q"><b>Q9. What is your biggest concern regarding milk prices?</b><textarea id="vc9" rows="2" style="width:100%"></textarea></div><div class="q"><b>Q10. What improvements would increase the profitability of dairy farming?</b><textarea id="vc10" rows="2" style="width:100%"></textarea></div></fieldset>
+<div id="verr"></div><button class="p" type="submit">Submit feedback</button>`;
+$('#vs').onchange=()=>{const s=$('#vs').value;$('#vd').innerHTML='<option value="">Select</option>'+(s?o(Object.keys(GEO[s])):'');$('#vu').value=''};
+$('#vd').onchange=()=>{$('#vu').value=$('#vs').value&&$('#vd').value?GEO[$('#vs').value][$('#vd').value]:''};
+$('#vf').onsubmit=submitFB}
+const qh=q=>`<div class="q"><b>${q.t}</b>${q.o.map((x,i)=>`<label class="opt"><input type="radio" name="${q.id}" value="${i}">${x}</label>`).join('')}</div>`;
+function submitFB(e){e.preventDefault();const g=i=>$('#'+i).value.trim(),er=[],n=i=>parseFloat(g(i));
+if(!$('#vcons').checked)er.push('Consent is required before feedback can be recorded.');
+[['vs','State'],['vd','District'],['vc','Farmer category'],['vm','Main milk type']].forEach(x=>{if(!g(x[0]))er.push(x[1]+' is required.')});
+if(!(n('vcur')>0))er.push('Enter a current price above 0.');if(!(n('vprev')>0))er.push('Enter a previous price above 0.');if(!(n('vqty')>0))er.push('Enter daily milk quantity above 0.');
+['vfat','vsnf'].forEach(i=>{if(g(i)&&(n(i)<0||n(i)>12))er.push('Fat and SNF must be between 0 and 12.')});if(n('vcur')>200||n('vprev')>200)er.push('Prices above ₹200 per litre look like a typing error.');
+const q={};Q.forEach(x=>{const c=document.querySelector(`input[name=${x.id}]:checked`);if(!c)er.push('Please answer '+x.t.slice(0,2)+'.');else q[x.id]=+c.value});
+const q5=[...document.querySelectorAll('input[name=q5]:checked')].map(c=>+c.value);if(!q5.length)er.push('Select at least one factor in Q5.');
+if(er.length){$('#verr').innerHTML='<div class="err">'+er.map(esc).join('<br>')+'</div>';return}
+const t=Date.now(),r=Object.assign({id:$('#vanon').checked||!g('vid')?'A-'+Math.random().toString(36).slice(2,8).toUpperCase():g('vid'),t,s:g('vs'),d:g('vd'),u:$('#vu').value,v:g('vv'),g:g('vg'),a:g('va'),x:n('vx')||0,an:n('van')||0,m:g('vm'),c:g('vc'),cur:n('vcur'),prev:n('vprev'),fat:n('vfat')||0,snf:n('vsnf')||0,pt:pdt(g('vpt'))||t,qty:n('vqty'),dcost:n('vdc')||0,q5,c9:g('vc9'),c10:g('vc10'),anon:$('#vanon').checked,demo:false,man:null},q);
+r.auto=sc(r);DB.fb.push(r);if(Store.save('nddb_fb',DB.fb)){$('#verr').innerHTML=`<div class="ok">Feedback saved. Reference ${esc(r.id)}. Submitted on ${ft(t)}. Structured sentiment: ${r.auto}.</div>`;$('#vf').reset();$('#vu').value='';banner()}}
+/* ---------- price tracker ---------- */
+const basis=r=>r.b||`Fat ${r.f}% / SNF ${r.n}%`;
+const prF=(skipM)=>DB.pr.filter(r=>(!F.s||r.s===F.s)&&(!F.d||r.d===F.d)&&(!F.u||r.u===F.u)&&(skipM||!F.m||r.m===F.m));
+function asOf(rows,t){const m={};rows.forEach(r=>{if(r.t<=t){const k=r.s+'|'+r.d+'|'+r.u+'|'+r.m+'|'+basis(r);if(!m[k]||m[k].t<r.t)m[k]=r}});return m}
+function pcmp(rows,days,keyf){const c=asOf(rows,NOW),p=asOf(rows,NOW-days*DAY),g={};for(const k in c)if(p[k]){const r=c[k],kk=keyf(r),e=g[kk]=g[kk]||{k:kk,m:r.m,b:new Set(),c:0,p:0,n:0};e.c+=r.p;e.p+=p[k].p;e.n++;e.b.add(basis(r))}return Object.values(g).map(e=>({k:e.k,m:e.m,b:e.b.size>1?'Mixed bases':[...e.b][0],c:e.c/e.n,p:e.p/e.n,n:e.n}))}
+R.price=()=>{const days=+$('#pcmp').value,lv=$('#pgrp').value,rows=prF(false),all=prF(true);
+const cards=['Cow','Buffalo'].map(m=>{const x=pcmp(all.filter(r=>r.m===m),days,()=>m)[0];return x?`<div class="kpi"><span>Average ${m.toLowerCase()} milk price</span><b>${RS(x.c)}</b><small>${x.b}. Previous: ${RS(x.p)} (${(x.c-x.p>=0?'+':'')+(x.c-x.p).toFixed(2)} ₹/L, ${((x.c/x.p-1)*100).toFixed(1)}%)</small></div>`:`<div class="kpi"><span>Average ${m.toLowerCase()} milk price</span><b>n/a</b><small>No price rows for this selection</small></div>`}).join('');
+$('#pk').innerHTML=cards+`<div class="kpi"><span>Price rows in view</span><b>${IN(rows.length,0)}</b><small>Demo plus imported rows</small></div>`;
+const ms=months(14);ch('c7','line',{labels:ms.map(ml),datasets:['Cow','Buffalo'].map((m,i)=>({label:m,borderColor:[BL,'#2e9e6a'][i],spanGaps:true,tension:.25,data:ms.map(k=>{const z=all.filter(r=>r.m===m&&mk(r.t)===k);return z.length?+(z.reduce((a,r)=>a+r.p,0)/z.length).toFixed(2):null})}))});
+const fb=DB.fb.filter(base),band=r=>r.m==='Cow'?(r.fat<3.8?'Low fat (below 3.8)':r.fat<=4.2?'Medium fat (3.8 to 4.2)':'High fat (above 4.2)'):(r.fat<6.5?'Low fat (below 6.5)':r.fat<=7?'Medium fat (6.5 to 7.0)':'High fat (above 7.0)');
+const bg={};fb.filter(r=>r.m!=='Mixed'&&r.fat>0).forEach(r=>{const k=r.m+'|'+band(r);(bg[k]=bg[k]||[]).push(r)});
+mkTable('pfat',[['Milk type',r=>r.m],['Fat band',r=>r.b],['Farmer reports',r=>r.n],['Avg price (₹/L)',r=>RS(r.a),r=>r.a]],Object.entries(bg).map(([k,v])=>({m:k.split('|')[0],b:k.split('|')[1],n:v.length,a:v.reduce((s,r)=>s+r.cur,0)/v.length})).sort((a,b)=>a.m.localeCompare(b.m)||a.b.localeCompare(b.b)));
+mkTable('ptb',[[{s:'State',d:'District',u:'Dairy union'}[lv],r=>esc(r.k)],['Milk type',r=>r.m],['Pricing basis',r=>esc(r.b)],['Current (₹/L)',r=>RS(r.c),r=>r.c],['Previous (₹/L)',r=>RS(r.p),r=>r.p],['Change (₹/L)',r=>(r.c-r.p>=0?'+':'')+(r.c-r.p).toFixed(2),r=>r.c-r.p],['Change %',r=>((r.c/r.p-1)*100).toFixed(1)+'%',r=>r.c/r.p],['Series',r=>r.n]],pcmp(rows,days,r=>r[lv]).sort((a,b)=>a.k.localeCompare(b.k)||a.m.localeCompare(b.m)))};
+function importPR(file){const fr=new FileReader();fr.onload=()=>{try{const L=fr.result.replace(/^\ufeff/,'').split(/\r?\n/).filter(x=>x.trim());const sp=l=>{const o=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){o.push(c);c=''}else c+=ch}o.push(c);return o.map(x=>x.trim())};
+const h=sp(L[0]).map(x=>x.toLowerCase()),need=['state','district','milk','price','date'],miss=need.filter(x=>!h.includes(x));if(miss.length){$('#pmsg').innerHTML='<div class="err">Missing columns: '+miss.join(', ')+'. Download the template for the correct format.</div>';return}
+let ok=0;const bad=[];L.slice(1).forEach((l,i)=>{const c=sp(l),o={};h.forEach((k,j)=>o[k]=c[j]);const m=/^b/i.test(o.milk)?'Buffalo':/^c/i.test(o.milk)?'Cow':'',t=pdt(o.date),p=parseFloat(o.price);
+if(!GEO[o.state]||!m||!(p>0&&p<200)||isNaN(t)){bad.push('Row '+(i+2));return}DB.pr.push({s:o.state,d:o.district,u:o.union||(GEO[o.state][o.district]||''),m,f:parseFloat(o.fat)||(m==='Cow'?4:6.5),n:parseFloat(o.snf)||(m==='Cow'?8.5:9),p,t,b:o.basis||'',demo:false});ok++});
+Store.save('nddb_pr',DB.pr);$('#pmsg').innerHTML=`<div class="${ok?'ok':'err'}">Imported ${ok} rows. ${bad.length?'Skipped '+bad.length+' invalid rows ('+bad.slice(0,8).join(', ')+'). State must match a managed state, milk must be Cow or Buffalo, price 0 to 200, date YYYY-MM-DD or DD-MM-YYYY.':''}</div>`;R.price()}catch(e){$('#pmsg').innerHTML='<div class="err">Could not read this file. Save it as CSV and try again.</div>'}};fr.readAsText(file)}
+/* ---------- economic impact ---------- */
+const EF=[['qty','Milk per day (litres)',12,10],['price','Procurement price (₹/L)',34,31],['feed','Cattle feed (₹/day)',150,150],['fod','Fodder (₹/day)',70,70],['vet','Veterinary (₹/day)',25,25],['lab','Labour (₹/day)',60,60],['oth','Other dairy expenses (₹/day)',20,20]];
+function econCalc(i){const v=k=>parseFloat($('#e'+i+k).value)||0,rev=v('qty')*v('price'),ex=v('feed')+v('fod')+v('vet')+v('lab')+v('oth');return{rev,ex,sd:rev-ex,sm:(rev-ex)*30}}
+function initEcon(){$('#ecin').innerHTML='<table><tr><th>Item</th><th>Period A</th><th>Period B</th></tr>'+EF.map(f=>`<tr><td>${f[1]}</td><td><input class="ei" id="eA${f[0]}" type="number" min="0" step="0.01" value="${f[2]}"></td><td><input class="ei" id="eB${f[0]}" type="number" min="0" step="0.01" value="${f[3]}"></td></tr>`).join('')+'</table><div id="eres"></div>';$$('.ei').forEach(x=>x.oninput=R.econ)}
+R.econ=()=>{const A=econCalc('A'),B=econCalc('B'),f=(a,b)=>`<td>${RS(a)}</td><td>${RS(b)}</td><td>${(b-a>=0?'+':'')+IN(b-a,2)}</td>`;
+$('#eres').innerHTML='<table style="margin-top:10px"><tr><th>Estimate</th><th>A</th><th>B</th><th>Change</th></tr><tr><td>Daily milk revenue</td>'+f(A.rev,B.rev)+'</tr><tr><td>Daily dairy expenses</td>'+f(A.ex,B.ex)+'</tr><tr><td>Estimated daily dairy surplus</td>'+f(A.sd,B.sd)+'</tr><tr><td>Estimated monthly dairy surplus (x30)</td>'+f(A.sm,B.sm)+'</tr></table>';
+ch('c8','bar',{labels:['Period A','Period B'],datasets:[{label:'Revenue',backgroundColor:BL,data:[A.rev,B.rev]},{label:'Expenses',backgroundColor:'#e6a23c',data:[A.ex,B.ex]},{label:'Estimated surplus',backgroundColor:'#2e9e6a',data:[A.sd,B.sd]}]});
+const d=cur().filter(r=>r.dcost>0),cats=['Marginal','Small','Medium','Large'].map(c=>{const z=d.filter(r=>r.c===c);if(!z.length)return null;const av=f=>z.reduce((a,r)=>a+f(r),0)/z.length,rev=av(r=>r.qty*r.cur),ex=av(r=>r.dcost);return{c,n:z.length,q:av(r=>r.qty),p:av(r=>r.cur),rev,ex,sd:rev-ex}}).filter(Boolean);
+mkTable('ecat',[['Category',r=>r.c],['Records',r=>r.n],['Avg litres/day',r=>IN(r.q),r=>r.q],['Avg price',r=>RS(r.p),r=>r.p],['Daily revenue',r=>RS(r.rev),r=>r.rev],['Daily expenses',r=>RS(r.ex),r=>r.ex],['Est. daily surplus',r=>RS(r.sd),r=>r.sd],['Est. monthly surplus',r=>RS(r.sd*30),r=>r.sd]],cats)};
+/* ---------- sentiment engine ---------- */
+R.sent=()=>{const d=cur(),a=stat(d),ver=d.filter(r=>r.man).length,k=(l,v,s)=>`<div class="kpi"><span>${l}</span><b>${v}</b><small>${s}</small></div>`;
+$('#sk').innerHTML=k('Positive',a.pos.toFixed(1)+'%','Of '+IN(a.n,0)+' responses')+k('Neutral',a.neu.toFixed(1)+'%','')+k('Negative',a.neg.toFixed(1)+'%','')+k('Automatically classified',IN(a.n-ver,0),'Structured survey rules')+k('Manually verified',IN(ver,0),'Corrected by an analyst');
+const tc={};d.forEach(r=>topics(r.c9).forEach(t=>tc[t]=(tc[t]||0)+1));const ts=Object.keys(TOP);
+ch('c9','bar',{labels:ts,datasets:[{label:'Mentions',data:ts.map(t=>tc[t]||0),backgroundColor:ts.map(t=>POSTOP.includes(t)?'#2e9e6a':'#d9534f')}]},{indexAxis:'y',plugins:{legend:{display:false}}});
+const rec=DB.fb.filter(base);ch('c10','line',{labels:months(12).map(ml),datasets:['Positive','Neutral','Negative'].map(x=>({label:x,borderColor:COL[x],spanGaps:true,tension:.25,data:monthly(rec,z=>+(z.filter(r=>sent(r)===x).length*100/z.length).toFixed(1))}))},{scales:{y:{min:0,max:100}}});
+mkTable('st',[['Date',r=>fd(r.t),r=>r.t],['State',r=>esc(r.s)],['Comment (Q9)',r=>esc(r.c9||'(none)')],['Keyword class',r=>kw(r.c9)],['Record sentiment',r=>sent(r)],['Status',r=>r.man?'Verified':'Auto'],['Set sentiment',r=>`<select onchange="setMan('${esc(r.id)}',this.value)"><option value="">Keep auto</option>${['Positive','Neutral','Negative'].map(x=>`<option${r.man===x?' selected':''}>${x}</option>`).join('')}</select>`,r=>0]],d.filter(r=>r.c9),{limit:100})};
+function setMan(id,v){const r=DB.fb.find(x=>x.id===id);if(!r)return;r.man=v||null;Store.save('nddb_fb',DB.fb);toast('Saved. Record marked '+(v?'Verified':'Auto')+'.');R.sent()}
+/* ---------- regional ---------- */
+R.reg=()=>{const d=cur();if(!d.length){$('#rst').innerHTML='<div class="empty">No responses for these filters.</div>';$('#rdet').innerHTML='';return}
+stateTable('rst',d);if(!RSEL){$('#rdet').innerHTML='<div class="note">Select a state in the table to see district detail.</div>';return}
+const z=d.filter(r=>r.s===RSEL);$('#rdet').innerHTML=`<h3 style="margin:16px 0 6px">${esc(RSEL)}: ${z.length} responses</h3><div class="grid"><div class="card"><h3>District detail</h3><div class="tw" id="rdt"></div></div><div class="card"><h3>Monthly sentiment trend (%)</h3><div class="cv"><canvas id="c11"></canvas></div></div><div class="card"><h3>Major concerns</h3><div class="cv"><canvas id="c12"></canvas></div></div></div>`;
+mkTable('rdt',[['District',r=>esc(r.k)],['Responses',r=>r.n,r=>r.n],['Positive %',r=>r.pos.toFixed(1),r=>r.pos],['Negative %',r=>r.neg.toFixed(1),r=>r.neg],['Avg cow price',r=>r.cow?RS(r.cow):'n/a',r=>r.cow||0],['Avg buffalo price',r=>r.buf?RS(r.buf):'n/a',r=>r.buf||0],['Main concern',r=>esc(r.tc)],['Quality',r=>r.n<CFG.minN?'Low sample':'Adequate']],Object.keys(GEO[RSEL]).map(k=>{const y=z.filter(r=>r.d===k),s=stat(y),av=m=>{const w=y.filter(r=>r.m===m);return w.length?stat(w).pr:0};return{k,n:s.n,pos:s.pos,neg:s.neg,cow:av('Cow'),buf:av('Buffalo'),tc:topC(y)}}).filter(r=>r.n));
+const rec=DB.fb.filter(r=>r.s===RSEL&&(!F.m||r.m===F.m)&&(!F.c||r.c===F.c));
+ch('c11','line',{labels:months(12).map(ml),datasets:['Positive','Negative'].map(x=>({label:x,borderColor:COL[x],spanGaps:true,data:months(12).map(k=>{const y=rec.filter(r=>mk(r.t)===k);return y.length>=3?+(y.filter(r=>sent(r)===x).length*100/y.length).toFixed(1):null})}))},{scales:{y:{min:0,max:100}}});
+const tc=cnt(z,r=>r.q5.map(i=>F5[i])).slice(0,5);ch('c12','bar',{labels:tc.map(x=>x[0]),datasets:[{label:'Farmers',data:tc.map(x=>x[1]),backgroundColor:BL}]},{indexAxis:'y',plugins:{legend:{display:false}}})};
+/* ---------- alerts ---------- */
+function evalU(c,p){const a=stat(c),b=p.length>=CFG.minN?stat(p):null,H=[],add=(k,cv,pv,act)=>H.push({k,cv,pv,act}),sh=z=>{const w=z.filter(r=>r.dcost>0);return w.length>=CFG.minN?w.filter(r=>r.dcost>r.cur*r.qty).length*100/w.length:null};
+if(a.neg>CFG.neg)add('Negative sentiment above '+CFG.neg+'%',a.neg.toFixed(1)+'%',b?b.neg.toFixed(1)+'%':'n/a','Review field feedback and brief the union on the main concerns.');
+if(b&&a.neg-b.neg>CFG.dneg)add('Negative sentiment up by more than '+CFG.dneg+' points',a.neg.toFixed(1)+'%',b.neg.toFixed(1)+'%','Check what changed in prices, payments or communication.');
+if(a.chg<-CFG.price)add('Average price decline above '+CFG.price+'%',a.chg.toFixed(1)+'%',b?b.chg.toFixed(1)+'%':'n/a','Compare with union price circulars and market rates.');
+const c1=sh(c),c0=sh(p);if(c1!==null&&c1>CFG.cost)add('Costs exceed milk revenue for more than '+CFG.cost+'% of farmers',c1.toFixed(1)+'%',c0!==null?c0.toFixed(1)+'%':'n/a','Review feed and fodder support and the price formula.');
+const ex=z=>z.length?z.filter(r=>r.q8>=2).length*100/z.length:0;if(ex(c)>CFG.exit)add('Intention to reduce or exit dairying above '+CFG.exit+'%',ex(c).toFixed(1)+'%',p.length>=CFG.minN?ex(p).toFixed(1)+'%':'n/a','Arrange field visits and consider retention measures.');return H}
+R.alert=()=>{const key=F.s?'d':'s',units=F.s?Object.keys(GEO[F.s]):Object.keys(GEO),bb=r=>(!F.m||r.m===F.m)&&(!F.c||r.c===F.c)&&(!F.s||r.s===F.s);
+const cd=DB.fb.filter(r=>bb(r)&&r.t>=NOW-F.p*DAY),pv=DB.fb.filter(r=>bb(r)&&r.t<NOW-F.p*DAY&&r.t>=NOW-2*F.p*DAY),rows=[],low=[],ok=[],lc={Yellow:0,Orange:0,Red:0};
+units.forEach(u=>{const c=cd.filter(r=>r[key]===u),p=pv.filter(r=>r[key]===u);if(c.length<CFG.minN){low.push(u+' (n='+c.length+')');return}const h=evalU(c,p);if(!h.length){ok.push(u);return}const lv=h.length>=3?'Red':h.length===2?'Orange':'Yellow';lc[lv]++;h.forEach(x=>rows.push(Object.assign({u,lv,n:c.length},x)))});
+$('#alsum').innerHTML='<div class="kpis">'+[['Green','Normal',ok.length],['Yellow','Monitor',lc.Yellow],['Orange','Attention required',lc.Orange],['Red','Critical',lc.Red]].map(x=>`<div class="kpi"><span><span class="pill ${x[0]}">${x[0]}</span> ${x[1]}</span><b>${x[2]}</b><small>${F.s?'districts':'states'}</small></div>`).join('')+'</div>';
+mkTable('alt',[[F.s?'District':'State',r=>esc(r.u)],['Level',r=>`<span class="pill ${r.lv}">${r.lv}</span>`,r=>['Yellow','Orange','Red'].indexOf(r.lv)],['Concern',r=>esc(r.k)],['Current',r=>r.cv],['Previous',r=>r.pv],['Responses',r=>r.n],['Reporting period',r=>'Last '+F.p+' days'],['Suggested follow-up',r=>esc(r.act)]],rows);
+$('#alnote').innerHTML=`Level rule: 1 triggered indicator is Yellow, 2 is Orange, 3 or more is Red. Units with fewer than ${CFG.minN} responses are not assessed${low.length?': '+esc(low.join(', ')):''}. Thresholds can be changed under Administration. Selecting a state in the filters shows its districts.`}
+/* ---------- reports ---------- */
+const RT={national:'National sentiment report',state:'State-wise sentiment report',district:'District-wise sentiment report',price:'Milk price fluctuation report',econ:'Farmer economic impact report',sat:'Farmer satisfaction report',concern:'Major concerns and emerging issues',month:'Monthly trend report',qtr:'Quarterly trend report'};
+function sRows(d,keyf){const g={};d.forEach(r=>(g[keyf(r)]=g[keyf(r)]||[]).push(r));return Object.keys(g).sort().map(k=>{const s=stat(g[k]);return[k,s.n,s.pos.toFixed(1),s.neu.toFixed(1),s.neg.toFixed(1),s.dis.toFixed(1),s.pr.toFixed(2),s.chg.toFixed(1)]})}
+const SH=['Responses','Positive %','Neutral %','Negative %','Dissatisfied %','Avg price (₹/L)','Avg price change %'];
+function genRep(t){const d=cur(),p=prv();
+if(t==='national'){const a=stat(d),b=stat(p),f=(x,y)=>[x,a[y].toFixed(1),p.length?b[y].toFixed(1):'n/a'];return{h:['Indicator','Current period','Previous period'],r:[['Responses',a.n,b.n],f('Positive %','pos'),f('Neutral %','neu'),f('Negative %','neg'),f('Dissatisfied %','dis'),['Avg reported price (₹/L)',a.pr.toFixed(2),p.length?b.pr.toFixed(2):'n/a'],['Avg price change %',a.chg.toFixed(1),p.length?b.chg.toFixed(1):'n/a']]}}
+if(t==='state')return{h:['State',...SH],r:sRows(d,r=>r.s)};if(t==='district')return{h:['District',...SH],r:sRows(d,r=>r.s+': '+r.d)};
+if(t==='price')return{h:['State and milk type','Responses','Avg current ₹/L','Avg previous ₹/L','Avg change %'],r:uniq(d.map(r=>r.s+'|'+r.m)).sort().map(k=>{const z=d.filter(r=>r.s+'|'+r.m===k),s=z.length;return[k.replace('|',', '),s,(z.reduce((a,r)=>a+r.cur,0)/s).toFixed(2),(z.reduce((a,r)=>a+r.prev,0)/s).toFixed(2),stat(z).chg.toFixed(1)]})};
+if(t==='econ'){const w=d.filter(r=>r.dcost>0);return{h:['Category','Records','Daily revenue ₹','Daily expenses ₹','Estimated daily dairy surplus ₹','Estimated monthly dairy surplus ₹'],r:['Marginal','Small','Medium','Large'].map(c=>{const z=w.filter(r=>r.c===c);if(!z.length)return null;const rv=z.reduce((a,r)=>a+r.qty*r.cur,0)/z.length,ex=z.reduce((a,r)=>a+r.dcost,0)/z.length;return[c,z.length,rv.toFixed(0),ex.toFixed(0),(rv-ex).toFixed(0),((rv-ex)*30).toFixed(0)]}).filter(Boolean)}}
+if(t==='sat'){const o=[];[['q1','Price satisfaction (Q1)'],['q6','Payment system (Q6)'],['q7','Price communication (Q7)']].forEach(([id,l])=>{const qq=Q.find(x=>x.id===id);qq.o.forEach((x,i)=>{const n=d.filter(r=>r[id]===i).length;o.push([l,x,n,d.length?(n*100/d.length).toFixed(1):'0'])})});return{h:['Question','Answer','Farmers','% of responses'],r:o}}
+if(t==='concern'){const o=cnt(d,r=>r.q5.map(i=>F5[i])).map(x=>['Pressure factor (Q5)',x[0],x[1]]);const tc={};d.forEach(r=>topics(r.c9).forEach(k=>tc[k]=(tc[k]||0)+1));return{h:['Type','Concern or topic','Mentions'],r:o.concat(Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(x=>['Comment topic (keyword)',x[0],x[1]]))}}
+const rec=DB.fb.filter(base),kf=t==='month'?r=>ml(mk(r.t)):r=>{const x=new Date(r.t);return x.getFullYear()+' Q'+(Math.floor(x.getMonth()/3)+1)};
+const g=sRows(rec,kf);if(t==='month')g.sort((a,b)=>a[0].split('-').reverse().join('').localeCompare(b[0].split('-').reverse().join('')));return{h:[t==='month'?'Month':'Quarter',...SH],r:g}}
+function summary(){const d=cur(),p=prv();if(!d.length)return'<div class="empty">No data for these filters.</div>';const a=stat(d),b=stat(p),sts=Object.keys(GEO).map(s=>{const z=d.filter(r=>r.s===s);return{s,n:z.length,neg:stat(z).neg}}).filter(x=>x.n>=CFG.minN).sort((x,y)=>y.neg-x.neg).slice(0,3);
+const ex=d.filter(r=>r.q8>=2).length,tc=cnt(d,r=>r.q5.map(i=>F5[i])).slice(0,3).map(x=>x[0]);
+return`<h3>Management summary (last ${F.p} days)</h3><p><b>What is happening?</b> ${a.neg.toFixed(1)}% of farmers are negative, ${a.pos.toFixed(1)}% positive${p.length?' (negative was '+b.neg.toFixed(1)+'% in the previous period)':''}. Farmers report an average price change of ${a.chg.toFixed(1)}%.</p>
+<p><b>Where?</b> ${sts.length?'Highest negative sentiment among states with at least '+CFG.minN+' responses: '+sts.map(x=>`${x.s} ${x.neg.toFixed(1)}% (n=${x.n})`).join(', ')+'.':'No state has enough responses for a reliable comparison.'}</p>
+<p><b>Why are farmers concerned?</b> Most selected pressures: ${tc.join(', ')}.</p><p><b>How many are affected?</b> ${IN(Math.round(a.neg*a.n/100),0)} of ${IN(a.n,0)} respondents are negative and ${IN(ex,0)} (${(ex*100/a.n).toFixed(1)}%) are considering reducing or leaving dairy farming.</p>
+<p><b>What action may be required?</b> ${a.neg>CFG.neg||ex*100/a.n>CFG.exit?'Review the Early Warnings tab and follow up with the flagged unions on feed costs, price communication and payments.':'Continue monitoring. No national threshold is breached in this view.'}</p><p class="note">DEMO DATA: NOT ACTUAL NDDB DATA, unless entered records are included. Counts depend on the selected filters.</p>`}
+R.rep=()=>{const t=$('#rsel').value,x=genRep(t);$('#rsum').innerHTML=summary();$('#rtt').textContent=RT[t]+' | Filters applied | Generated '+fd(NOW);
+$('#rtb').innerHTML=x.r.length?'<table><thead><tr>'+x.h.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+x.r.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>':'<div class="empty">No data for this report with the current filters.</div>'}
+/* ---------- admin ---------- */
+function admin(){const f=DB.fb,en=f.filter(r=>!r.demo),inc=f.filter(r=>!r.v||!r.c9||!r.c10).length,last=en.length?fd(Math.max(...en.map(r=>r.t))):'No entered records yet';
+$('#adm').innerHTML=`<div class="note">Role-based access here is a placeholder. Real access control must be enforced by a secure backend. Farmer names and phone numbers are deliberately not collected.</div>
+<div class="kpis"><div class="kpi"><span>Total records</span><b>${IN(f.length,0)}</b><small>Demo ${IN(f.length-en.length,0)} | Entered ${en.length}</small></div><div class="kpi"><span>Incomplete records</span><b>${IN(inc,0)}</b><small>Missing village or comments</small></div><div class="kpi"><span>Completeness</span><b>${f.length?((1-inc/f.length)*100).toFixed(1):0}%</b><small>Share of fully filled records</small></div><div class="kpi"><span>Last entered submission</span><b style="font-size:18px">${last}</b><small>Price rows: ${IN(DB.pr.length,0)}</small></div></div>
+<div class="grid"><div class="card"><h3>Alert thresholds</h3><div class="fg">${[['neg','Negative sentiment above (%)'],['dneg','Rise in negative sentiment (points)'],['price','Average price decline above (%)'],['cost','Costs exceed revenue above (% of farmers)'],['exit','Reduce or exit intention above (%)'],['minN','Minimum responses per unit']].map(x=>`<label>${x[1]}<input type="number" min="0" id="th_${x[0]}" value="${CFG[x[0]]}"></label>`).join('')}</div><div class="row"><button class="p" id="thsave">Save thresholds</button></div></div>
+<div class="card"><h3>Manage states, districts and unions</h3><div class="fg"><label>State<input id="gs" list="gsl"></label><datalist id="gsl">${Object.keys(GEO).map(s=>`<option>${esc(s)}`).join('')}</datalist><label>District<input id="gd"></label><label>Milk union<input id="gu"></label></div><div class="row"><button class="p" id="gadd">Add or update</button></div><small>Existing: ${Object.keys(GEO).map(s=>esc(s)+' ('+Object.keys(GEO[s]).length+')').join(', ')}</small></div>
+<div class="card"><h3>Data actions</h3><div class="row"><button class="s" id="xall">Export all records (CSV)</button><button class="s" id="xreg">Regenerate demo data</button><button class="s" id="xdel">Remove all demo data</button></div></div>
+<div class="card wide"><h3>Feedback records</h3><input id="aq" placeholder="Search records" oninput="TB.at.q=this.value.toLowerCase();drawT('at')"><div class="tw" id="at"></div></div></div>`;
+mkTable('at',[['ID',r=>esc(r.id)],['Date',r=>fd(r.t),r=>r.t],['State',r=>esc(r.s)],['District',r=>esc(r.d)],['Milk',r=>r.m],['Category',r=>r.c],['Price ₹/L',r=>r.cur.toFixed(2),r=>r.cur],['Sentiment',r=>sent(r)],['Source',r=>r.demo?'Demo':'Entered'],['Actions',r=>`<button class="s" onclick="editRec('${esc(r.id)}')">Edit price</button> <button class="s" onclick="delRec('${esc(r.id)}')">Delete</button>`,r=>0]],f.slice().sort((a,b)=>b.t-a.t),{limit:150});
+$('#thsave').onclick=()=>{for(const k in CFG){const v=parseFloat($('#th_'+k).value);if(isNaN(v)||v<0){toast('Enter valid numbers for all thresholds');return}CFG[k]=v}Store.save('nddb_cfg',CFG);toast('Thresholds saved')};
+$('#gadd').onclick=()=>{const s=$('#gs').value.trim(),d=$('#gd').value.trim(),u=$('#gu').value.trim();if(!s||!d||!u){toast('Enter state, district and union');return}(GEO[s]=GEO[s]||{})[d]=u;Store.save('nddb_geo',GEO);fbar();initVoice();admin();toast('Saved')};
+$('#xall').onclick=()=>dl('NDDB_feedback_all.csv',recRows(DB.fb));
+$('#xreg').onclick=()=>{if(confirm('Replace demo records with newly generated demo data? Entered records are kept.')){DB.fb=DB.fb.filter(r=>!r.demo).concat(genFB(1000));DB.pr=DB.pr.filter(r=>!r.demo).concat(genPR());saveAll();render();toast('Demo data regenerated')}};
+$('#xdel').onclick=()=>{if(confirm('Remove all demo records and demo prices? This cannot be undone.')){DB.fb=DB.fb.filter(r=>!r.demo);DB.pr=DB.pr.filter(r=>!r.demo);saveAll();render();toast('Demo data removed')}}}
+R.admin=admin;
+const recRows=d=>[['ID','Date','State','District','Union','Village','Category','Milk','Current price','Previous price','Fat','SNF','Litres per day','Daily expenses','Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9 comment','Q10 suggestion','Sentiment','Status','Source']].concat(d.map(r=>[r.id,fd(r.t),r.s,r.d,r.u,r.v,r.c,r.m,r.cur,r.prev,r.fat,r.snf,r.qty,r.dcost,Q[0].o[r.q1],Q[1].o[r.q2],Q[2].o[r.q3],Q[3].o[r.q4],r.q5.map(i=>F5[i]).join('; '),Q[4].o[r.q6],Q[5].o[r.q7],Q[6].o[r.q8],r.c9,r.c10,sent(r),r.man?'Verified':'Auto',r.demo?'DEMO':'Entered']));
+function delRec(id){if(confirm('Delete this record permanently?')){DB.fb=DB.fb.filter(r=>r.id!==id);Store.save('nddb_fb',DB.fb);render()}}
+function editRec(id){const r=DB.fb.find(x=>x.id===id),v=parseFloat(prompt('New current price (₹/litre)',r.cur));if(v>0&&v<200){r.cur=v;r.auto=sc(r);Store.save('nddb_fb',DB.fb);render()}else if(!isNaN(v))toast('Enter a price between 0 and 200')}
+/* ---------- init ---------- */
+$('#rsel').innerHTML=Object.entries(RT).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');$('#rsel').onchange=R.rep;
+$('#rcsv').onclick=()=>{const t=$('#rsel').value,x=genRep(t);dl('NDDB_'+t+'_report.csv',[x.h,...x.r])};
+$('#rfil').onclick=()=>{const d=cur();if(!d.length){toast('No data in the current filters');return}dl('NDDB_filtered_feedback.csv',recRows(d))};
+$('#pcmp').onchange=$('#pgrp').onchange=R.price;$('#pcsv').onchange=e=>{if(e.target.files[0])importPR(e.target.files[0]);e.target.value=''};
+$('#ptpl').onclick=()=>dl('NDDB_price_template.csv',[['state','district','union','milk','fat','snf','price','date','basis'],['Gujarat','Anand','Amul Dairy','Cow',4,8.5,38.5,'01-10-2026','Standard fat 4.0 SNF 8.5'],['Gujarat','Anand','Amul Dairy','Buffalo',6.5,9,59,'01-10-2026','Standard fat 6.5 SNF 9.0']]);
+window.addEventListener('error',()=>toast('Something went wrong. Refresh the page and try again.'));
+fbar();initVoice();initEcon();drawNav();show('dash');
+</script></body></html>

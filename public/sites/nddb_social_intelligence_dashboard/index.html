@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NDDB Social Media Intelligence Dashboard</title>
+<style>
+  :root {
+    --navy:#12345b; --blue:#1769aa; --blue2:#eaf3fb; --bg:#f4f7fb;
+    --text:#243247; --muted:#6b7788; --line:#e3eaf2; --green:#16845b;
+    --red:#c53c4b; --amber:#b7791f; --purple:#7357b8; --white:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  .app{display:flex;min-height:100vh}
+  aside{width:245px;background:#102d50;color:#fff;padding:24px 16px;flex-shrink:0}
+  .brand{display:flex;align-items:center;gap:12px;padding:4px 8px 24px;border-bottom:1px solid #2c4968}
+  .logo{width:42px;height:42px;border-radius:12px;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:800}
+  .brand h1{font-size:15px;margin:0;line-height:1.35}.brand small{color:#b9cbe0;font-size:11px}
+  .nav-label{font-size:10px;letter-spacing:1.4px;color:#8fa8c4;margin:24px 10px 8px}
+  nav button{width:100%;border:0;background:transparent;color:#d5e2f0;padding:12px 11px;text-align:left;border-radius:9px;cursor:pointer;font-size:13px;margin:2px 0}
+  nav button.active,nav button:hover{background:#214b78;color:white}
+  .side-note{margin:30px 8px 0;padding:12px;border:1px solid #315272;border-radius:10px;color:#b9cbe0;font-size:11px;line-height:1.5}
+  main{flex:1;min-width:0;padding:26px 30px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:22px}
+  .eyebrow{font-size:11px;color:var(--blue);font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+  h2{margin:5px 0 0;font-size:25px;color:var(--navy)}
+  .actions{display:flex;gap:9px;align-items:center}
+  select,input,button{font:inherit}
+  .filter{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:9px;color:var(--text)}
+  .btn{border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:#fff;cursor:pointer;font-weight:600}
+  .btn.secondary{background:white;color:var(--blue);border:1px solid #cbdced}
+  .notice{font-size:12px;color:var(--muted);margin:-8px 0 18px}
+  .kpis{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 7px #15385b05}
+  .kpi-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}
+  .kpi-icon{width:30px;height:30px;border-radius:9px;background:var(--blue2);color:var(--blue);display:grid;place-items:center;font-weight:700}
+  .value{font-size:26px;font-weight:750;color:var(--navy);margin:12px 0 6px}
+  .delta{font-size:11px;color:var(--green)}.delta.neutral{color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:15px;margin-bottom:15px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:15px}
+  .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .card h3{margin:0;font-size:15px;color:var(--navy)}.sub{font-size:11px;color:var(--muted);margin-top:5px}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+  .chart{height:210px;position:relative;border-bottom:1px solid var(--line);border-left:1px solid var(--line);margin:10px 4px 0 25px;background:repeating-linear-gradient(to bottom,transparent 0,transparent 51px,#edf1f6 52px)}
+  .chart svg{width:100%;height:100%;overflow:visible}
+  .axis{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:8px 0 0 25px}
+  .sentiment-bar{height:13px;border-radius:99px;overflow:hidden;display:flex;background:#edf1f6;margin:18px 0}
+  .sentiment-bar span{height:100%}
+  .sentiment-list{display:grid;gap:13px}
+  .sentiment-row{display:flex;justify-content:space-between;font-size:12px}
+  .sentiment-row strong{color:var(--navy)}
+  .platforms{display:grid;gap:11px}
+  .platform{display:grid;grid-template-columns:90px 1fr 45px;gap:10px;align-items:center;font-size:12px}
+  .platform-name{font-weight:600}.track{height:8px;background:#edf1f6;border-radius:20px;overflow:hidden}.fill{height:100%;border-radius:20px;background:var(--blue)}
+  .table-wrap{overflow:auto}
+  table{border-collapse:collapse;width:100%;font-size:12px;min-width:680px}
+  th{text-align:left;color:var(--muted);font-weight:600;background:#f8fafc}
+  th,td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .pill{display:inline-block;padding:5px 8px;border-radius:20px;font-size:10px;font-weight:700}
+  .positive{background:#e7f6ef;color:var(--green)}.neutral{background:#edf2f7;color:#64748b}.negative{background:#fdecef;color:var(--red)}.query{background:#fff4df;color:var(--amber)}
+  .post-title{font-weight:600;color:var(--navy);max-width:300px}.platform-tag{color:var(--muted)}
+  .alert{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:12px;line-height:1.45}
+  .alert:last-child{border:0}.alert-icon{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+  .alert-icon.red{background:#fdecef;color:var(--red)}.alert-icon.amber{background:#fff4df;color:var(--amber)}.alert-icon.green{background:#e7f6ef;color:var(--green)}
+  .alert strong{display:block;color:var(--navy);margin-bottom:2px}
+  .section{display:none}.section.active{display:block}
+  .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+  footer{font-size:10px;color:#8a96a5;text-align:right;margin:18px 0}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
+  @media(max-width:720px){.app{display:block}aside{width:100%;padding:14px}.brand{padding-bottom:12px}.nav-label,.side-note{display:none}nav{display:flex;overflow:auto;gap:4px;margin-top:10px}nav button{white-space:nowrap;width:auto;margin:0}main{padding:18px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}h2{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><div class="logo">ND</div><div><h1>NDDB SOCIAL<br>INTELLIGENCE</h1><small>Sentiment & Impact Tracker</small></div></div>
+    <div class="nav-label">WORKSPACE</div>
+    <nav>
+      <button class="active" data-section="overview">▦ &nbsp; Executive Overview</button>
+      <button data-section="sentiment">◉ &nbsp; Sentiment Analytics</button>
+      <button data-section="content">▤ &nbsp; Content Performance</button>
+      <button data-section="campaigns">✳ &nbsp; Campaigns</button>
+      <button data-section="reputation">⚑ &nbsp; Reputation Monitor</button>
+      <button data-section="reports">⇩ &nbsp; Reports & Export</button>
+    </nav>
+    <div class="side-note"><b>DEMO MODE</b><br>This prototype uses illustrative sample data. Connect authorised platform data before operational use.</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div><div class="eyebrow">Communication intelligence</div><h2 id="pageTitle">Executive Overview</h2></div>
+      <div class="actions">
+        <select class="filter" id="period"><option value="30">Last 30 days</option><option value="7">Last 7 days</option><option value="90">Last 90 days</option></select>
+        <select class="filter" id="platformFilter"><option value="all">All platforms</option><option>X</option><option>Facebook</option><option>LinkedIn</option><option>Instagram</option><option>YouTube</option></select>
+        <button class="btn secondary" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+    <p class="notice">Illustrative figures only · Select a platform or reporting period to filter the prototype.</p>
+
+    <section class="section active" id="overview">
+      <div class="kpis">
+        <div class="card"><div class="kpi-top">Posts published <span class="kpi-icon">▤</span></div><div class="value" id="kPosts">148</div><div class="delta">Across selected platforms</div></div>
+        <div class="card"><div class="kpi-top">Total engagements <span class="kpi-icon">♡</span></div><div class="value" id="kEng">42,680</div><div class="delta">Likes, comments, shares & more</div></div>
+        <div class="card"><div class="kpi-top">Net sentiment <span class="kpi-icon">◉</span></div><div class="value" id="kNet">+72.4</div><div class="delta">Positive minus negative index</div></div>
+        <div class="card"><div class="kpi-top">Audience growth <span class="kpi-icon">↗</span></div><div class="value" id="kGrowth">+3.8%</div><div class="delta">Illustrative period-on-period</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-head"><div><h3>Engagement trend</h3><div class="sub">Daily engagement across selected platforms</div></div><span class="pill neutral">Sample</span></div>
+          <div class="chart"><svg viewBox="0 0 600 210" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1769aa" stop-opacity=".22"/><stop offset="1" stop-color="#1769aa" stop-opacity="0"/></linearGradient></defs><path d="M0 170 L50 150 L100 160 L150 105 L200 125 L250 90 L300 115 L350 55 L400 80 L450 45 L500 65 L550 25 L600 40 L600 210 L0 210 Z" fill="url(#area)"/><polyline points="0,170 50,150 100,160 150,105 200,125 250,90 300,115 350,55 400,80 450,45 500,65 550,25 600,40" fill="none" stroke="#1769aa" stroke-width="3" stroke-linejoin="round"/></svg></div><div class="axis"><span>Day 1</span><span>Day 7</span><span>Day 14</span><span>Day 21</span><span>Day 30</span></div></div>
+        <div class="card"><div class="card-head"><div><h3>Audience sentiment</h3><div class="sub">Share of classified comments / mentions</div></div><span class="pill neutral">Sample</span></div>
+          <div class="sentiment-bar"><span style="width:72%;background:#16845b"></span><span style="width:21%;background:#94a3b8"></span><span style="width:7%;background:#c53c4b"></span></div>
+          <div class="sentiment-list"><div class="sentiment-row"><span><i class="dot" style="background:#16845b"></i>Positive</span><strong>72%</strong></div><div class="sentiment-row"><span><i class="dot" style="background:#94a3b8"></i>Neutral</span><strong>21%</strong></div><div class="sentiment-row"><span><i class="dot" style="background:#c53c4b"></i>Negative</span><strong>7%</strong></div></div>
+          <p class="sub" style="margin-top:18px">Queries and constructive feedback are classified separately.</p>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-head"><div><h3>Platform engagement</h3><div class="sub">Relative contribution · sample data</div></div></div><div class="platforms" id="platformBars"></div></div>
+        <div class="card"><div class="card-head"><div><h3>Reputation & response alerts</h3><div class="sub">Items requiring review</div></div><span class="pill query">3 items</span></div>
+          <div class="alert"><div class="alert-icon red">!</div><div><strong>Negative sentiment increase</strong>Topic: service-related query cluster · Review comments</div></div>
+          <div class="alert"><div class="alert-icon amber">↗</div><div><strong>Recurring information request</strong>Topic: programme eligibility · Prepare FAQ response</div></div>
+          <div class="alert"><div class="alert-icon green">★</div><div><strong>High appreciation detected</strong>Campaign: farmer-centric initiative · Share insight</div></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-head"><div><h3>Top content this period</h3><div class="sub">Ranked by engagement · illustrative records</div></div><button class="btn secondary" onclick="showSection('content')">View all</button></div><div class="table-wrap"><table><thead><tr><th>Content / Post</th><th>Platform</th><th>Engagement</th><th>Sentiment</th><th>Category</th></tr></thead><tbody id="topPosts"></tbody></table></div></div>
+    </section>
+
+    <section class="section" id="sentiment">
+      <div class="grid2">
+        <div class="card"><h3>Sentiment distribution</h3><div class="sub">Illustrative classified responses</div><div class="sentiment-bar"><span style="width:72%;background:#16845b"></span><span style="width:21%;background:#94a3b8"></span><span style="width:7%;background:#c53c4b"></span></div><div class="sentiment-list"><div class="sentiment-row"><span>Positive</span><strong>72%</strong></div><div class="sentiment-row"><span>Neutral</span><strong>21%</strong></div><div class="sentiment-row"><span>Negative</span><strong>7%</strong></div><div class="sentiment-row"><span>Queries (separate)</span><strong>—</strong></div></div></div>
+        <div class="card"><h3>Sentiment by theme</h3><div class="sub">Share of positive responses · sample</div><div class="platforms" style="margin-top:20px"><div class="platform"><span class="platform-name">Farmer welfare</span><div class="track"><div class="fill" style="width:88%"></div></div><b>88%</b></div><div class="platform"><span class="platform-name">Cooperatives</span><div class="track"><div class="fill" style="width:81%"></div></div><b>81%</b></div><div class="platform"><span class="platform-name">Nutrition</span><div class="track"><div class="fill" style="width:76%"></div></div><b>76%</b></div><div class="platform"><span class="platform-name">Biogas</span><div class="track"><div class="fill" style="width:69%"></div></div><b>69%</b></div></div></div>
+      </div>
+      <div class="card"><h3>Sentiment review queue</h3><div class="sub">AI classifications should be validated by an analyst</div><div class="table-wrap"><table><thead><tr><th>Comment (sample)</th><th>Language</th><th>AI label</th><th>Confidence</th><th>Review</th></tr></thead><tbody><tr><td>“Very informative initiative.”</td><td>English</td><td><span class="pill positive">Positive</span></td><td>94%</td><td><button class="btn secondary" onclick="alert('Demo: review workflow')">Review</button></td></tr><tr><td>“Please share eligibility details.”</td><td>English</td><td><span class="pill query">Query</span></td><td>89%</td><td><button class="btn secondary" onclick="alert('Demo: review workflow')">Review</button></td></tr><tr><td>“The issue remains unresolved.”</td><td>English</td><td><span class="pill negative">Negative</span></td><td>81%</td><td><button class="btn secondary" onclick="alert('Demo: review workflow')">Review</button></td></tr></tbody></table></div></div>
+    </section>
+
+    <section class="section" id="content">
+      <div class="card"><div class="card-head"><div><h3>Content performance library</h3><div class="sub">Post-level sample records · filters apply to platform</div></div><button class="btn" onclick="downloadCSV()">Export CSV</button></div><div class="table-wrap"><table><thead><tr><th>Post / Campaign</th><th>Platform</th><th>Format</th><th>Engagement</th><th>Sentiment</th><th>Topic</th></tr></thead><tbody id="allPosts"></tbody></table></div></div>
+    </section>
+
+    <section class="section" id="campaigns">
+      <div class="grid3"><div class="card"><div class="kpi-top">Campaigns tracked</div><div class="value">12</div><div class="delta neutral">Illustrative</div></div><div class="card"><div class="kpi-top">Avg. engagement rate</div><div class="value">5.6%</div><div class="delta">Across sample campaigns</div></div><div class="card"><div class="kpi-top">Positive sentiment</div><div class="value">78%</div><div class="delta">Campaign responses</div></div></div>
+      <div class="card"><h3>Campaign comparison</h3><div class="sub">Sample campaign metrics; replace with actual data</div><div class="table-wrap"><table><thead><tr><th>Campaign</th><th>Posts</th><th>Reach</th><th>Engagement</th><th>Positive</th><th>Top platform</th></tr></thead><tbody><tr><td>World Milk Day</td><td>18</td><td>2.4 lakh</td><td>8,420</td><td>82%</td><td>Instagram</td></tr><tr><td>Foundation Day</td><td>12</td><td>1.8 lakh</td><td>6,170</td><td>79%</td><td>LinkedIn</td></tr><tr><td>Dairy Revolution</td><td>15</td><td>2.1 lakh</td><td>7,260</td><td>85%</td><td>Facebook</td></tr></tbody></table></div></div>
+    </section>
+
+    <section class="section" id="reputation">
+      <div class="grid2"><div class="card"><h3>Monitoring & alerts</h3><div class="sub">Sample alerts—not live monitoring</div><div class="alert"><div class="alert-icon red">!</div><div><strong>Critical · Sentiment spike</strong>Negative responses increased above configured threshold. Verify context and source before escalation.</div></div><div class="alert"><div class="alert-icon amber">?</div><div><strong>Medium · Unanswered queries</strong>Information requests pending response beyond target SLA.</div></div><div class="alert"><div class="alert-icon green">✓</div><div><strong>Positive · Appreciation</strong>High positive engagement on farmer-focused communication.</div></div></div>
+      <div class="card"><h3>Issue workflow</h3><div class="sub">Suggested response management stages</div><div class="sentiment-list" style="margin-top:18px"><div class="sentiment-row"><span>Open</span><strong>5</strong></div><div class="sentiment-row"><span>Under review</span><strong>3</strong></div><div class="sentiment-row"><span>Referred to department</span><strong>2</strong></div><div class="sentiment-row"><span>Responded / closed</span><strong>18</strong></div></div></div></div>
+      <div class="card"><h3>Alert register</h3><div class="sub">Add owner, due date and action notes in the production version.</div><div class="table-wrap"><table><thead><tr><th>Alert</th><th>Priority</th><th>Platform</th><th>Status</th><th>Owner</th></tr></thead><tbody><tr><td>Sentiment spike review</td><td><span class="pill negative">High</span></td><td>X</td><td>Under review</td><td>Communication</td></tr><tr><td>Scheme information query</td><td><span class="pill query">Medium</span></td><td>Facebook</td><td>Open</td><td>Programme team</td></tr><tr><td>Appreciation insight</td><td><span class="pill positive">Low</span></td><td>LinkedIn</td><td>Closed</td><td>Communication</td></tr></tbody></table></div></div>
+    </section>
+
+    <section class="section" id="reports">
+      <div class="grid2"><div class="card"><h3>Report centre</h3><div class="sub">Download a sample post dataset or print this dashboard to PDF.</div><p style="font-size:13px;line-height:1.6">Available report templates: Daily Monitoring · Weekly Sentiment · Monthly Performance · Campaign Impact · Quarterly Communication Review · Annual Social Media Report.</p><button class="btn" onclick="downloadCSV()">Download sample CSV</button> <button class="btn secondary" onclick="window.print()">Print / Save PDF</button></div><div class="card"><h3>Reporting schedule</h3><div class="sentiment-list" style="margin-top:16px"><div class="sentiment-row"><span>Daily monitoring</span><strong>Daily</strong></div><div class="sentiment-row"><span>Sentiment summary</span><strong>Weekly</strong></div><div class="sentiment-row"><span>Performance report</span><strong>Monthly</strong></div><div class="sentiment-row"><span>Campaign review</span><strong>Post-campaign</strong></div><div class="sentiment-row"><span>Impact assessment</span><strong>Quarterly</strong></div></div></div></div>
+    </section>
+    <footer>NDDB Social Media Intelligence Dashboard · UI concept / demo data only</footer>
+  </main>
+</div>
+<script>
+const posts=[
+ {title:"Farmer-centric initiative highlights",platform:"LinkedIn",format:"Carousel",eng:8420,sent:"Positive",topic:"Farmer welfare"},
+ {title:"World Milk Day campaign creative",platform:"Instagram",format:"Reel",eng:7280,sent:"Positive",topic:"Nutrition"},
+ {title:"Cooperative development update",platform:"Facebook",format:"Video",eng:6140,sent:"Positive",topic:"Cooperatives"},
+ {title:"Institutional announcement",platform:"X",format:"Text + image",eng:3820,sent:"Neutral",topic:"Institutional"},
+ {title:"Dairy technology awareness film",platform:"YouTube",format:"Video",eng:2960,sent:"Positive",topic:"Technology"},
+ {title:"Programme information post",platform:"Facebook",format:"Image",eng:1850,sent:"Query",topic:"Schemes"},
+ {title:"Biogas and sustainability story",platform:"LinkedIn",format:"Video",eng:1640,sent:"Positive",topic:"Biogas"},
+ {title:"Event update",platform:"X",format:"Text",eng:920,sent:"Neutral",topic:"Events"}
+];
+const platformData=[["X",62],["Facebook",84],["LinkedIn",76],["Instagram",91],["YouTube",48]];
+const names={overview:"Executive Overview",sentiment:"Sentiment Analytics",content:"Content Performance",campaigns:"Campaign Intelligence",reputation:"Reputation Monitor",reports:"Reports & Export"};
+function badge(s){return `<span class="pill ${s.toLowerCase()}">${s}</span>`}
+function renderPosts(){
+ const pf=document.getElementById("platformFilter").value;
+ const list=posts.filter(p=>pf==="all"||p.platform===pf);
+ const rows=list.map(p=>`<tr><td><div class="post-title">${p.title}</div></td><td class="platform-tag">${p.platform}</td><td>${p.eng.toLocaleString("en-IN")}</td><td>${badge(p.sent)}</td><td>${p.topic}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">No sample records for this platform.</td></tr>';
+ document.getElementById("topPosts").innerHTML=list.slice(0,5).map(p=>`<tr><td><div class="post-title">${p.title}</div></td><td class="platform-tag">${p.platform}</td><td>${p.eng.toLocaleString("en-IN")}</td><td>${badge(p.sent)}</td><td>${p.topic}</td></tr>`).join("")||'<tr><td colspan="5" class="empty">No sample records.</td></tr>';
+ document.getElementById("allPosts").innerHTML=rows;
+ document.getElementById("platformBars").innerHTML=platformData.filter(p=>pf==="all"||p[0]===pf).map(p=>`<div class="platform"><span class="platform-name">${p[0]}</span><div class="track"><div class="fill" style="width:${p[1]}%"></div></div><b>${p[1]}%</b></div>`).join("")||'<div class="empty">No platform data.</div>';
+ const d=Number(document.getElementById("period").value);document.getElementById("kPosts").textContent=Math.round((pf==="all"?148:29)*d/30);
+ document.getElementById("kEng").textContent=Math.round((pf==="all"?42680:8500)*d/30).toLocaleString("en-IN");
+}
+function showSection(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.section===id));document.getElementById("pageTitle").textContent=names[id];}
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>showSection(b.dataset.section)));
+document.getElementById("platformFilter").addEventListener("change",renderPosts);
+document.getElementById("period").addEventListener("change",renderPosts);
+function resetFilters(){document.getElementById("period").value="30";document.getElementById("platformFilter").value="all";renderPosts()}
+function downloadCSV(){const head=["Post","Platform","Format","Engagement","Sentiment","Topic"];const data=posts.map(p=>[p.title,p.platform,p.format,p.eng,p.sent,p.topic]);const csv=[head,...data].map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="nddb_social_tracker_sample.csv";a.click();URL.revokeObjectURL(a.href)}
+renderPosts();
+</script>
+</body>
+</html>

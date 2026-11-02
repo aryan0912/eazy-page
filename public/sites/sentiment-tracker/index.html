@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NDDB Dairy Market Intelligence Tracker</title>
+<style>
+:root{--red:#C8102E;--red-d:#9E0C24;--navy:#14305C;--navy-l:#2B4A7F;--bg:#F6F4EF;--card:#fff;--ink:#1E2430;--mut:#5C6573;--line:#DDD8CE;--amber:#C98A1B;--grey:#9AA0A9}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.4}
+header{background:#fff;border-bottom:3px solid var(--red)}
+.hwrap{max-width:1200px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:14px}
+#logoBox{flex:0 0 auto;height:46px;display:flex;align-items:center;padding-right:14px;border-right:1px solid var(--line)}#logoBox img{height:46px;width:auto;display:block}
+.ttl h1{font-size:18px;margin:0;color:var(--navy)}.ttl p{margin:1px 0 0;color:var(--mut);font-size:11.5px}
+.hr{margin-left:auto;text-align:right;font-size:11px;color:var(--mut)}
+.hr button{font:inherit;font-size:12px;margin-top:3px;background:var(--navy);color:#fff;border:0;border-radius:4px;padding:4px 10px;cursor:pointer}
+nav{background:var(--navy)}.nwrap{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;overflow-x:auto}
+nav button{background:none;border:0;color:#cdd7e8;padding:11px 16px;font-size:13px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:#fff;border-bottom-color:var(--red);font-weight:600}
+main{max-width:1200px;margin:0 auto;padding:16px 20px 36px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.grid{display:grid;gap:12px;margin-bottom:12px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.kp{grid-template-columns:repeat(6,1fr)}
+@media(max-width:960px){.kp{grid-template-columns:repeat(3,1fr)}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.kp,.g2,.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.hr span{display:none}}
+.hl{font-size:14.5px;font-weight:600;color:var(--navy);margin:0 0 2px;line-height:1.3}
+.sub{font-size:11px;color:var(--mut);margin:0 0 6px}
+.chip{display:inline-block;font-size:10px;border:1px solid var(--line);border-radius:9px;padding:0 6px;margin-left:3px;color:var(--navy);text-decoration:none;background:#fff;white-space:nowrap}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.kpi h3{font-size:10.5px;margin:0 0 3px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kpi .v{font-size:25px;font-weight:600;color:var(--navy);line-height:1.1}.kpi .u{font-size:11px;color:var(--mut);font-weight:400}
+.kpi .d{font-size:11px;color:var(--mut);margin-top:2px}.kpi.na .v{color:var(--grey);font-size:17px;padding:5px 0}
+.pos{color:var(--navy)}.neg{color:var(--red)}
+.tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:3px;font-weight:600}
+.t-na{background:#ECEDEF;color:#555}.t-ok{background:#E3F0E6;color:#2E6A3F}.t-warn{background:#FBF0DA;color:#8A5A0B}
+table{width:100%;border-collapse:collapse;font-size:12.3px}th,td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);background:#FBFAF7;position:sticky;top:0}
+th.s{cursor:pointer}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow:auto;max-height:400px;border:1px solid var(--line);border-radius:6px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10.5px;color:var(--mut);margin-top:4px}.legend i{display:inline-block;width:11px;height:9px;margin-right:4px;border-radius:2px;vertical-align:middle}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+select,.seg button{font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid var(--line);background:#fff;border-radius:4px;color:var(--ink)}
+.seg{display:inline-flex}.seg button{border-radius:0;margin-left:-1px;cursor:pointer}.seg button:first-child{border-radius:4px 0 0 4px;margin-left:0}.seg button:last-child{border-radius:0 4px 4px 0}
+.seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+#tiles{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.tile{aspect-ratio:1/.82;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:2px solid transparent;color:#fff}
+.tile b{font-size:12px}.tile.sel{border-color:var(--red)}.tile.dim{opacity:.25}.empty{visibility:hidden}
+.split{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:12px}@media(max-width:900px){.split{grid-template-columns:1fr}}
+.board{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.board{grid-template-columns:1fr}}
+.ev{border-left:4px solid var(--grey);padding:5px 9px;margin:6px 0;background:#FBFAF7;font-size:12.3px}
+.ev.up{border-color:var(--amber)}.ev.dn{border-color:var(--navy-l)}.ev b{display:block;color:var(--ink)}.ev span.p{color:var(--mut);font-size:10.5px}
+#ready{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.rd{padding:7px 9px;border-radius:4px;font-size:11.5px;color:#fff}.rd small{display:block;opacity:.9;font-size:10px}
+.rd.L{background:#2E6A3F}.rd.P{background:#C98A1B}.rd.N{background:#9AA0A9}
+.note{font-size:11px;color:var(--mut);margin-top:6px}
+ul.tight{margin:4px 0 0 18px;padding:0}ul.tight li{margin:2px 0;font-size:12.3px}
+footer{max-width:1200px;margin:0 auto;padding:0 20px 26px;font-size:10.5px;color:var(--mut)}footer label{cursor:pointer;color:var(--navy);text-decoration:underline}
+svg text{font-family:inherit}
+@media print{nav,.hr button,.ctl,footer{display:none}.tab{display:block!important;page-break-after:always}body{background:#fff}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <div id="logoBox"></div>
+  <div class="ttl"><h1>Dairy Market Intelligence Tracker</h1><p>National Dairy Development Board | Official and NDDB-published data only | Every chart names its source</p></div>
+  <div class="hr"><span>Data verified 02 Nov 2026 | Not a real-time feed</span><br><button onclick="window.print()">Print briefing</button></div>
+</div></header>
+<nav><div class="nwrap" id="tabs"></div></nav>
+<main>
+
+<section class="tab" id="t-overview">
+  <div class="grid kp" id="kpis"></div>
+  <div class="grid g2">
+    <div class="card"><div class="hl" id="h_prod"></div><div class="sub">Million tonnes. Solid line: reported. Dashed: NDDB projection for 2024-25. <span id="s_prod"></span></div><div id="c_prod"></div></div>
+    <div class="card"><div class="hl" id="h_coop"></div><div class="sub">Dairy cooperatives, all India. Procurement in lakh kg per day, sales in lakh litres per day. <span id="s_coop"></span></div><div class="grid g2" style="margin:0"><div id="c_proc"></div><div id="c_sales"></div></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="hl" id="h_comm"></div><div class="sub">Change in price over 2024-25, percent. <span id="s_comm"></span></div><div id="c_comm"></div></div>
+    <div class="card"><div class="hl" id="h_top"></div><div class="sub">Milk production 2023-24, thousand tonnes. <span id="s_top"></span></div><div id="c_top"></div></div>
+  </div>
+  <div class="card"><div class="hl" id="h_ready"></div><div class="sub">Data blocks from the tracker brief. Green loaded, amber partial, grey not yet loaded from an approved source.</div><div id="ready"></div></div>
+</section>
+
+<section class="tab" id="t-signals">
+  <div class="card" style="margin-bottom:12px"><div class="hl">Directional evidence on milk price pressure, shown without a score</div>
+    <div class="sub">Each item is a reported fact with its period and source. This is not the sentiment index: no weights, no scoring, and periods differ, so read each tag.</div>
+    <div class="board"><div><b style="color:var(--amber)">Points to upward price pressure</b><div id="evUp"></div></div><div><b style="color:var(--navy-l)">Points to stable or easing conditions</b><div id="evDn"></div></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="hl" id="h_bal"></div><div class="sub">Growth in 2024-25 over 2023-24, percent. Mixed bases: first bar is an NDDB projection. <span id="s_bal"></span></div><div id="c_bal"></div></div>
+    <div class="card"><div class="hl" id="h_cpi"></div><div class="sub">All-India CPI General, year on year, percent. Background indicator, not a milk price. <span id="s_cpi"></span></div><div id="c_cpi"></div></div>
+  </div>
+  <div class="card"><div class="hl">Sentiment indices: awaiting price series</div>
+    <div class="sub">Scale is a proposed analytical convention for NDDB review, not an official classification.</div>
+    <div class="grid g3" style="margin:0" id="sent"></div>
+    <svg viewBox="0 0 600 40" width="100%" style="margin-top:8px"><g id="scale"></g></svg>
+  </div>
+</section>
+
+<section class="tab" id="t-coops">
+  <div class="grid g2">
+    <div class="card"><div class="hl" id="h_proc2"></div><div class="sub">Lakh kg per day, cooperative average. <span id="s_proc2"></span></div><div id="c_proc2"></div><div class="note" id="n_proc2"></div></div>
+    <div class="card"><div class="hl" id="h_vis"></div><div class="sub">Today as a share of the Vision 2047 target. <span id="s_vis"></span></div><div id="c_vis"></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="hl" id="h_wr"></div><div class="sub">Cooperative societies under White Revolution 2.0. <span id="s_wr"></span></div><div id="c_wr"></div></div>
+    <div class="card"><div class="hl" id="h_sub"></div><div class="sub">Rupees crore, FY 2024-25. Measures differ by entity (turnover or total income). <span id="s_sub"></span></div><div id="c_sub"></div></div>
+  </div>
+</section>
+
+<section class="tab" id="t-states">
+  <div class="ctl"><span class="seg" id="metricSeg"></span><select id="regSel"></select><span id="metricSrc"></span></div>
+  <div class="split">
+    <div class="card"><div class="hl" id="mapHl"></div><div class="sub" id="mapSub"></div><div id="tiles"></div><div class="legend" id="mapLegend"></div>
+      <div class="note">Schematic tile map, one tile per State or UT. Milk price metrics are unavailable from approved sources, so they cannot be mapped.</div></div>
+    <div class="card" id="detail"></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="hl" id="h_reg"></div><div class="sub">Compound annual growth in milk production, 2014-15 to 2023-24, by region. Derived. <span id="s_reg"></span></div><div id="c_reg"></div></div>
+    <div class="card"><div class="hl" id="h_gr"></div><div class="sub">Production change 2023-24 over 2022-23, percent. Five highest and five lowest. <span id="s_gr"></span></div><div id="c_gr"></div></div>
+  </div>
+  <div class="card"><div class="ctl"><b class="hl" style="margin:0">Compare production history</b><select id="selA"></select><select id="selB"></select></div><div id="c_trend"></div></div>
+  <div class="card" style="margin-top:12px"><div class="sub">All States and UTs. Click a header to sort. Thousand tonnes. <span id="s_tbl"></span></div><div class="scroll"><table id="stTable"></table></div></div>
+</section>
+
+<section class="tab" id="t-sources">
+  <div class="card" style="margin-bottom:12px"><div class="hl">Approved Source Register</div><div class="scroll" style="max-height:none"><table id="reg"></table></div></div>
+  <div class="card" style="margin-bottom:12px"><div class="hl">Source Ledger</div><div class="scroll" style="max-height:none"><table id="ledger"></table></div></div>
+  <div class="grid g2"><div class="card"><div class="hl">Not available from approved sources</div><ul class="tight" id="gaps"></ul></div>
+  <div class="card"><div class="hl">Confirmations needed from NDDB</div><ul class="tight" id="assume"></ul></div></div>
+</section>
+</main>
+<footer>Logo embedded from the NDDB logo file supplied; <label for="logoUp">replace with your own file</label><input id="logoUp" type="file" accept="image/*" style="display:none"> | Palette approximates the NDDB logo red with deep blue.</footer>
+
+<script>
+/* ===== SOURCES ===== */
+const SRC={
+ S1:{inst:"NDDB (republishing DAHD Basic Animal Husbandry Statistics)",ds:"Milk Production in India",url:"https://nddb.coop/information/stats/milkprodindia",ref:"1991-92 to 2023-24",pub:"Not stated on page",freq:"Annual",status:"Confirm: NDDB web statistics",vars:"National production, per capita availability"},
+ S2:{inst:"NDDB (republishing DAHD Basic Animal Husbandry Statistics)",ds:"Milk Production by States/UTs",url:"https://nddb.coop/information/stats/milkprodstate",ref:"2001-02 to 2023-24",pub:"Not stated on page",freq:"Annual",status:"Confirm: NDDB web statistics",vars:"State and UT production"},
+ S3:{inst:"MoSPI (NSO) via PIB",ds:"Press Release of CPI, base 2024=100, September 2026 (Annexures III, IV)",url:"https://www.pib.gov.in/PressReleseDetailm.aspx?PRID=2322244&lang=2&reg=48",ref:"Jan to Sep 2026",pub:"12 Oct 2026",freq:"Monthly",status:"Approved (Government of India)",vars:"General CPI, food inflation, state CPI"},
+ S4:{inst:"National Dairy Development Board",ds:"Annual Report 2024-25 (Chairman's Message pp.4-9; Trends from the Dairy Sector pp.10-11)",url:"https://www.nddb.coop/sites/default/files/pdfs/NDDB_AR_2024_25_Eng.pdf",ref:"FY 2024-25 (to March 2025)",pub:"Not stated in extracted text",freq:"Annual",status:"Approved by user request",vars:"Projected production, cooperative procurement and sales, SMP and butter prices, Vision 2047, White Revolution 2.0, subsidiaries, qualitative cost statements"},
+ S5:{inst:"National Dairy Development Board",ds:"Annual Report 2023-24 (procurement figure read from a search excerpt)",url:"https://www.nddb.coop/sites/default/files/pdfs/NDDB_AR_2023_24_Eng.pdf",ref:"FY 2023-24",pub:"Not stated",freq:"Annual",status:"Confirm: NDDB annual report series",vars:"Cooperative procurement 2023-24"},
+ S6:{inst:"National Dairy Development Board",ds:"Annual Report 2022-23 (procurement and sales figures read from search excerpts)",url:"https://www.nddb.coop/sites/default/files/pdfs/NDDB_AR_2023_090124_Eng.pdf",ref:"FY 2022-23",pub:"Not stated",freq:"Annual",status:"Confirm: NDDB annual report series",vars:"Cooperative procurement and sales 2022-23"}
+};
+const chip=(id,w)=>`<a class="chip" target="_blank" rel="noopener" href="${SRC[id].url}" title="${SRC[id].ds}${w?' | '+w:''}">${id}${w?' '+w:''}</a>`;
+const $=i=>document.getElementById(i);
+
+/* ===== DATA ===== */
+const NAT={yrs:["1991-92","1992-93","1993-94","1994-95","1995-96","1996-97","1997-98","1998-99","1999-2000","2000-01","2001-02","2002-03","2003-04","2004-05","2005-06","2006-07","2007-08","2008-09","2009-10","2010-11","2011-12","2012-13","2013-14","2014-15","2015-16","2016-17","2017-18","2018-19","2019-20","2020-21","2021-22","2022-23","2023-24"],
+ prod:[55.6,58.0,60.6,63.8,66.2,69.1,72.1,75.4,78.3,80.6,84.4,86.2,88.1,92.5,97.1,102.6,107.9,112.2,116.4,121.8,127.9,132.4,137.7,146.3,155.5,165.4,176.3,187.7,198.4,210.0,221.1,230.6,239.3],
+ pc:[178,182,186,192,195,200,205,210,214,217,222,224,225,233,241,251,260,266,273,281,290,299,307,322,337,355,375,394,406,427,444,459,471]};
+const AR={proj:250,pcProj:490,
+ proc:[["2022-23",589,"S6"],["2023-24",662,"S5"],["2024-25",676,"S4"]],
+ sales:[["2022-23",427,"S6"],["2023-24",null,""],["2024-25",444,"S4"]],
+ salesG:1.0,
+ smp:{dom:5,price:247,gdt:[2546,2737]},but:{dom:21,price:414,gdt:[6569,7622]},
+ vis:[["Productivity per animal (kg a year)",2080,5200],["Villages covered (lakh)",1.7,3.5],["Value-added share of cooperative milk (%)",25,50]],
+ wr:[["New societies to be established",75000],["Existing societies to be strengthened",46000]],
+ subs:[["Mother Dairy F&V",17386],["NDDB-supported MPOs (23), combined",9637],["Indian Immunologicals",1453],["IDMC",882],["NDDB CALF",18.63]]};
+const SY=["2001-02","2002-03","2003-04","2004-05","2005-06","2006-07","2007-08","2008-09","2009-10","2010-11","2011-12","2012-13","2013-14","2014-15","2015-16","2016-17","2017-18","2018-19","2019-20","2020-21","2021-22","2022-23","2023-24"];
+const N=null;
+const ALLIN=[84406,86159,88082,92484,97066,102580,107934,112183,116425,121848,127904,132431,137685,146314,155491,165404,176347,187749,198440,209960,222069,230577,239299];
+const ST=[
+["LA","Ladakh","North","UT",[...Array(19).fill(N),15,29,31,29.31],5.90,3,0],
+["JK","Jammu and Kashmir","North","UT",[1360,1389,1414,1422,1400,1400,1519,1565,1592,1609,1614,1631,1615,1951,2273,2376,2460,2540,2506,2595,2727,2817,2875],4.27,2,1],
+["HP","Himachal Pradesh","North","State",[756,773,786,870,869,933,1007,1026,971,1102,1120,1139,1151,1172,1283,1329,1392,1460,1531,1576,1615,1617,1749],4.02,3,1],
+["PB","Punjab","North","State",[7932,8173,8391,8554,8909,9168,9282,9387,9389,9423,9551,9724,10011,10351,10774,11282,11855,12599,13348,13394,14077,14301,14000],5.27,2,2],
+["CH","Chandigarh","North","UT",[43,43,44,43,46,46,47,47,46,45,45,44,44,44,43,36,42,45,49,52,57,56,58.87],4.39,3,2],
+["UK","Uttarakhand","North","State",[1066,1079,1188,1195,1206,1213,1221,1230,1377,1383,1417,1478,1550,1565,1656,1692,1742,1792,1845,1797,1856,1859,1898],5.47,4,2],
+["RJ","Rajasthan","North","State",[7758,7789,8054,8310,8713,10309,11377,11931,12330,13234,13512,13946,14573,16934,18500,20850,22427,23668,25573,30723,33265,33307,34733],5.71,1,3],
+["HR","Haryana","North","State",[4978,5124,5221,5222,5299,5366,5442,5745,6006,6267,6661,7040,7442,7901,8381,8975,9809,10726,11735,11284,11630,11966,12220],4.37,2,3],
+["DL","NCT of Delhi","North","UT",[294,296,299,303,310,288,445,450,466,480,502,287,284,280,281,279,279,N,N,N,N,488,488],3.40,3,3],
+["UP","Uttar Pradesh","North","State",[14648,15288,15943,16512,17356,18094,18861,19537,20203,21031,22556,23330,24194,25198,26387,27770,29052,30519,31864,31359,33874,36242,38780],6.08,4,3],
+["SK","Sikkim","Northeast","State",[37,45,48,46,48,49,42,42,44,43,45,42,46,50,67,54,59,61,84,74,87,87,81],4.83,7,3],
+["AR","Arunachal Pradesh","Northeast","State",[42,46,46,48,48,49,32,24,26,28,22,23,43,46,50,53,54,55,61,44,46,46,20],3.70,9,3],
+["GJ","Gujarat","West","State",[5862,6089,6421,6745,6960,7533,7911,8386,8844,9321,9817,10315,11112,11691,12262,12784,13569,14493,15292,15853,16722,17281,18312],5.11,1,4],
+["MP","Madhya Pradesh","Central","State",[5283,5343,5388,5506,6283,6374,6572,6855,7167,7514,8149,8838,9599,10779,12148,13445,14713,15911,17109,17999,19004,20122,21326],6.68,3,4],
+["BR","Bihar","East","State",[2664,2869,3180,4743,5060,5451,5783,5934,6124,6517,6643,6845,7197,7775,8288,8711,9242,9818,10480,11502,12253,12503,12853],5.48,5,4],
+["WB","West Bengal","East","State",[3515,3600,3686,3790,3891,3983,4087,4176,4300,4471,4672,4859,4906,4961,5038,5183,5389,5607,5869,6165,6414,6969,7650],4.04,6,4],
+["AS","Assam","Northeast","State",[682,705,727,739,747,750,752,753,756,790,796,800,815,829,843,861,872,882,920,954,982,1006,1092],4.62,8,4],
+["NL","Nagaland","Northeast","State",[57,58,63,69,74,67,45,53,78,76,78,79,81,76,77,79,74,73,62,56,61,50,53],3.22,9,4],
+["DN","Dadra and Nagar Haveli and Daman and Diu","West","UT",[8,8,8,4,5,5,10,10,10,11,11,11,11,9,9,8,8,1,1,1,2,2,2],6.59,1,5],
+["MH","Maharashtra","West","State",[6094,6238,6379,6567,6769,6978,7210,7455,7679,8044,8469,8734,9089,9542,10153,10402,11102,11655,12024,13703,14305,15042,16045],5.18,2,5],
+["CG","Chhattisgarh","Central","State",[795,804,812,831,839,849,866,908,956,1029,1119,1164,1209,1232,1277,1374,1469,1567,1676,1747,1848,1956,2124],5.00,4,5],
+["JH","Jharkhand","East","State",[940,952,954,1330,1335,1401,1442,1466,1463,1555,1745,1679,1700,1734,1812,1894,2016,2183,2321,2434,2629,2774,3025],5.02,5,5],
+["ML","Meghalaya","Northeast","State",[66,68,69,71,73,74,77,77,78,79,80,81,82,83,84,84,85,87,88,89,90,94,97],3.59,8,5],
+["MN","Manipur","Northeast","State",[68,69,71,75,77,77,78,78,78,78,79,80,82,82,79,79,82,86,90,71,76,72,63],5.10,9,5],
+["GA","Goa","West","State",[45,46,48,57,56,57,58,59,59,60,60,61,68,67,54,51,55,57,61,60,63,64,64],3.92,2,6],
+["TS","Telangana","South","State",[...Array(13).fill(N),4207,4442,4681,4965,5416,5590,5765,5808,5855,5840],6.64,3,6],
+["OD","Odisha","East","State",[929,941,997,1283,1342,1431,1625,1598,1651,1671,1721,1724,1861,1903,1930,2003,2088,2311,2370,2373,2402,2476,2636],6.70,5,6],
+["TR","Tripura","Northeast","State",[90,79,84,86,87,89,91,96,100,104,111,118,130,141,152,160,174,185,199,206,217,230,247],3.96,8,6],
+["MZ","Mizoram","Northeast","State",[14,15,15,16,15,16,17,17,11,11,14,14,15,20,22,24,25,26,24,25,25,24,25],2.85,9,6],
+["KA","Karnataka","South","State",[4797,4539,3857,3917,4022,4124,4244,4538,4822,5114,5447,5718,5997,6121,6344,6562,7137,7901,9031,10936,11796,12829,13463],5.86,2,7],
+["AP","Andhra Pradesh","South","State",[5814,6584,6959,7257,7624,7938,8925,9570,10429,11203,12088,12762,13007,9656,10817,12178,13725,15044,15263,14714,15403,15448,13994],6.29,3,7],
+["LD","Lakshadweep","South","UT",[2,2,1,1,2,2,2,2,2,2,2,2,6,4,3,3,3,4,4,4,0.42,0.41,0.39],3.95,1,8],
+["KL","Kerala","South","State",[2718,2419,2111,2025,2063,2119,2253,2441,2509,2645,2716,2791,2655,2711,2650,2520,2576,2548,2544,2534,2532,2580,2580],5.26,2,8],
+["TN","Tamil Nadu","South","State",[4988,4622,4752,4784,5474,6277,6540,6651,6787,6831,6968,7005,7049,7132,7244,7556,7742,8362,8759,9790,10107,10317,10808],6.81,3,8],
+["PY","Puducherry","South","UT",[37,37,40,41,43,45,46,46,46,47,45,47,47,48,48,48,49,49,50,50,50,50,50],6.86,4,8],
+["AN","Andaman and Nicobar Islands","Islands","UT",[23,26,25,24,20,23,24,26,24,25,26,21,14,16,15,16,17,18,19,15,17,17,18],4.30,7,8]];
+const CPI={m:["Jan-26","Feb-26","Mar-26","Apr-26","May-26","Jun-26","Jul-26","Aug-26","Sep-26*"],y:[2.74,3.21,3.40,3.48,3.93,4.38,4.45,4.83,5.54]};
+const CFPI={aug:5.97,sep:7.74};
+
+/* ===== DERIVED ===== */
+const L=a=>a[a.length-1],pct=(a,b)=>(a/b-1)*100;
+ST.forEach(s=>{const v=s[4];s.p23=L(v);s.p22=v[v.length-2];s.g=(s.p22!=null&&s.p23!=null)?pct(s.p23,s.p22):null;s.sh=s.p23/L(ALLIN)*100;});
+const natG=pct(NAT.prod[32],NAT.prod[31]),projG=pct(AR.proj,NAT.prod[32]);
+const procG1=pct(AR.proc[1][1],AR.proc[0][1]),procG2=pct(AR.proc[2][1],AR.proc[1][1]);
+const gdtSmp=pct(AR.smp.gdt[1],AR.smp.gdt[0]),gdtBut=pct(AR.but.gdt[1],AR.but.gdt[0]);
+const f1=x=>x==null?"n/a":x.toFixed(1),sgn=x=>x==null?"n/a":(x>0?"+":"")+x.toFixed(1)+"%";
+const fmt=x=>x==null?"n/a":x>=100?Math.round(x).toLocaleString("en-IN"):(+x.toFixed(2)).toString();
+const NA='<span class="tag t-na">Data unavailable from approved sources</span>';
+const NAVY="#14305C",NAVYL="#2B4A7F",RED="#C8102E",AMB="#C98A1B",GRY="#9AA0A9";
+
+/* ===== CHARTS ===== */
+function lineChart(el,labels,series,o={}){
+  const W=o.w||520,H=o.h||220,m={l:46,r:18,t:14,b:30};
+  const all=series.flatMap(s=>s.v).filter(x=>x!=null);let lo=Math.min(...all),hi=Math.max(...all);
+  if(o.zero){lo=Math.min(0,lo)}const pad=(hi-lo)*.08;hi+=pad;if(lo!==0)lo-=pad;
+  const X=i=>m.l+i*(W-m.l-m.r)/(labels.length-1),Y=v=>H-m.b-(v-lo)/(hi-lo)*(H-m.t-m.b);let g="";
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y}" y2="${y}" stroke="#E7E2D8"/><text x="${m.l-6}" y="${y+3}" text-anchor="end" font-size="10" fill="#5C6573">${o.dec!=null?v.toFixed(o.dec):fmt(v)}</text>`}
+  const st=Math.ceil(labels.length/6);labels.forEach((l,i)=>{if(i%st===0||i===labels.length-1)g+=`<text x="${X(i)}" y="${H-m.b+14}" text-anchor="middle" font-size="10" fill="#5C6573">${l}</text>`});
+  series.forEach(s=>{let d="",pen=false;s.v.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1);pen=true});
+    g+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="2.2" ${s.dash?'stroke-dasharray="5 4"':""}/>`;
+    const li=s.v.map(x=>x!=null).lastIndexOf(true);if(li>=0){g+=`<circle cx="${X(li)}" cy="${Y(s.v[li])}" r="3.4" fill="${s.c}"/>`;if(s.end)g+=`<text x="${X(li)}" y="${Y(s.v[li])-8}" text-anchor="end" font-size="11" font-weight="600" fill="${s.c}">${s.end}</text>`}});
+  (o.marks||[]).forEach(mk=>{g+=`<line x1="${X(mk.i)}" x2="${X(mk.i)}" y1="${m.t}" y2="${H-m.b}" stroke="#bbb" stroke-dasharray="2 3"/><text x="${X(mk.i)+3}" y="${m.t+8}" font-size="9.5" fill="#5C6573">${mk.t}</text>`});
+  const lg=series.length>1&&!o.nolegend?'<div class="legend">'+series.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join("")+"</div>":"";
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>${lg}`}
+function hbars(el,items,o={}){
+  const W=o.w||520,rh=o.rh||26,m={l:o.ml||150,r:62,t:4,b:4},H=m.t+m.b+items.length*rh;
+  const vals=items.map(i=>i.v).filter(v=>v!=null),mn=Math.min(0,...vals),mx=Math.max(0,...vals);
+  const X=v=>m.l+(v-mn)/((mx-mn)||1)*(W-m.l-m.r),x0=X(0);let g="";
+  items.forEach((it,i)=>{const y=m.t+i*rh,b=rh-8;
+    g+=`<text x="${m.l-8}" y="${y+b/2+4}" text-anchor="end" font-size="11" fill="#1E2430">${it.l}</text>`;
+    if(it.v==null){g+=`<text x="${x0+4}" y="${y+b/2+4}" font-size="10.5" fill="#9AA0A9">not reported</text>`;return}
+    const x=Math.min(x0,X(it.v)),w=Math.max(2,Math.abs(X(it.v)-x0));
+    g+=`<rect x="${x}" y="${y}" width="${w}" height="${b}" rx="2" fill="${it.c||NAVY}"/>`;
+    const lx=it.v>=0?x+w+5:x-5;g+=`<text x="${lx}" y="${y+b/2+4}" text-anchor="${it.v>=0?"start":"end"}" font-size="11" font-weight="600" fill="#1E2430">${it.t||fmt(it.v)}</text>`});
+  g+=`<line x1="${x0}" x2="${x0}" y1="${m.t}" y2="${H-m.b}" stroke="#999"/>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`}
+function cols(el,items,o={}){ /* items [label,value,note,colour] */
+  const W=o.w||250,H=o.h||190,m={l:8,r:8,t:24,b:34},mx=Math.max(...items.map(i=>i[1]||0))*1.12,n=items.length,bw=(W-m.l-m.r)/n*.6;let g="";
+  items.forEach((it,i)=>{const cx=m.l+(i+.5)*(W-m.l-m.r)/n,h=it[1]==null?0:(it[1]/mx)*(H-m.t-m.b),y=H-m.b-h;
+    if(it[1]==null)g+=`<text x="${cx}" y="${H-m.b-6}" text-anchor="middle" font-size="10" fill="#9AA0A9">not reported</text>`;
+    else g+=`<rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${h}" rx="2" fill="${it[3]||NAVY}"/><text x="${cx}" y="${y-5}" text-anchor="middle" font-size="12" font-weight="600" fill="#1E2430">${fmt(it[1])}</text>`;
+    g+=`<text x="${cx}" y="${H-m.b+13}" text-anchor="middle" font-size="10.5" fill="#5C6573">${it[0]}</text>`;
+    if(it[2])g+=`<text x="${cx}" y="${H-m.b+26}" text-anchor="middle" font-size="10" font-weight="600" fill="${it[2].startsWith("-")?RED:NAVY}">${it[2]}</text>`});
+  g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${H-m.b}" y2="${H-m.b}" stroke="#999"/>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`}
+const spark=(v,c)=>{const W=80,H=22,mn=Math.min(...v),mx=Math.max(...v);return `<svg viewBox="0 0 ${W} ${H}" width="80" height="22"><path d="${v.map((x,i)=>(i?"L":"M")+(i*(W-4)/(v.length-1)+2).toFixed(1)+" "+(H-3-(x-mn)/((mx-mn)||1)*(H-6)).toFixed(1)).join("")}" fill="none" stroke="${c||NAVY}" stroke-width="1.8"/></svg>`};
+
+/* ===== LOGO + TABS ===== */
+const logoBox=$("logoBox");
+const LOGO="data:image/jpeg;base64,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WJwvGMDOfasjwPqdja+HdQlmu4USPUbtmy44Hmt2rqo9L0+Ft0Vjao2CuVhUHB6jpTRo+lqcjTbMc54gXr+VAHK+BLpNLj1LRtQk8m8jvJJ0Mvy+dFIdyupPXuPbFT6ZGt38QtV1yBgNPjso7RpuiSyBizEHuACBn14rqp7S2ugBcW8UwXp5iBsfnTjBC0HkGJDDjb5ZUbcemKAPPPAOiR6z4K8L3FzchrfTyZ47dR/y1DthmPt1Aqs9w+jao3iixzcx/b5rG9ijOSyO37tsez4H0avSoLW3tYzHb28UKHkrGgUH8BSQ2Npbqyw2sEasQWCRgAn1OKAOJ0eNbD4l+TNKv2mTRBLMd3WQzsW/n+Qqn4U3SSa7OmuR21vF4huZZIW2gMocEnd1wR+HFegtY2bXBna0gMxGDIYxuI+vWof7G0vn/iW2fPX9wvP6UAc5eW2leJ9cuLOd1lgutMikj52uPnZlZc8gjINVNBn1WPx3b6Vq6M89lptyI7zHy3MbSwbW/wB75SCP8a7UWVotwLhbaETgYEgjG4DGOvWptilw5UbwCA2OQD1H6D8qAOQE0X/C4GXzE3f2EFxuHXzzx9a69mVFLMQqjkknAFQfYLP7T9p+yQefnPm+WN354zUzxpLGySIrowwVYZBFAHjOmL9m+Hnh/WLG9e51C0uh5GnswdHZpSpATqGCsTntXZ6HN/YvjbxBaak3lf2hKl3aSycLIu3ayg+qkDj3rq4NNsLWQPb2VtE4/ijiVT+gqae3guU2Twxyp12yKGH60AcZqk9vP49sdVjmUWej2U7XlwD8vz42pnoT8pOPf3rHulv9HfRfFl7cWojlvN1yFQh0juMDDNuwQg2DgD7tekGytTbfZjbQmD/nkYxt/LpRJZWk0CwS2sLwr92NowVH0FAHCXQv7vxz4iXRdSigvDptv5WVV1kb5+Pb6j1rOv8AUdOb4WrBEotLi3uoFuraVvnSUTKXJ9cnJz716VFp1jBMJobO3jlAwHSJQ2Prikm0ywuJDJPY20sh6s8SsT+JFAHMePZotV8KzaPYyR3F7qBWKBI2DEfMCWOOgA5zXXQoYoI4yxYqoBJ74FRwWVpakm3tYYSepjjC5/Kp6ACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//Z";
+logoBox.innerHTML='<img alt="National Dairy Development Board" src="'+LOGO+'">';
+$("logoUp").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{logoBox.innerHTML='<img alt="NDDB logo" src="'+r.result+'">'};r.readAsDataURL(f)});
+const TABS=[["overview","Chairman's View"],["signals","Market Signals"],["coops","Cooperatives and Vision"],["states","States and UTs"],["sources","Sources and Readiness"]];
+TABS.forEach(([id,l])=>{const b=document.createElement("button");b.textContent=l;b.dataset.id=id;b.onclick=()=>show(id);$("tabs").appendChild(b)});
+function show(id){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.id==="t-"+id));document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.id===id));history.replaceState(null,"","#"+id);window.scrollTo(0,0)}
+
+/* ===== OVERVIEW ===== */
+(function(){
+  const K=[
+   ["Milk production 2023-24",NAT.prod[32],"Mt",`${sgn(natG)} y/y | 2024-25 projected ${AR.proj} Mt`,["S1","S4"],spark(NAT.prod.slice(-10))],
+   ["Per capita availability",NAT.pc[32],"g/day",`2024-25 projected about ${AR.pcProj}`,["S1","S4"],spark(NAT.pc.slice(-10))],
+   ["Cooperative procurement 2024-25",AR.proc[2][1],"lakh kg/day",`${sgn(procG2)} y/y (derived)`,["S4"],spark(AR.proc.map(x=>x[1]))],
+   ["Cooperative liquid sales 2024-25",444,"lakh L/day",`${sgn(AR.salesG)} y/y (as published)`,["S4"],""],
+   ["Food inflation, Sep 2026",CFPI.sep+"%","CFPI y/y",`Aug 2026: ${CFPI.aug}% | CPI General 5.54%`,["S3"],spark(CPI.y,RED)]];
+  $("kpis").innerHTML=K.map(k=>`<div class="card kpi"><h3>${k[0]}</h3><div class="v">${k[1]} <span class="u">${k[2]}</span></div><div class="d">${k[3]} ${k[4].map(s=>chip(s)).join("")}</div><div>${k[5]}</div></div>`).join("")+
+   `<div class="card kpi na"><h3>Milk price trend</h3><div class="v">Unavailable</div><div class="d">No procurement or retail price series loaded from an approved source</div></div>`;
+  /* production */
+  const lab=[...NAT.yrs,"2024-25P"];
+  $("h_prod").textContent=`India's milk output is ${(NAT.prod[32]/NAT.prod[0]).toFixed(1)}x its 1991-92 level, and NDDB projects ${AR.proj} Mt for 2024-25`;
+  lineChart($("c_prod"),lab,[{n:"Reported",v:[...NAT.prod,null],c:NAVY,end:NAT.prod[32]+""},{n:"NDDB projection",v:[...Array(32).fill(null),NAT.prod[32],AR.proj],c:RED,dash:true,end:AR.proj+" P"}],{zero:true,dec:0,nolegend:true,marks:[{i:23,t:"2014-15"}]});
+  $("s_prod").innerHTML=chip("S1")+chip("S4","Chairman's Message p.5");
+  /* coops */
+  $("h_coop").textContent=`Cooperative procurement growth slowed from ${f1(procG1)}% to ${f1(procG2)}%, with liquid sales up about 1%`;
+  cols($("c_proc"),AR.proc.map((r,i)=>[r[0],r[1],i?sgn(i==1?procG1:procG2):"",NAVY]),{});
+  cols($("c_sales"),AR.sales.map((r,i)=>[r[0],r[1],"",NAVYL]),{});
+  $("s_coop").innerHTML=chip("S4","pp.5,10")+chip("S5")+chip("S6");
+  /* commodities */
+  $("h_comm").textContent=`Conserved commodity prices rose in 2024-25: white butter up ${AR.but.dom}% and SMP up ${AR.smp.dom}% domestically`;
+  hbars($("c_comm"),[
+    {l:"White butter, India (Rs "+AR.but.price+"/kg)",v:AR.but.dom,c:AMB,t:"+"+AR.but.dom+"%"},
+    {l:"SMP, India (Rs "+AR.smp.price+"/kg)",v:AR.smp.dom,c:AMB,t:"+"+AR.smp.dom+"%"},
+    {l:"Butter, Global Dairy Trade*",v:gdtBut,c:GRY,t:sgn(gdtBut)},
+    {l:"SMP, Global Dairy Trade*",v:gdtSmp,c:GRY,t:sgn(gdtSmp)}],{ml:190});
+  $("s_comm").innerHTML=chip("S4","p.11")+" *Derived from Apr 2024 and Mar 2025 prices quoted in the report";
+  /* top states */
+  const top=[...ST].sort((a,b)=>b.p23-a.p23).slice(0,10),t5=top.slice(0,5).reduce((a,s)=>a+s.p23,0)/L(ALLIN)*100;
+  $("h_top").textContent=`Five states (${top.slice(0,5).map(s=>s[0]).join(", ")}) produce ${t5.toFixed(0)}% of India's milk`;
+  hbars($("c_top"),top.map(s=>({l:s[1],v:s.p23,c:NAVY,t:fmt(s.p23)+" ("+s.sh.toFixed(1)+"%)"})),{ml:120,rh:22});
+  $("s_top").innerHTML=chip("S2");
+  /* readiness */
+  const R=[["Milk production","L","Annual to 2023-24; 2024-25 projected"],["General CPI and food","L","Monthly to Sep 2026"],["Cooperative procurement","P","National only, 3 years"],["Cooperative liquid sales","P","National only, 2 years"],["SMP and butter prices","P","Start and end of 2024-25 only"],["Policy events","P","Two items from AR 2024-25"],["Procurement price (farmer)","N","Not loaded"],["Retail milk price","N","Not loaded"],["Milk CPI item index","N","Not loaded"],["Feed and fodder prices","N","Qualitative statements only"],["Weather (IMD)","N","Not loaded"],["International prices","P","Reported in AR 2024-25 only"]];
+  const nl=R.filter(r=>r[1]==="L").length,np=R.filter(r=>r[1]==="P").length;
+  $("h_ready").textContent=`${nl} of ${R.length} data blocks fully loaded, ${np} partial; the farmer and retail milk price series are the missing core`;
+  $("ready").innerHTML=R.map(r=>`<div class="rd ${r[1]}">${r[0]}<small>${r[2]}</small></div>`).join("");
+})();
+
+/* ===== SIGNALS ===== */
+(function(){
+  const up=[
+   ["White butter price +21% to Rs 414/kg","FY 2024-25, domestic","S4","p.11"],
+   ["SMP price +5% to Rs 247/kg","FY 2024-25, domestic","S4","p.11"],
+   ["Global dairy trade: SMP "+sgn(gdtSmp)+", butter "+sgn(gdtBut)+" (derived)","Apr 2024 to Mar 2025","S4","p.11"],
+   ["Food inflation up to "+CFPI.sep+"% from "+CFPI.aug+"%","Sep 2026, provisional","S3","Key Statistics A"]];
+  const dn=[
+   ["Feed ingredient prices fell in the latter part of the year","FY 2024-25, NDDB statement, no series loaded","S4","pp.5, 10"],
+   ["De-oiled rice bran export ban helped stabilise cattle feed prices","FY 2024-25, NDDB assessment","S4","p.10"],
+   ["Stable milk price regime and remunerative prices to farmers","FY 2024-25, NDDB statement","S4","pp.4, 10"],
+   ["Large inventories of conserved commodities held by cooperatives","FY 2024-25","S4","p.5"],
+   ["Procurement outgrowing liquid sales: "+sgn(procG2)+" against "+sgn(AR.salesG),"FY 2024-25","S4","pp.5, 10"]];
+  const row=(a,c)=>`<div class="ev ${c}"><b>${a[0]}</b><span class="p">${a[1]} ${chip(a[2],a[3])}</span></div>`;
+  $("evUp").innerHTML=up.map(a=>row(a,"up")).join("");$("evDn").innerHTML=dn.map(a=>row(a,"dn")).join("");
+  $("h_bal").textContent=`Projected output growth (${sgn(projG)}) exceeds cooperative procurement (${sgn(procG2)}) and liquid sales (${sgn(AR.salesG)})`;
+  hbars($("c_bal"),[{l:"Milk production (NDDB projection)",v:projG,c:RED,t:sgn(projG)+" P"},{l:"Cooperative procurement",v:procG2,c:NAVY,t:sgn(procG2)},{l:"Cooperative liquid sales",v:AR.salesG,c:NAVYL,t:sgn(AR.salesG)}],{ml:190});
+  $("s_bal").innerHTML=chip("S1")+chip("S4","pp.5,10")+chip("S5");
+  $("h_cpi").textContent=`Headline inflation has risen every month in 2026, reaching 5.54% in September; food inflation is ${CFPI.sep}%`;
+  lineChart($("c_cpi"),CPI.m,[{n:"CPI General",v:CPI.y,c:RED,end:"5.54%"}],{dec:1,nolegend:true});
+  $("s_cpi").innerHTML=chip("S3","Annexure IV");
+  const C=[["Farmer procurement sentiment","Needs official procurement prices with fat and SNF basis, by state"],["Consumer milk price sentiment","Needs official retail prices or the milk item CPI"],["National dairy market sentiment","Needs both, plus volumes and input costs"]];
+  $("sent").innerHTML=C.map(c=>`<div><b>${c[0]}</b><div style="margin:4px 0">${NA}</div><div class="sub">${c[1]}</div></div>`).join("");
+  const cs=["#8E0A20","#C8102E","#B8B8B8","#2B4A7F","#14305C"],lb=["-100 to -60 strong down","-59 to -20 moderate down","-19 to +19 stable","+20 to +59 moderate up","+60 to +100 strong up"];
+  $("scale").innerHTML=cs.map((c,i)=>`<rect x="${i*120}" y="4" width="118" height="10" fill="${c}"/><text x="${i*120+59}" y="30" text-anchor="middle" font-size="9" fill="#5C6573">${lb[i]}</text>`).join("");
+})();
+
+/* ===== COOPERATIVES ===== */
+(function(){
+  $("h_proc2").textContent=`Cooperatives now procure ${AR.proc[2][1]} lakh kg a day, ${((AR.proc[2][1]/AR.proc[0][1]-1)*100).toFixed(0)}% more than in 2022-23`;
+  cols($("c_proc2"),AR.proc.map((r,i)=>[r[0],r[1],i?sgn(i==1?procG1:procG2):"",NAVY]),{w:420,h:230});
+  $("s_proc2").innerHTML=chip("S4")+chip("S5")+chip("S6");
+  $("n_proc2").textContent="2022-23 and 2023-24 values were read from excerpts of those annual reports and should be checked against the full PDFs.";
+  const v=AR.vis;$("h_vis").textContent=`Vision 2047 needs animal productivity to rise ${(v[0][2]/v[0][1]).toFixed(1)}x; village coverage and value-added share must double`;
+  hbars($("c_vis"),v.map(x=>({l:x[0],v:x[1]/x[2]*100,c:NAVY,t:x[1]+" of "+x[2]+" ("+Math.round(x[1]/x[2]*100)+"%)"})),{ml:210,rh:34,w:560});
+  $("s_vis").innerHTML=chip("S4","Chairman's Message p.8");
+  $("h_wr").textContent=`White Revolution 2.0 adds ${(AR.wr[0][1]).toLocaleString("en-IN")} new societies and strengthens ${(AR.wr[1][1]).toLocaleString("en-IN")}`;
+  hbars($("c_wr"),AR.wr.map(x=>({l:x[0],v:x[1],c:x[0].startsWith("New")?RED:NAVY,t:x[1].toLocaleString("en-IN")})),{ml:200,rh:36});
+  $("s_wr").innerHTML=chip("S4","p.6");
+  $("h_sub").textContent=`Mother Dairy (Rs ${AR.subs[0][1].toLocaleString("en-IN")} crore, +16%) leads the NDDB group by turnover`;
+  hbars($("c_sub"),AR.subs.map((x,i)=>({l:x[0],v:x[1],c:i?NAVYL:NAVY,t:x[1].toLocaleString("en-IN")})),{ml:200,rh:30});
+  $("s_sub").innerHTML=chip("S4","pp.6-8");
+})();
+
+/* ===== STATES ===== */
+const METRICS={g:{n:"Production growth",hl:"Production change 2023-24 over 2022-23",get:s=>s.g,src:"S2",sub:"Navy = increase, red = decrease, grey = no change or no data."},
+ sh:{n:"Share of India",hl:"Share of India's milk production, 2023-24",get:s=>s.sh,src:"S2",sub:"Darker means a larger share."},
+ cpi:{n:"CPI General",hl:"General CPI inflation, Sep 2026 (not milk)",get:s=>s[5],src:"S3",sub:"Darker amber means higher inflation. Provisional."}};
+let cur="g",sel=null,reg="All",sortK="p23",sortD=-1;const regions=["All",...new Set(ST.map(s=>s[2]))];
+$("regSel").innerHTML=regions.map(r=>`<option>${r==="All"?"All regions":r}</option>`).join("");
+$("regSel").onchange=e=>{reg=regions[e.target.selectedIndex];draw()};
+$("metricSeg").innerHTML=Object.keys(METRICS).map(k=>`<button data-k="${k}">${METRICS[k].n}</button>`).join("");
+document.querySelectorAll("#metricSeg button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;draw()});
+function colour(s){const v=METRICS[cur].get(s);if(v==null)return GRY;
+  if(cur==="g"){if(v===0)return GRY;const t=Math.min(1,Math.abs(v)/12);return v>0?`rgb(${Math.round(150-130*t)},${Math.round(175-125*t)},${Math.round(210-118*t)})`:`rgb(${Math.round(225-25*t)},${Math.round(150-134*t)},${Math.round(160-114*t)})`}
+  if(cur==="sh"){const t=Math.min(1,Math.sqrt(v/16));return `rgb(${Math.round(190-170*t)},${Math.round(200-152*t)},${Math.round(225-133*t)})`}
+  const t=Math.min(1,(v-2.5)/4.5);return `rgb(${Math.round(222-60*t)},${Math.round(190-100*t)},${Math.round(120-90*t)})`}
+function draw(){const M=METRICS[cur];
+  document.querySelectorAll("#metricSeg button").forEach(b=>b.classList.toggle("on",b.dataset.k===cur));
+  $("mapHl").textContent=M.hl;$("mapSub").textContent=M.sub;$("metricSrc").innerHTML=chip(M.src);
+  const grid=Array.from({length:9},()=>Array(10).fill(null));ST.forEach(s=>grid[s[7]][s[6]]=s);let h="";
+  grid.forEach(r=>r.forEach(s=>{if(!s){h+='<div class="tile empty"></div>';return}const v=M.get(s),dim=reg!=="All"&&s[2]!==reg;
+    h+=`<div class="tile ${sel===s[0]?"sel":""} ${dim?"dim":""}" style="background:${colour(s)}" data-c="${s[0]}" title="${s[1]}"><b>${s[0]}</b>${v==null?"n/a":(cur==="g"?sgn(v):f1(v)+"%")}</div>`}));
+  $("tiles").innerHTML=h;document.querySelectorAll(".tile[data-c]").forEach(t=>t.onclick=()=>{sel=t.dataset.c;draw()});
+  detail();table()}
+function detail(){const el=$("detail"),s=ST.find(x=>x[0]===sel);
+  if(!s){el.innerHTML='<div class="hl">Select a State or UT</div><div class="sub">Tap a tile for its production history and CPI.</div>';return}
+  el.innerHTML=`<div class="hl">${s[1]}</div><div class="sub">${s[3]} | ${s[2]}</div>
+  <div id="dsp"></div><table>
+  <tr><td>2023-24 production</td><td class="n">${fmt(s.p23)} '000 t ${chip("S2")}</td></tr>
+  <tr><td>Change over 2022-23</td><td class="n">${sgn(s.g)}</td></tr>
+  <tr><td>Share of India</td><td class="n">${s.sh<0.1?"<0.1":f1(s.sh)}%</td></tr>
+  <tr><td>CPI General, Sep 2026</td><td class="n">${s[5].toFixed(2)}% ${chip("S3","Annex III")}</td></tr>
+  <tr><td>Procurement and retail price</td><td class="n">${NA}</td></tr></table>
+  ${s[0]==="DN"?"<div class='note'>Dadra and Nagar Haveli series; Daman and Diu has no figures after 2014-15.</div>":""}${s[0]==="DL"?"<div class='note'>Source gives no Delhi figures for 2018-19 to 2021-22.</div>":""}`;
+  lineChart($("dsp"),SY,[{n:s[1],v:s[4],c:NAVY}],{w:420,h:150,nolegend:true})}
+function table(){const cols_=[["name","State / UT"],["reg","Region"],["p22","2022-23","n"],["p23","2023-24","n"],["g","Change","n"],["cpi","CPI Sep-26 %","n"]];
+  const rows=ST.filter(s=>reg==="All"||s[2]===reg).map(s=>({s,name:s[1],reg:s[2],p22:s.p22,p23:s.p23,g:s.g,cpi:s[5]}));
+  rows.sort((a,b)=>{const x=a[sortK],y=b[sortK];if(x==null)return 1;if(y==null)return -1;return(typeof x==="string"?x.localeCompare(y):x-y)*sortD});
+  $("stTable").innerHTML="<tr>"+cols_.map(c=>`<th class="s ${c[2]||""}" data-k="${c[0]}">${c[1]}</th>`).join("")+"</tr>"+rows.map(r=>`<tr data-c="${r.s[0]}" style="cursor:pointer"><td>${r.name}</td><td>${r.reg}</td><td class="n">${fmt(r.p22)}</td><td class="n">${fmt(r.p23)}</td><td class="n ${r.g>0?"pos":r.g<0?"neg":""}">${sgn(r.g)}</td><td class="n">${r.cpi.toFixed(2)}</td></tr>`).join("");
+  document.querySelectorAll("#stTable th.s").forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortD=sortK===k?-sortD:-1;sortK=k;table()});
+  document.querySelectorAll("#stTable tr[data-c]").forEach(tr=>tr.onclick=()=>{sel=tr.dataset.c;draw();window.scrollTo({top:0,behavior:"smooth"})});
+  $("s_tbl").innerHTML=chip("S2")+chip("S3","Annex III")}
+(function(){ /* region CAGR 2014-15 to 2023-24, only states with both years */
+  const rg={};ST.forEach(s=>{const b=s[4][13],e=s.p23;if(b==null||e==null)return;(rg[s[2]]=rg[s[2]]||{b:0,e:0}).b+=b;rg[s[2]].e+=e});
+  const items=Object.entries(rg).map(([k,v])=>({l:k,v:(Math.pow(v.e/v.b,1/9)-1)*100,c:NAVY})).sort((a,b)=>b.v-a.v);items.forEach(i=>i.t=f1(i.v)+"%");
+  $("h_reg").textContent=`${items[0].l} India grew fastest at ${items[0].t} a year; ${items[items.length-1].l} was slowest at ${items[items.length-1].t}`;
+  hbars($("c_reg"),items,{ml:90});$("s_reg").innerHTML=chip("S2");
+  const rk=ST.filter(s=>s.g!=null).sort((a,b)=>b.g-a.g),pick=[...rk.slice(0,5),...rk.slice(-5)];
+  const nUp=rk.filter(s=>s.g>0).length;
+  $("h_gr").textContent=`${nUp} of ${rk.length} States and UTs grew in 2023-24; Andhra Pradesh fell ${Math.abs(ST.find(s=>s[0]==="AP").g).toFixed(1)}% as published`;
+  hbars($("c_gr"),pick.map(s=>({l:s[1],v:s.g,c:s.g>=0?NAVY:RED,t:sgn(s.g)})),{ml:130,rh:22});$("s_gr").innerHTML=chip("S2");
+  const opts=[["IN","India"],...ST.map(s=>[s[0],s[1]])];
+  $("selA").innerHTML=opts.map(o=>`<option value="${o[0]}">${o[0]==="IN"?"India":o[1]}</option>`).join("");
+  $("selB").innerHTML='<option value="">Compare with: none</option>'+opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join("");$("selA").value="UP";$("selB").value="RJ";
+  const get=c=>c==="IN"?{n:"India",v:ALLIN}:{n:ST.find(s=>s[0]===c)[1],v:ST.find(s=>s[0]===c)[4]};
+  function d(){const a=get($("selA").value),S=[{n:a.n,v:a.v,c:NAVY}];if($("selB").value){const b=get($("selB").value);S.push({n:b.n,v:b.v,c:RED})}
+    lineChart($("c_trend"),SY,S,{w:1000,h:240,zero:true})}
+  $("selA").onchange=d;$("selB").onchange=d;d()})();
+
+/* ===== SOURCES ===== */
+(function(){
+  $("reg").innerHTML="<tr><th>ID</th><th>Institution</th><th>Publication</th><th>Reference period</th><th>Published</th><th>Frequency</th><th>Verified</th><th>Status</th><th>Supports</th></tr>"+
+   Object.entries(SRC).map(([id,s])=>`<tr><td><b>${id}</b></td><td>${s.inst}</td><td>${s.ds}<br><a class="chip" style="margin:3px 0 0" target="_blank" rel="noopener" href="${s.url}">${s.url}</a></td><td>${s.ref}</td><td>${s.pub}</td><td>${s.freq}</td><td>02 Nov 2026</td><td><span class="tag ${s.status.startsWith("Confirm")?"t-warn":"t-ok"}">${s.status}</span></td><td>${s.vars}</td></tr>`).join("");
+  const LG=[
+   ["Milk production, national and state","As published","S1, S2","Year tables"],
+   ["2024-25 production 250 Mt and 490 g/day","NDDB projection, not an official reported figure","S4","Chairman's Message p.5; Trends p.10"],
+   ["Cooperative procurement 676 lakh kg/day; liquid sales 444 lakh L/day","As published","S4","Chairman's Message p.5; Trends pp.10-11"],
+   ["Cooperative procurement 589 (2022-23), 662 (2023-24); sales 427 (2022-23)","As published in earlier reports; read from excerpts","S6, S5","Dairy cooperatives sections"],
+   ["Procurement growth","Derived: (later / earlier - 1) x 100","S4, S5, S6","Inputs above"],
+   ["SMP +5% to Rs 247/kg; white butter +21% to Rs 414/kg","As published","S4","Trends p.11"],
+   ["GDT SMP and butter change","Derived from USD prices for Apr 2024 and Mar 2025 quoted by NDDB; GDT is not itself an approved source","S4","Trends p.11"],
+   ["Vision 2047 targets; White Revolution 2.0 numbers; subsidiary turnover","As published","S4","Chairman's Message pp.6-8"],
+   ["Projected production growth","Derived: 250 / 239.3 - 1","S1, S4","Inputs above"],
+   ["Regional CAGR","Derived: (sum 2023-24 / sum 2014-15)^(1/9) - 1, states with both years","S2","State table"],
+   ["CPI, food inflation, state CPI","As published; Sep 2026 provisional","S3","Annexures III, IV; Key Statistics A"]];
+  $("ledger").innerHTML="<tr><th>Item</th><th>Type</th><th>Source</th><th>Location</th><th>Accessed</th></tr>"+LG.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>02 Nov 2026</td></tr>`).join("");
+  $("gaps").innerHTML=["Farmer procurement prices by state, with fat and SNF basis","Retail milk prices and revisions; milk item CPI (MoSPI eSankhyiki)","Cooperative procurement and sales by state or union","Feed, fodder, maize and oilseed meal price series","IMD rainfall and temperature","Original publication dates of DAHD tables and annual reports","Annual report pages beyond the first 53, including the Progress of Dairy Cooperatives section (p.140), were not read"].map(x=>`<li>${x}</li>`).join("");
+  $("assume").innerHTML=["Confirm NDDB web statistics pages and the 2022-23 and 2023-24 annual reports as approved sources (S1, S2, S5, S6).","Printed page numbers were taken from the report's footers in extracted text; spot-check before circulation.","Global Dairy Trade prices appear only as quoted by NDDB; confirm that is acceptable.","Delhi 488 (2022-23, 2023-24) and Ladakh figures were read from tables with blank cells; verify against DAHD.","Sentiment scale and movement thresholds need NDDB sign-off before any score is shown.","Chandigarh is placed in North; Andaman and Nicobar is shown as Islands, as the brief's grouping omits both."].map(x=>`<li>${x}</li>`).join("")})();
+
+draw();show(((location.hash||"#overview").slice(1).replace(/[^a-z]/g,""))||"overview");
+if(!document.querySelector(".tab.on"))show("overview");
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NDDB | Dairy Farmer Sentiment Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--navy:#123b5d;--blue:#176b9b;--teal:#138477;--ink:#183247;--muted:#6b7f8e;--line:#e3ebf0;--bg:#f3f7fa}
+*{box-sizing:border-box}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.sidebar{background:#102f49}.navitem{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;color:#c5d5e1;font-size:13px;cursor:pointer;transition:.2s}.navitem:hover,.navitem.active{background:#1b4b6d;color:#fff}.navitem.active{box-shadow:inset 3px 0 #52c6b2}
+.card{background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px rgba(20,55,80,.035)}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#718596;font-weight:700}.kpi-value{font-size:26px;font-weight:750;letter-spacing:-.04em;color:#173b55}.kpi-note{font-size:11px;color:#748797}.pill{font-size:10px;font-weight:700;border-radius:99px;padding:4px 8px}.positive{background:#e5f6ef;color:#13845f}.negative{background:#fff0ee;color:#c84c43}.warning{background:#fff6df;color:#a87310}.neutral{background:#edf3f7;color:#60788a}
+.section-title{font-size:14px;font-weight:750;color:#183d57}.section-sub{font-size:11px;color:#8092a0}.btn{border:1px solid #d9e4eb;background:#fff;border-radius:8px;padding:7px 11px;font-size:11px;font-weight:650;color:#496477}.btn:hover{background:#f2f7fa}.btn-primary{background:#176b9b;color:white;border-color:#176b9b}.btn-primary:hover{background:#12577f}
+#map{height:350px;border-radius:10px;z-index:1}.leaflet-container{font:12px inherit}.marker-label{font-weight:700;color:#183247}.tab-panel{display:none}.tab-panel.active{display:block}.table-row:hover{background:#f7fafc}.progress{height:6px;background:#edf2f5;border-radius:99px;overflow:hidden}.progress>span{display:block;height:100%;border-radius:99px}.tiny-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px}.alert-item{border-left:3px solid;padding:10px 12px;background:#fbfdfe;border-radius:0 9px 9px 0}.filter{border:1px solid #dce6ec;border-radius:8px;padding:7px 9px;background:white;font-size:11px;color:#456174}
+@media(max-width:900px){.sidebar{display:none}.main-wrap{margin-left:0!important}.mobile-nav{display:flex!important}#map{height:300px}}
+@media(min-width:901px){.mobile-nav{display:none!important}}
+</style>
+</head>
+<body>
+<div class="min-h-screen flex">
+<aside class="sidebar w-60 min-h-screen fixed left-0 top-0 p-4 flex flex-col">
+  <div class="flex items-center gap-3 px-2 pt-2 pb-7">
+    <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-xl font-black" style="color:#123b5d">N</div>
+    <div><div class="text-white font-extrabold tracking-wide text-sm">NDDB</div><div class="text-slate-300 text-[10px] tracking-widest">DAIRY INTELLIGENCE</div></div>
+  </div>
+  <div class="text-[9px] font-bold tracking-[.18em] text-slate-400 px-3 mb-2">WORKSPACE</div>
+  <nav class="space-y-1">
+    <div class="navitem active" data-tab="overview"><span>▦</span> Command Centre</div>
+    <div class="navitem" data-tab="geography"><span>◎</span> Cooperative Heatmap</div>
+    <div class="navitem" data-tab="economics"><span>⌁</span> Price & Economics</div>
+    <div class="navitem" data-tab="voices"><span>◖</span> Farmer Voices</div>
+    <div class="navitem" data-tab="alerts"><span>⚑</span> Distress & Alerts</div>
+    <div class="navitem" data-tab="reports"><span>▤</span> Reports & Insights</div>
+  </nav>
+  <div class="mt-8 text-[9px] font-bold tracking-[.18em] text-slate-400 px-3 mb-2">ADMINISTRATION</div>
+  <div class="navitem" data-tab="settings"><span>⚙</span> Data & Settings</div>
+  <div class="mt-auto rounded-xl p-3 border border-slate-600/60 bg-slate-800/40">
+    <div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-xs text-white font-semibold">Prototype environment</span></div>
+    <p class="text-[10px] text-slate-300 leading-relaxed">Illustrative data only. No live NDDB, union or farmer records connected.</p>
+  </div>
+</aside>
+
+<div class="main-wrap ml-60 flex-1 min-w-0">
+<header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+  <div class="px-5 lg:px-8 py-3 flex items-center justify-between gap-3">
+    <div><div class="text-[10px] uppercase tracking-[.14em] font-bold text-slate-400">National Dairy Development Board</div><h1 class="text-lg md:text-xl font-extrabold text-slate-800">Dairy Farmer Sentiment Tracker</h1></div>
+    <div class="flex items-center gap-2">
+      <span class="hidden md:inline-flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 rounded-lg px-3 py-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span> DEMO DATA · 02 NOV 2026</span>
+      <button class="btn" onclick="window.print()">⇩ Export / Print</button>
+      <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold">ND</div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav bg-white border-b px-4 py-2 gap-2 overflow-x-auto">
+  <button class="btn btn-primary" onclick="switchTab('overview')">Overview</button><button class="btn" onclick="switchTab('geography')">Heatmap</button><button class="btn" onclick="switchTab('economics')">Economics</button><button class="btn" onclick="switchTab('voices')">Voices</button><button class="btn" onclick="switchTab('alerts')">Alerts</button>
+</div>
+
+<main class="p-4 lg:p-7 max-w-[1600px] mx-auto">
+<div class="flex flex-wrap justify-between items-end gap-3 mb-5">
+ <div><div class="text-xs text-slate-500 mb-1">National overview <span class="mx-1">/</span> All participating regions</div><h2 class="text-2xl font-extrabold tracking-tight">Farmer pulse at a glance</h2><p class="text-xs text-slate-500 mt-1">A unified view of sentiment, milk economics and emerging cooperative-level stress.</p></div>
+ <div class="flex flex-wrap gap-2"><select id="stateFilter" class="filter" onchange="applyFilters()"><option value="All">All states</option><option>Gujarat</option><option>Karnataka</option><option>Maharashtra</option><option>Kerala</option><option>Punjab</option><option>Madhya Pradesh</option></select><select id="periodFilter" class="filter" onchange="updatePeriod()"><option value="6">Last 6 months</option><option value="3">Last 3 months</option><option value="12">Last 12 months</option></select><button class="btn" onclick="resetFilters()">↺ Reset</button></div>
+</div>
+
+<section id="overview" class="tab-panel active">
+ <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+  <div class="card p-4"><div class="flex justify-between"><span class="kpi-label">Farmer sentiment index</span><span class="pill warning">Watch</span></div><div class="kpi-value mt-2" id="kpiSentiment">52<span class="text-sm text-slate-400">/100</span></div><div class="kpi-note mt-1"><span class="text-rose-600 font-bold">−4.2 pts</span> vs previous period</div><div class="progress mt-3"><span style="width:52%;background:#e6a83b"></span></div></div>
+  <div class="card p-4"><div class="flex justify-between"><span class="kpi-label">Avg. procurement price</span><span class="pill positive">+₹1.20/L</span></div><div class="kpi-value mt-2">₹54.20<span class="text-sm text-slate-400">/L</span></div><div class="kpi-note mt-1">Illustrative blended rate · Fat/SNF adjusted</div><div class="progress mt-3"><span style="width:68%;background:#239b83"></span></div></div>
+  <div class="card p-4"><div class="flex justify-between"><span class="kpi-label">Cattle feed price index</span><span class="pill negative">Elevated</span></div><div class="kpi-value mt-2">₹38.00<span class="text-sm text-slate-400">/kg</span></div><div class="kpi-note mt-1"><span class="text-rose-600 font-bold">+8.6%</span> vs previous period</div><div class="progress mt-3"><span style="width:82%;background:#dc756b"></span></div></div>
+  <div class="card p-4"><div class="flex justify-between"><span class="kpi-label">Payment cycle</span><span class="pill warning">Needs review</span></div><div class="kpi-value mt-2">8.4<span class="text-sm text-slate-400"> days</span></div><div class="kpi-note mt-1">Average reported payment lag</div><div class="progress mt-3"><span style="width:56%;background:#d9a13e"></span></div></div>
+ </div>
+
+ <div class="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-4">
+  <div class="card p-4 xl:col-span-3">
+   <div class="flex flex-wrap justify-between items-start gap-2 mb-3"><div><div class="section-title">Cooperative sentiment heatmap</div><div class="section-sub">Illustrative regional indicators · Select a marker to inspect</div></div><div class="flex gap-3 text-[10px] text-slate-500"><span><i class="tiny-dot" style="background:#1da47d"></i>Positive</span><span><i class="tiny-dot" style="background:#e6aa3b"></i>Watch</span><span><i class="tiny-dot" style="background:#d95b55"></i>Distress</span></div></div>
+   <div id="map"></div><div class="flex justify-between text-[10px] text-slate-400 mt-2"><span>Map markers represent sample union/district locations</span><span>Source: Demonstration dataset</span></div>
+  </div>
+  <div class="card p-4 xl:col-span-2">
+   <div class="flex justify-between items-start"><div><div class="section-title">Sentiment composition</div><div class="section-sub">Share of analysed farmer expressions</div></div><span class="pill neutral">Illustrative</span></div>
+   <div class="h-52 flex items-center justify-center"><canvas id="sentimentDonut"></canvas></div>
+   <div class="grid grid-cols-3 gap-2 text-center mt-1"><div><div class="text-lg font-bold text-emerald-600">28%</div><div class="text-[10px] text-slate-500">Positive</div></div><div><div class="text-lg font-bold text-amber-600">44%</div><div class="text-[10px] text-slate-500">Neutral</div></div><div><div class="text-lg font-bold text-rose-600">28%</div><div class="text-[10px] text-slate-500">Negative</div></div></div>
+   <div class="border-t mt-4 pt-3 text-[11px] text-slate-500">Most frequent concern: <b class="text-slate-700">rising input costs</b></div>
+  </div>
+ </div>
+
+ <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+  <div class="card p-4 xl:col-span-2"><div class="flex justify-between items-start mb-2"><div><div class="section-title">Milk price vs. farmer sentiment</div><div class="section-sub">Monthly trend · dual-axis comparison</div></div><span class="pill neutral">6-month view</span></div><div class="h-64"><canvas id="trendChart"></canvas></div></div>
+  <div class="card p-4"><div class="section-title mb-1">Priority signals</div><div class="section-sub mb-4">Topics driving farmer conversations</div>
+   <div class="space-y-4">
+    <div><div class="flex justify-between text-xs mb-1"><span>Feed & input costs</span><b>34%</b></div><div class="progress"><span style="width:34%;background:#d9786d"></span></div></div>
+    <div><div class="flex justify-between text-xs mb-1"><span>Milk procurement rate</span><b>26%</b></div><div class="progress"><span style="width:26%;background:#438db5"></span></div></div>
+    <div><div class="flex justify-between text-xs mb-1"><span>Payment delays</span><b>19%</b></div><div class="progress"><span style="width:19%;background:#d9a13e"></span></div></div>
+    <div><div class="flex justify-between text-xs mb-1"><span>Fodder availability</span><b>13%</b></div><div class="progress"><span style="width:13%;background:#55a78d"></span></div></div>
+    <div><div class="flex justify-between text-xs mb-1"><span>Other issues</span><b>8%</b></div><div class="progress"><span style="width:8%;background:#9aaab5"></span></div></div>
+   </div>
+   <div class="mt-5 p-3 rounded-lg bg-amber-50 border border-amber-100 text-[11px] text-amber-900"><b>Insight:</b> Input-cost concerns are prominent despite a modest improvement in the illustrative procurement price.</div>
+  </div>
+ </div>
+ <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+  <div class="card p-4"><div class="flex justify-between mb-3"><div><div class="section-title">Active distress alerts</div><div class="section-sub">Prioritised for review by the concerned union</div></div><button class="btn" onclick="switchTab('alerts')">View all →</button></div>
+   <div class="space-y-3">
+    <div class="alert-item" style="border-color:#d95b55"><div class="flex justify-between gap-2"><b class="text-xs">Fodder scarcity signal</b><span class="pill negative">High</span></div><div class="text-[11px] text-slate-600 mt-1">Kaira region, Gujarat · Negative expressions rising across sample inputs.</div><div class="text-[10px] text-slate-400 mt-1">Suggested review: fodder availability and local prices</div></div>
+    <div class="alert-item" style="border-color:#e1a33c"><div class="flex justify-between gap-2"><b class="text-xs">Payment delay concern</b><span class="pill warning">Medium</span></div><div class="text-[11px] text-slate-600 mt-1">Sangli region, Maharashtra · Reported payment-cycle concerns.</div><div class="text-[10px] text-slate-400 mt-1">Suggested review: society-wise payment ledger</div></div>
+   </div>
+  </div>
+  <div class="card p-4"><div class="section-title mb-1">Data coverage & confidence</div><div class="section-sub mb-4">Prototype coverage indicators, not live ingestion statistics</div>
+   <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-lg bg-slate-50 p-3"><div class="text-xl font-bold">5</div><div class="text-[10px] text-slate-500">Languages modelled</div></div><div class="rounded-lg bg-slate-50 p-3"><div class="text-xl font-bold">6</div><div class="text-[10px] text-slate-500">Sample regions</div></div>
+    <div class="rounded-lg bg-slate-50 p-3"><div class="text-xl font-bold">3</div><div class="text-[10px] text-slate-500">Input channels shown</div></div><div class="rounded-lg bg-slate-50 p-3"><div class="text-xl font-bold">—</div><div class="text-[10px] text-slate-500">Verified live sources</div></div>
+   </div>
+   <p class="text-[10px] text-slate-400 mt-3">A production score should include sample size, source reliability, language confidence and geographic coverage.</p>
+  </div>
+ </div>
+</section>
+
+<section id="geography" class="tab-panel">
+ <div class="card p-4 mb-4"><div class="section-title">Regional cooperative intelligence</div><div class="section-sub mb-3">Explore sample locations and compare sentiment levels. All values are illustrative.</div><div id="mapLarge" style="height:480px;border-radius:10px"></div></div>
+ <div class="card p-4"><div class="section-title mb-3">Region-level summary</div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="text-slate-500 border-b"><tr><th class="py-3">Region</th><th>State</th><th>Sentiment</th><th>Feed ₹/kg</th><th>Payment lag</th><th>Signal</th></tr></thead><tbody id="regionRows"></tbody></table></div></div>
+</section>
+
+<section id="economics" class="tab-panel">
+ <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+  <div class="card p-4 xl:col-span-2"><div class="section-title">Economic pressure dashboard</div><div class="section-sub mb-3">Compare procurement returns with major input-cost signals</div><div class="h-72"><canvas id="economicChart"></canvas></div></div>
+  <div class="card p-4"><div class="section-title mb-3">Illustrative input basket</div>
+   <div class="space-y-4">
+    <div><div class="flex justify-between text-xs"><span>Cattle feed</span><b>₹38/kg</b></div><div class="text-[10px] text-rose-600">↑ 8.6% period-on-period</div></div>
+    <div><div class="flex justify-between text-xs"><span>Dry fodder</span><b>₹7.80/kg</b></div><div class="text-[10px] text-rose-600">↑ 12.0% period-on-period</div></div>
+    <div><div class="flex justify-between text-xs"><span>Green fodder</span><b>₹2.40/kg</b></div><div class="text-[10px] text-amber-600">↑ 3.1% period-on-period</div></div>
+    <div><div class="flex justify-between text-xs"><span>Procurement price</span><b>₹54.20/L</b></div><div class="text-[10px] text-emerald-600">↑ ₹1.20/L period-on-period</div></div>
+   </div>
+   <div class="mt-5 p-3 bg-blue-50 rounded-lg text-[11px] text-blue-900">Recommended analysis: estimate net milk margin using fat/SNF-linked price, yield, feed intake and local fodder costs.</div>
+  </div>
+ </div>
+ <div class="card p-4"><div class="section-title">Payment timeliness indicators</div><div class="section-sub mb-3">Sample regional payment lag; validate against union payment records before action.</div><div class="h-64"><canvas id="paymentChart"></canvas></div></div>
+</section>
+
+<section id="voices" class="tab-panel">
+ <div class="flex flex-wrap justify-between items-center gap-2 mb-4"><div><div class="section-title text-lg">Farmer voice intelligence</div><div class="section-sub">Illustrative, anonymised sample statements to demonstrate multilingual analysis.</div></div><select class="filter" id="voiceLang" onchange="renderVoices()"><option value="All">All languages</option><option>Gujarati</option><option>Hindi</option><option>Marathi</option><option>Kannada</option><option>Tamil</option></select></div>
+ <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+  <div class="card p-4"><div class="kpi-label">Expressions analysed</div><div class="kpi-value">1,284</div><div class="kpi-note">Illustrative sample volume</div></div><div class="card p-4"><div class="kpi-label">Negative expressions</div><div class="kpi-value text-rose-600">28%</div><div class="kpi-note">Require contextual review</div></div><div class="card p-4"><div class="kpi-label">Language coverage</div><div class="kpi-value">5</div><div class="kpi-note">Gujarati · Hindi · Marathi · Kannada · Tamil</div></div>
+ </div>
+ <div class="card p-4"><div class="flex justify-between mb-3"><div class="section-title">Recent farmer expressions</div><span class="pill neutral">Synthetic examples</span></div><div id="voiceList" class="space-y-3"></div></div>
+ <div class="text-[11px] text-slate-500 mt-3">Production safeguards: consent-based collection, removal of personal identifiers, human review for sarcasm/dialect, and no individual farmer profiling.</div>
+</section>
+
+<section id="alerts" class="tab-panel">
+ <div class="flex flex-wrap justify-between items-center mb-4"><div><div class="section-title text-lg">Distress & intervention alerts</div><div class="section-sub">Signals are prompts for verification, not automated findings or policy decisions.</div></div><button class="btn btn-primary" onclick="alert('Demo only: connect a verified alert workflow in the production system.')">＋ Create review note</button></div>
+ <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"><div class="card p-4"><div class="kpi-label">High priority</div><div class="kpi-value text-rose-600">2</div><div class="kpi-note">Illustrative alerts</div></div><div class="card p-4"><div class="kpi-label">Medium priority</div><div class="kpi-value text-amber-600">4</div><div class="kpi-note">Illustrative alerts</div></div><div class="card p-4"><div class="kpi-label">Awaiting validation</div><div class="kpi-value">6</div><div class="kpi-note">Requires union-level evidence</div></div></div>
+ <div class="card p-4"><div class="section-title mb-3">Alert register</div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="border-b text-slate-500"><tr><th class="py-3">Signal</th><th>Location</th><th>Trigger</th><th>Priority</th><th>Suggested validation</th><th>Status</th></tr></thead><tbody>
+ <tr class="border-b table-row"><td class="py-3 font-semibold">Fodder scarcity</td><td>Kaira, Gujarat</td><td>Negative sentiment + fodder cost rise</td><td><span class="pill negative">High</span></td><td>Check local fodder supply and rates</td><td>Open</td></tr>
+ <tr class="border-b table-row"><td class="py-3 font-semibold">Payment delay</td><td>Sangli, Maharashtra</td><td>Repeated payment-related complaints</td><td><span class="pill negative">High</span></td><td>Reconcile DCS and union payment dates</td><td>Open</td></tr>
+ <tr class="border-b table-row"><td class="py-3 font-semibold">Feed affordability</td><td>Mysuru, Karnataka</td><td>Feed cost outpacing milk returns</td><td><span class="pill warning">Medium</span></td><td>Review feed retail price and margin</td><td>Review</td></tr>
+ <tr class="border-b table-row"><td class="py-3 font-semibold">Procurement rate concern</td><td>Malappuram, Kerala</td><td>Negative rate-related expressions</td><td><span class="pill warning">Medium</span></td><td>Compare local alternatives and quality mix</td><td>Review</td></tr>
+ <tr class="border-b table-row"><td class="py-3 font-semibold">Seasonal fodder pressure</td><td>Bhopal, Madhya Pradesh</td><td>Dry fodder availability mentions</td><td><span class="pill warning">Medium</span></td><td>Check seasonal supply and mandi reports</td><td>Review</td></tr>
+ </tbody></table></div></div>
+ <div class="card p-4 mt-4"><div class="section-title mb-2">Predictive model design — not yet enabled</div><div class="grid md:grid-cols-3 gap-3 text-xs"><div class="bg-slate-50 p-3 rounded-lg"><b>Distress cattle sale risk</b><p class="text-slate-500 mt-1">Combine sentiment trend, milk margin, feed/fodder stress and verified cattle-market indicators.</p></div><div class="bg-slate-50 p-3 rounded-lg"><b>Payment stress risk</b><p class="text-slate-500 mt-1">Use payment ledger ageing, union liquidity indicators and repeated farmer complaints.</p></div><div class="bg-slate-50 p-3 rounded-lg"><b>Supply diversion risk</b><p class="text-slate-500 mt-1">Use procurement volume trends, competing buyer rates and verified supply-withdrawal patterns.</p></div></div></div>
+</section>
+
+<section id="reports" class="tab-panel">
+ <div class="card p-5 mb-4"><div class="section-title text-lg">Management insights</div><div class="section-sub mb-4">Illustrative interpretation of the current demo dataset</div>
+ <ol class="space-y-4 text-sm"><li class="flex gap-3"><span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">01</span><div><b>Track net farmer returns, not procurement price alone.</b><p class="text-xs text-slate-500 mt-1">A procurement-price increase may not offset feed and fodder inflation. Add a district-level indicative milk margin measure.</p></div></li><li class="flex gap-3"><span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">02</span><div><b>Validate payment complaints against transaction data.</b><p class="text-xs text-slate-500 mt-1">Link DCS-wise payment schedules and actual credit dates to distinguish isolated complaints from systemic delays.</p></div></li><li class="flex gap-3"><span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">03</span><div><b>Build trust through human-reviewed vernacular insights.</b><p class="text-xs text-slate-500 mt-1">Show source type, language confidence, sample size and reviewer status alongside each sentiment signal.</p></div></li></ol>
+ </div>
+ <div class="card p-4"><div class="section-title mb-2">Suggested implementation sequence</div><div class="grid md:grid-cols-4 gap-3"><div class="p-3 rounded-lg bg-slate-50"><div class="text-[10px] font-bold text-blue-700">PHASE 1</div><b class="text-xs">Data foundation</b><p class="text-[11px] text-slate-500 mt-1">Define DCS/union hierarchy, data agreements and trusted economic sources.</p></div><div class="p-3 rounded-lg bg-slate-50"><div class="text-[10px] font-bold text-blue-700">PHASE 2</div><b class="text-xs">Pilot ingestion</b><p class="text-[11px] text-slate-500 mt-1">Start with consented IVR/voice, meeting notes and verified records.</p></div><div class="p-3 rounded-lg bg-slate-50"><div class="text-[10px] font-bold text-blue-700">PHASE 3</div><b class="text-xs">Analytics & validation</b><p class="text-[11px] text-slate-500 mt-1">Local-language models, human review and economic correlation testing.</p></div><div class="p-3 rounded-lg bg-slate-50"><div class="text-[10px] font-bold text-blue-700">PHASE 4</div><b class="text-xs">Scale & governance</b><p class="text-[11px] text-slate-500 mt-1">Role-based dashboards, alert workflows, audits and model monitoring.</p></div></div></div>
+</section>
+
+<section id="settings" class="tab-panel">
+ <div class="card p-5"><div class="section-title text-lg">Data sources & governance</div><div class="section-sub mb-4">Configuration concept for a future production deployment</div><div class="grid md:grid-cols-2 gap-4">
+ <div class="border rounded-xl p-4"><b class="text-sm">Potential source connectors</b><ul class="text-xs text-slate-600 mt-3 space-y-2 list-disc pl-4"><li>Consent-based WhatsApp / IVR voice submissions</li><li>DCS meeting minutes and grievance registers</li><li>AMCS procurement, quality and payment records (subject to approvals)</li><li>Verified cattle feed and fodder price surveys</li><li>Regional mandi, agriculture and local news feeds</li></ul></div>
+ <div class="border rounded-xl p-4"><b class="text-sm">Governance controls</b><ul class="text-xs text-slate-600 mt-3 space-y-2 list-disc pl-4"><li>Role-based access: NDDB, federation, union and authorised users</li><li>Consent, purpose limitation and retention controls</li><li>Mask personal identifiers and restrict raw audio access</li><li>Show source provenance, timestamp and confidence score</li><li>Human validation before escalation or policy action</li></ul></div></div>
+ <div class="mt-4 p-4 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-900"><b>Important prototype notice:</b> This is a front-end demonstration. It does not scrape websites, receive WhatsApp/IVR messages, run AI sentiment analysis, connect to AMCS, or predict cattle sales/defaults. The displayed figures, regions, statements and alerts are synthetic placeholders and must not be treated as actual NDDB or cooperative data.</div>
+ </div>
+</section>
+
+<footer class="text-[10px] text-slate-400 mt-7 pb-5 flex flex-wrap justify-between gap-2"><span>NDDB Dairy Farmer Sentiment Tracker · Concept prototype</span><span>For discussion and design validation only · Not an official operational dashboard</span></footer>
+</main>
+</div>
+</div>
+<script>
+const regions=[
+ {name:'Kaira',state:'Gujarat',city:'Anand',coords:[22.56,72.95],score:48,feed:39.2,lag:7.2,level:'Watch',color:'#e6aa3b'},
+ {name:'Kolhapur',state:'Maharashtra',city:'Kolhapur',coords:[16.70,74.24],score:39,feed:40.1,lag:12.6,level:'Distress',color:'#d95b55'},
+ {name:'Mysuru',state:'Karnataka',city:'Mysuru',coords:[12.30,76.64],score:57,feed:37.5,lag:6.1,level:'Stable',color:'#1da47d'},
+ {name:'Malappuram',state:'Kerala',city:'Malappuram',coords:[11.05,76.07],score:61,feed:36.8,lag:5.4,level:'Stable',color:'#1da47d'},
+ {name:'Ludhiana',state:'Punjab',city:'Ludhiana',coords:[30.90,75.85],score:66,feed:35.9,lag:4.8,level:'Positive',color:'#1da47d'},
+ {name:'Bhopal',state:'Madhya Pradesh',city:'Bhopal',coords:[23.26,77.41],score:46,feed:38.6,lag:9.1,level:'Watch',color:'#e6aa3b'}
+];
+const voices=[
+ {lang:'Gujarati',place:'Kaira, Gujarat',sent:'Negative',topic:'Fodder cost',text:'ચારા અને પશુઆહારના ભાવ વધી રહ્યા છે, દૂધના ભાવમાં એટલો વધારો નથી.',translation:'Fodder and cattle-feed prices are increasing, while milk prices have not increased proportionately.',confidence:'0.91',source:'Illustrative voice transcription'},
+ {lang:'Hindi',place:'Bhopal, Madhya Pradesh',sent:'Neutral',topic:'Procurement rate',text:'दूध का भुगतान समय पर मिल रहा है, लेकिन पशु आहार महंगा हो गया है।',translation:'Milk payment is being received on time, but cattle feed has become expensive.',confidence:'0.88',source:'Illustrative IVR transcript'},
+ {lang:'Marathi',place:'Sangli, Maharashtra',sent:'Negative',topic:'Payment delay',text:'दूधाचे पैसे जमा होण्यास उशीर होत आहे.',translation:'There is a delay in the milk payment being credited.',confidence:'0.94',source:'Illustrative voice transcription'},
+ {lang:'Kannada',place:'Mysuru, Karnataka',sent:'Positive',topic:'Cooperative service',text:'ಸಂಘದಿಂದ ಪಾವತಿ ಸರಿಯಾಗಿ ಬರುತ್ತಿದೆ ಮತ್ತು ಸೇವೆಯೂ ಉತ್ತಮವಾಗಿದೆ.',translation:'Payments from the society are regular and the service is good.',confidence:'0.89',source:'Illustrative meeting note'},
+ {lang:'Tamil',place:'Sample region, Tamil Nadu',sent:'Neutral',topic:'Feed availability',text:'தீவனத்தின் விலை மாறுகிறது; உள்ளூர் கிடைப்பையும் ಗಮನಿಸಬೇಕು.',translation:'Fodder prices are changing; local availability also needs attention.',confidence:'0.86',source:'Illustrative IVR transcript'}
+];
+let charts={},maps={};
+function switchTab(id){document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.navitem').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));if(id==='geography')setTimeout(()=>maps.large&&maps.large.invalidateSize(),100);if(id==='overview')setTimeout(()=>maps.main&&maps.main.invalidateSize(),100);window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.navitem').forEach(n=>n.addEventListener('click',()=>switchTab(n.dataset.tab)));
+function markerIcon(color){return L.divIcon({className:'',html:`<div style="width:19px;height:19px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 1px 7px #4568; "></div>`,iconSize:[19,19],iconAnchor:[9,9]})}
+function createMap(id){let m=L.map(id,{scrollWheelZoom:false}).setView([22.9,78.2],4.6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(m);regions.forEach(r=>L.marker(r.coords,{icon:markerIcon(r.color)}).addTo(m).bindPopup(`<b>${r.name}, ${r.state}</b><br>Sentiment: ${r.score}/100<br>Feed: ₹${r.feed}/kg<br>Payment lag: ${r.lag} days<br><small>Illustrative data</small>`));return m}
+function initCharts(){
+ charts.donut=new Chart(document.getElementById('sentimentDonut'),{type:'doughnut',data:{labels:['Positive','Neutral','Negative'],datasets:[{data:[28,44,28],backgroundColor:['#1da47d','#e6aa3b','#d95b55'],borderWidth:0,hoverOffset:5}]},options:{maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false}}}});
+ charts.trend=new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct'],datasets:[{label:'Procurement price (₹/L)',data:[51,52,52.5,53,53,54.2],yAxisID:'y',borderColor:'#277eae',backgroundColor:'#277eae',tension:.35,pointRadius:3},{label:'Sentiment index',data:[64,62,59,55,49,52],yAxisID:'y1',borderColor:'#d66c62',backgroundColor:'#d66c62',tension:.35,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:8,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{title:{display:true,text:'₹ / litre'},ticks:{font:{size:10}}},y1:{position:'right',min:0,max:100,title:{display:true,text:'Score'},grid:{drawOnChartArea:false},ticks:{font:{size:10}}}}}});
+ charts.economic=new Chart(document.getElementById('economicChart'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct'],datasets:[{label:'Milk procurement ₹/L',data:[51,52,52.5,53,53,54.2],borderColor:'#277eae',tension:.3,yAxisID:'y'},{label:'Cattle feed ₹/kg',data:[34,34.5,35,36,37,38],borderColor:'#d66c62',tension:.3,yAxisID:'y1'},{label:'Farmer sentiment',data:[64,62,59,55,49,52],borderColor:'#239b83',borderDash:[5,4],tension:.3,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:8}}},scales:{x:{grid:{display:false}},y:{position:'left',title:{display:true,text:'Milk ₹/L'}},y1:{position:'right',title:{display:true,text:'Feed ₹/kg'},grid:{drawOnChartArea:false}},y2:{display:false,min:0,max:100}}}});
+ charts.payment=new Chart(document.getElementById('paymentChart'),{type:'bar',data:{labels:regions.map(r=>r.name),datasets:[{label:'Payment lag (days)',data:regions.map(r=>r.lag),backgroundColor:regions.map(r=>r.lag>10?'#d95b55':r.lag>7?'#e6aa3b':'#239b83'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,title:{display:true,text:'Days'}},x:{grid:{display:false}}}}});
+}
+function renderRegions(){document.getElementById('regionRows').innerHTML=regions.map(r=>`<tr class="border-b table-row"><td class="py-3 font-semibold">${r.name}</td><td>${r.state}</td><td><b>${r.score}/100</b></td><td>₹${r.feed.toFixed(1)}</td><td>${r.lag} days</td><td><span class="pill ${r.level==='Distress'?'negative':r.level==='Watch'?'warning':'positive'}">${r.level}</span></td></tr>`).join('')}
+function renderVoices(){let lang=document.getElementById('voiceLang').value;let arr=voices.filter(v=>lang==='All'||v.lang===lang);document.getElementById('voiceList').innerHTML=arr.map(v=>`<div class="border rounded-xl p-3"><div class="flex flex-wrap justify-between gap-2"><div class="flex gap-2 items-center"><span class="pill neutral">${v.lang}</span><span class="text-[11px] text-slate-500">${v.place}</span><span class="text-[11px] text-slate-400">· ${v.topic}</span></div><span class="pill ${v.sent==='Negative'?'negative':v.sent==='Positive'?'positive':'warning'}">${v.sent}</span></div><p class="text-sm font-medium mt-3">${v.text}</p><p class="text-xs text-slate-500 mt-1">Translation: ${v.translation}</p><div class="flex justify-between mt-3 text-[10px] text-slate-400"><span>${v.source}</span><span>Model confidence: ${v.confidence} · Synthetic</span></div></div>`).join('')||'<p class="text-xs text-slate-500">No sample expressions for this language.</p>'}
+function applyFilters(){let s=document.getElementById('stateFilter').value;let list=s==='All'?regions:regions.filter(r=>r.state===s);document.getElementById('kpiSentiment').innerHTML=(list.length?Math.round(list.reduce((a,r)=>a+r.score,0)/list.length):'—')+'<span class="text-sm text-slate-400">/100</span>';if(maps.main){maps.main.eachLayer(l=>{if(l instanceof L.Marker)maps.main.removeLayer(l)});list.forEach(r=>L.marker(r.coords,{icon:markerIcon(r.color)}).addTo(maps.main).bindPopup(`<b>${r.name}, ${r.state}</b><br>Sentiment: ${r.score}/100<br><small>Illustrative data</small>`));if(list.length)maps.main.fitBounds(list.map(r=>r.coords),{padding:[25,25],maxZoom:6})}}
+function updatePeriod(){let p=document.getElementById('periodFilter').value;document.querySelectorAll('.pill').forEach(()=>{});if(charts.trend){let labels=p==='3'?['Aug','Sep','Oct']:p==='12'?['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct']:['May','Jun','Jul','Aug','Sep','Oct'];let vals=p==='3'?[55,49,52]:p==='12'?[68,66,65,64,62,61,64,62,59,55,49,52]:[64,62,59,55,49,52];charts.trend.data.labels=labels;charts.trend.data.datasets[1].data=vals;charts.trend.update()}}
+function resetFilters(){document.getElementById('stateFilter').value='All';document.getElementById('periodFilter').value='6';applyFilters();updatePeriod()}
+window.addEventListener('load',()=>{maps.main=createMap('map');maps.large=createMap('mapLarge');initCharts();renderRegions();renderVoices()});
+</script>
+</body>
+</html>

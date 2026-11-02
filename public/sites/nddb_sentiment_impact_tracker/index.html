@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NDDB | Sentiment & Impact Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--navy:#102c3b;--teal:#087f78;--mint:#e7f4ef;--ink:#18313c;--muted:#6c7d83;--line:#e6ece9;--gold:#c28a35}
+*{box-sizing:border-box}body{font-family:'DM Sans',sans-serif;background:#f5f8f6;color:var(--ink)}h1,h2,h3,.display{font-family:Manrope,sans-serif}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 5px 18px rgba(16,44,59,.035)}
+.kpi{position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;width:105px;height:105px;border-radius:50%;right:-35px;top:-42px;background:rgba(8,127,120,.06)}
+.navbtn{padding:9px 13px;border-radius:10px;color:#d8e5e5;font-size:13px;white-space:nowrap}.navbtn.active,.navbtn:hover{background:#244653;color:white}
+.pill{font-size:11px;font-weight:700;padding:4px 8px;border-radius:99px;display:inline-block}
+.chart-wrap{position:relative;height:250px}.chart-wrap.tall{height:300px}
+#indiaMap{height:360px;border-radius:13px;background:#edf3f0;z-index:1}
+.leaflet-container{font:12px 'DM Sans',sans-serif}.leaflet-popup-content-wrapper{border-radius:12px}
+.feed-item{border-bottom:1px solid #edf1ef;padding:14px 0}.feed-item:last-child{border:0}
+.tab{border-bottom:2px solid transparent;padding:10px 2px;color:#718187;font-size:13px}.tab.active{color:var(--teal);border-color:var(--teal);font-weight:700}
+select,input{border:1px solid #dce5e1;border-radius:9px;padding:8px 10px;background:white;font-size:12px;color:#29424b}
+.btn{background:var(--teal);color:white;border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700}.btn:hover{background:#066d67}
+.metric-line{height:6px;background:#edf2ef;border-radius:9px;overflow:hidden}.metric-line span{display:block;height:100%;border-radius:9px}
+.section-anchor{scroll-margin-top:100px}
+@media(max-width:800px){#indiaMap{height:300px}.chart-wrap{height:220px}.hide-mobile{display:none}.navbtn{padding:8px 10px}}
+</style>
+</head>
+<body>
+<header class="sticky top-0 z-50" style="background:#102c3b">
+  <div class="max-w-[1500px] mx-auto px-4 md:px-7 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-extrabold text-lg" style="background:#087f78">N</div>
+      <div class="min-w-0"><div class="text-white font-extrabold tracking-wide text-sm md:text-base">NDDB <span class="font-normal text-teal-200">/ Intelligence</span></div><div class="text-[10px] md:text-xs text-slate-300 tracking-[.16em] uppercase">Sentiment & Impact Tracker</div></div>
+    </div>
+    <nav class="hidden lg:flex items-center gap-1">
+      <a class="navbtn active" href="#overview">Overview</a><a class="navbtn" href="#national">National pulse</a><a class="navbtn" href="#farmer">Farmer impact</a><a class="navbtn" href="#global">Global dairy</a><a class="navbtn" href="#action">Action centre</a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <span class="hidden sm:inline text-[11px] text-slate-300">PROTOTYPE DATA</span><span class="w-2 h-2 rounded-full bg-amber-400"></span>
+      <button onclick="window.print()" class="text-xs text-white border border-slate-500 rounded-lg px-3 py-2">Export / Print</button>
+    </div>
+  </div>
+  <div class="lg:hidden px-3 pb-2 flex gap-1 overflow-x-auto"><a class="navbtn active" href="#overview">Overview</a><a class="navbtn" href="#national">National pulse</a><a class="navbtn" href="#farmer">Farmer impact</a><a class="navbtn" href="#global">Global dairy</a><a class="navbtn" href="#action">Action centre</a></div>
+</header>
+<main class="max-w-[1500px] mx-auto px-4 md:px-7 py-6">
+  <section id="overview" class="section-anchor flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+    <div><div class="text-xs font-bold tracking-[.18em] uppercase mb-2" style="color:#087f78">India's dairy ecosystem · intelligence brief</div><h1 class="display text-2xl md:text-3xl font-extrabold" style="color:#102c3b">The pulse of India's dairy sector</h1><p class="text-sm mt-2" style="color:#718187">A unified view of public perception, farmer outcomes and global confidence.</p></div>
+    <div class="flex flex-wrap items-center gap-2"><label class="text-xs text-slate-500">Period</label><select id="period" onchange="updatePeriod()"><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="365">Last 12 months</option></select><select id="region" onchange="updateRegion()"><option value="all">All India</option><option>Gujarat</option><option>Uttar Pradesh</option><option>Rajasthan</option><option>Maharashtra</option><option>Karnataka</option><option>Punjab</option></select><span class="text-[11px] text-slate-400 ml-1">Updated: 02 Nov 2026 · demo</span></div>
+  </section>
+
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+    <div class="card kpi p-5"><div class="text-xs text-slate-500 font-semibold">Overall sentiment score</div><div class="flex items-end gap-2 mt-2"><span class="display text-3xl font-extrabold">+68</span><span class="pill mb-1" style="background:#e4f5ec;color:#16734d">▲ 4.2 pts</span></div><div class="text-xs text-slate-500 mt-1">Positive net sentiment · illustrative</div><div class="metric-line mt-4"><span style="width:68%;background:#087f78"></span></div></div>
+    <div class="card kpi p-5"><div class="text-xs text-slate-500 font-semibold">Farmer impact index</div><div class="flex items-end gap-2 mt-2"><span class="display text-3xl font-extrabold">74.6</span><span class="pill mb-1" style="background:#e4f5ec;color:#16734d">▲ 2.8 pts</span></div><div class="text-xs text-slate-500 mt-1">Livelihood + service experience composite</div><div class="metric-line mt-4"><span style="width:74.6%;background:#4a9b73"></span></div></div>
+    <div class="card kpi p-5"><div class="text-xs text-slate-500 font-semibold">Global trust index</div><div class="flex items-end gap-2 mt-2"><span class="display text-3xl font-extrabold">81.2</span><span class="pill mb-1" style="background:#e4f5ec;color:#16734d">▲ 1.6 pts</span></div><div class="text-xs text-slate-500 mt-1">Quality, reliability & partnership signals</div><div class="metric-line mt-4"><span style="width:81.2%;background:#c28a35"></span></div></div>
+    <div class="card kpi p-5"><div class="text-xs text-slate-500 font-semibold">Signals analysed</div><div class="flex items-end gap-2 mt-2"><span class="display text-3xl font-extrabold">12,480</span><span class="pill mb-1" style="background:#eef2f4;color:#52666e">30 days</span></div><div class="text-xs text-slate-500 mt-1">News, feedback, forums & trade mentions</div><div class="flex gap-2 mt-4 text-[10px] text-slate-500"><span>● News 32%</span><span>● Farmer voice 48%</span><span>● Trade 20%</span></div></div>
+  </section>
+
+  <section id="national" class="section-anchor grid grid-cols-1 xl:grid-cols-12 gap-4 mb-4">
+    <div class="card p-5 xl:col-span-4">
+      <div class="flex justify-between items-start"><div><div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Module A · national pulse</div><h2 class="font-extrabold text-lg mt-1">Public sentiment</h2></div><span class="pill" style="background:#fff5e6;color:#98651e">Illustrative</span></div>
+      <div class="chart-wrap mt-3"><canvas id="sentimentGauge"></canvas></div>
+      <div class="grid grid-cols-3 gap-2 text-center mt-1"><div><div class="text-xl font-extrabold" style="color:#16835d">62%</div><div class="text-[11px] text-slate-500">Positive</div></div><div><div class="text-xl font-extrabold text-slate-500">24%</div><div class="text-[11px] text-slate-500">Neutral</div></div><div><div class="text-xl font-extrabold" style="color:#c65b50">14%</div><div class="text-[11px] text-slate-500">Negative</div></div></div>
+      <div class="border-t mt-4 pt-3" style="border-color:#edf1ef"><div class="flex justify-between text-xs"><span class="font-semibold">Cooperative-to-digital transition</span><span class="font-bold" style="color:#087f78">71 / 100</span></div><div class="metric-line mt-2"><span style="width:71%;background:#087f78"></span></div><p class="text-[11px] text-slate-500 mt-2">Acceptance is strongest where digital payments improve transparency; connectivity and onboarding remain friction points.</p></div>
+    </div>
+    <div class="card p-5 xl:col-span-8">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2"><div><div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Module A + B · geographic intelligence</div><h2 class="font-extrabold text-lg mt-1">State-level sentiment & intervention signals</h2><p class="text-xs text-slate-500 mt-1">Select a marker to inspect the sample state profile.</p></div><div class="flex gap-3 text-[10px] text-slate-500"><span>● Positive</span><span style="color:#d49a43">● Watch</span><span style="color:#c65b50">● Critical</span></div></div>
+      <div id="indiaMap" class="mt-3"></div><div id="stateDetail" class="mt-3 text-xs text-slate-500">Selected: <b>Gujarat</b> · Sentiment +76 · Farmer impact 79</div>
+    </div>
+  </section>
+
+  <section id="farmer" class="section-anchor grid grid-cols-1 xl:grid-cols-12 gap-4 mb-4">
+    <div class="card p-5 xl:col-span-5">
+      <div class="flex justify-between items-start"><div><div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Module B · farmer voice</div><h2 class="font-extrabold text-lg mt-1">What farmers are saying</h2><p class="text-xs text-slate-500 mt-1">Illustrative, translated sample feedback</p></div><select id="language" onchange="filterFeed()"><option value="all">All languages</option><option>Gujarati</option><option>Hindi</option><option>Marathi</option><option>Punjabi</option></select></div>
+      <div id="feed" class="mt-2"></div><button class="text-xs font-bold mt-3" style="color:#087f78" onclick="showToast('Demo feed: connect your verified farmer-feedback source to load more records.')">View all farmer feedback →</button>
+    </div>
+    <div class="card p-5 xl:col-span-7">
+      <div class="flex justify-between items-start gap-3"><div><div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Module B · livelihood outcomes</div><h2 class="font-extrabold text-lg mt-1">Intervention, income & procurement</h2><p class="text-xs text-slate-500 mt-1">Illustrative district trend · indexed values</p></div><select id="district" onchange="updateDistrict()"><option>Anand, Gujarat</option><option>Banaskantha, Gujarat</option><option>Jaipur, Rajasthan</option><option>Kolhapur, Maharashtra</option></select></div>
+      <div class="chart-wrap tall mt-4"><canvas id="incomeChart"></canvas></div>
+      <div class="grid grid-cols-3 gap-3 mt-2"><div><div class="text-[10px] text-slate-500">Milk income index</div><div class="font-extrabold text-lg">+18.4%</div></div><div><div class="text-[10px] text-slate-500">Procurement volume</div><div class="font-extrabold text-lg">+12.1%</div></div><div><div class="text-[10px] text-slate-500">Service coverage</div><div class="font-extrabold text-lg">86%</div></div></div>
+    </div>
+  </section>
+
+  <section id="global" class="section-anchor grid grid-cols-1 xl:grid-cols-12 gap-4 mb-4">
+    <div class="card p-5 xl:col-span-7">
+      <div class="flex justify-between items-start"><div><div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Module C · global dairy platform</div><h2 class="font-extrabold text-lg mt-1">Export market confidence radar</h2><p class="text-xs text-slate-500 mt-1">Perception dimensions by destination market · sample index / 100</p></div><span class="pill" style="background:#fff5e6;color:#98651e">Not trade statistics</span></div>
+      <div class="chart-wrap tall mt-3"><canvas id="globalRadar"></canvas></div>
+    </div>
+    <div class="card p-5 xl:col-span-5">
+      <div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Module C · collaboration</div><h2 class="font-extrabold text-lg mt-1">Knowledge & partnership timeline</h2>
+      <div class="mt-4 space-y-4">
+        <div class="flex gap-3"><div class="w-2 rounded-full" style="background:#087f78"></div><div><div class="text-[10px] text-slate-400 font-bold">2026 · DEMO MILESTONE</div><div class="text-sm font-bold">Global dairy knowledge exchange</div><p class="text-xs text-slate-500 mt-1">Illustrative entry for collaboration tracking; replace with verified NDDB announcements.</p></div></div>
+        <div class="flex gap-3"><div class="w-2 rounded-full" style="background:#c28a35"></div><div><div class="text-[10px] text-slate-400 font-bold">2025 · TRACKING CATEGORY</div><div class="text-sm font-bold">Quality systems & standards dialogue</div><p class="text-xs text-slate-500 mt-1">Track IDF / Codex engagement, technical exchanges and standards alignment.</p></div></div>
+        <div class="flex gap-3"><div class="w-2 rounded-full" style="background:#7d9b9b"></div><div><div class="text-[10px] text-slate-400 font-bold">ONGOING · TRACKING CATEGORY</div><div class="text-sm font-bold">Dairy development knowledge transfer</div><p class="text-xs text-slate-500 mt-1">Capture advisory projects, institutional partnerships and capability-building activity.</p></div></div>
+      </div>
+      <div class="border-t mt-4 pt-3" style="border-color:#edf1ef"><div class="flex justify-between text-xs"><span class="font-semibold">International collaboration index</span><b style="color:#087f78">78 / 100</b></div><div class="metric-line mt-2"><span style="width:78%;background:#c28a35"></span></div></div>
+    </div>
+  </section>
+
+  <section id="action" class="section-anchor card p-5 mb-5">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-3"><div><div class="text-xs font-bold uppercase tracking-wider" style="color:#087f78">Decision support · Module B</div><h2 class="font-extrabold text-lg mt-1">Grievance & resolution action centre</h2><p class="text-xs text-slate-500 mt-1">Prioritised issues inferred from sample feedback. Not a live case-management system.</p></div><button class="btn" onclick="showToast('Demo action: connect a case-management workflow to assign owners and update status.')">＋ Create intervention</button></div>
+    <div class="overflow-x-auto mt-4"><table class="w-full text-left text-xs min-w-[650px]"><thead><tr class="text-slate-400 border-b" style="border-color:#edf1ef"><th class="py-3">Issue / signal</th><th>Location</th><th>Mentions</th><th>Resolution SLA</th><th>Priority</th><th>Status</th></tr></thead><tbody id="grievances"></tbody></table></div>
+  </section>
+  <footer class="flex flex-col md:flex-row justify-between gap-2 text-[10px] text-slate-400 pb-8"><div>NDDB Sentiment & Impact Tracker · Frontend concept prototype · Version 1.0</div><div>All sentiment, index, grievance and chart values are synthetic demonstration data. Not official NDDB reporting.</div></footer>
+</main>
+<div id="toast" class="fixed bottom-5 right-5 hidden bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-xl z-[999]"></div>
+<script>
+// ---------------------------------------------------------------------------
+// DEMO DATA ONLY. Replace with validated NDDB/DAHD/FAO/IDF/Commerce datasets.
+// Never present synthetic sentiment scores as official measurements.
+// ---------------------------------------------------------------------------
+const mockData={
+ states:[
+ {name:'Gujarat',lat:22.3,lng:72.6,sentiment:76,impact:79,level:'positive',note:'Strong cooperative engagement; monitor fodder cost'},
+ {name:'Rajasthan',lat:26.9,lng:73.8,sentiment:61,impact:68,level:'watch',note:'Veterinary access and seasonal fodder concerns'},
+ {name:'Maharashtra',lat:19.7,lng:75.7,sentiment:69,impact:73,level:'positive',note:'Digital payments viewed favourably'},
+ {name:'Uttar Pradesh',lat:26.8,lng:80.9,sentiment:57,impact:64,level:'watch',note:'Payment timeliness is a recurring concern'},
+ {name:'Punjab',lat:31.1,lng:75.3,sentiment:72,impact:77,level:'positive',note:'Positive service feedback; input costs noted'},
+ {name:'Karnataka',lat:15.3,lng:76.2,sentiment:74,impact:75,level:'positive',note:'AI and extension service feedback positive'},
+ {name:'Madhya Pradesh',lat:23.5,lng:78.5,sentiment:54,impact:61,level:'critical',note:'Fodder availability and veterinary response'},
+ {name:'West Bengal',lat:22.9,lng:87.8,sentiment:65,impact:69,level:'watch',note:'Milk collection access varies by district'},
+ {name:'Andhra Pradesh',lat:16.5,lng:80.6,sentiment:70,impact:72,level:'positive',note:'Collection and chilling infrastructure feedback'},
+ {name:'Tamil Nadu',lat:11.1,lng:78.7,sentiment:73,impact:76,level:'positive',note:'Cooperative service and payment confidence'}
+ ],
+ feed:[
+ {lang:'Gujarati',place:'Anand, Gujarat',sent:'Positive',color:'green',quote:'“ડિજિટલ ચુકવણીથી હિસાબ વધુ સ્પષ્ટ થયો છે.”',translation:'Digital payments have made the accounts more transparent.',topic:'Digital payments',time:'2h ago'},
+ {lang:'Hindi',place:'Mathura, Uttar Pradesh',sent:'Concern',color:'red',quote:'“पशु चिकित्सक समय पर मिल जाएँ तो नुकसान कम होगा।”',translation:'Timely access to a veterinarian would reduce losses.',topic:'Veterinary access',time:'5h ago'},
+ {lang:'Marathi',place:'Kolhapur, Maharashtra',sent:'Positive',color:'green',quote:'“दूध संकलन केंद्रावर आता वेळेवर माहिती मिळते.”',translation:'We now receive timely information at the milk collection centre.',topic:'Collection services',time:'Yesterday'},
+ {lang:'Punjabi',place:'Ludhiana, Punjab',sent:'Neutral',color:'amber',quote:'“ਚਾਰੇ ਦੀ ਕੀਮਤ ਵਧ ਰਹੀ ਹੈ, ਸਹਾਇਤਾ ਚਾਹੀਦੀ ਹੈ।”',translation:'Fodder prices are rising; support is needed.',topic:'Fodder availability',time:'Yesterday'}
+ ],
+ grievances:[
+ ['Delayed milk payment','Uttar Pradesh','186','48 hours','High','Monitoring'],
+ ['Fodder scarcity / cost','Rajasthan','142','72 hours','High','Escalated'],
+ ['Veterinary access','Madhya Pradesh','119','24 hours','Critical','Action needed'],
+ ['Digital onboarding support','Gujarat','64','5 days','Medium','In progress']
+ ]
+};
+let sentimentChart,incomeChart,radarChart,map;
+const palette={green:'#16835d',amber:'#d49a43',red:'#c65b50'};
+function initCharts(){
+ sentimentChart=new Chart(document.getElementById('sentimentGauge'),{type:'doughnut',data:{labels:['Positive','Neutral','Negative'],datasets:[{data:[62,24,14],backgroundColor:['#16835d','#dce5e1','#c65b50'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'76%',rotation:-90,circumference:180,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}}}});
+ const centerPlugin={id:'centerText',afterDraw(chart){if(chart.canvas.id!=='sentimentGauge')return;const{ctx,chartArea:{left,right,top,bottom}}=chart;ctx.save();ctx.textAlign='center';ctx.fillStyle='#102c3b';ctx.font='800 30px Manrope';ctx.fillText('+68', (left+right)/2,(top+bottom)/2+25);ctx.fillStyle='#718187';ctx.font='11px DM Sans';ctx.fillText('NET SENTIMENT',(left+right)/2,(top+bottom)/2+45);ctx.restore();}};Chart.register(centerPlugin);
+ incomeChart=new Chart(document.getElementById('incomeChart'),{type:'line',data:{labels:['May','Jun','Jul','Aug','Sep','Oct'],datasets:[{label:'Farmer milk income index',data:[100,103,106,108,113,118],borderColor:'#087f78',backgroundColor:'rgba(8,127,120,.10)',fill:true,tension:.35,yAxisID:'y'},{label:'Procurement volume index',data:[100,101,104,107,109,112],borderColor:'#c28a35',backgroundColor:'transparent',tension:.35,yAxisID:'y'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:7,font:{size:10}}}},scales:{y:{min:95,grid:{color:'#eef2f0'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+ radarChart=new Chart(document.getElementById('globalRadar'),{type:'radar',data:{labels:['Quality confidence','Supply reliability','Traceability','Standards alignment','Value perception','Partner responsiveness'],datasets:[{label:'Middle East',data:[84,79,76,82,78,80],borderColor:'#087f78',backgroundColor:'rgba(8,127,120,.12)',pointBackgroundColor:'#087f78'},{label:'SE Asia',data:[79,74,72,80,83,76],borderColor:'#c28a35',backgroundColor:'rgba(194,138,53,.10)',pointBackgroundColor:'#c28a35'},{label:'Africa',data:[75,81,68,73,80,78],borderColor:'#66849a',backgroundColor:'rgba(102,132,154,.08)',pointBackgroundColor:'#66849a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:7,font:{size:10}}}},scales:{r:{min:0,max:100,ticks:{stepSize:20,backdropColor:'transparent',font:{size:9}},grid:{color:'#e8eeeb'},pointLabels:{font:{size:10}}}}}});
+}
+function initMap(){
+ map=L.map('indiaMap',{scrollWheelZoom:false}).setView([22.8,79.2],4.4);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
+ mockData.states.forEach(s=>{const color=palette[s.level==='positive'?'green':s.level==='watch'?'amber':'red'];const m=L.circleMarker([s.lat,s.lng],{radius:10,fillColor:color,color:'#fff',weight:2,opacity:1,fillOpacity:.9}).addTo(map);m.bindPopup(`<b>${s.name}</b><br>Sentiment: +${s.sentiment}<br>Farmer impact: ${s.impact}<br><span style="color:#647780">${s.note}</span>`);m.on('click',()=>document.getElementById('stateDetail').innerHTML=`Selected: <b>${s.name}</b> · Sentiment +${s.sentiment} · Farmer impact ${s.impact} · ${s.note}`);});
+}
+function renderFeed(){const lang=document.getElementById('language').value;document.getElementById('feed').innerHTML=mockData.feed.filter(f=>lang==='all'||f.lang===lang).map(f=>`<div class="feed-item"><div class="flex justify-between gap-2"><div class="text-[11px] font-bold">${f.place} <span class="font-normal text-slate-400">· ${f.lang}</span></div><span class="pill" style="background:${f.color==='green'?'#e4f5ec':f.color==='red'?'#fff0ed':'#fff5e6'};color:${f.color==='green'?'#16734d':f.color==='red'?'#b74d42':'#98651e'}">${f.sent}</span></div><div class="text-sm mt-2 font-semibold">${f.quote}</div><div class="text-xs text-slate-500 mt-1">${f.translation}</div><div class="flex justify-between mt-2 text-[10px] text-slate-400"><span>${f.topic}</span><span>${f.time}</span></div></div>`).join('')||'<p class="text-xs text-slate-400 py-6">No sample feedback for this language.</p>'}
+function renderGrievances(){document.getElementById('grievances').innerHTML=mockData.grievances.map(g=>`<tr class="border-b last:border-0" style="border-color:#f0f3f1"><td class="py-3 font-semibold">${g[0]}</td><td>${g[1]}</td><td>${g[2]}</td><td>${g[3]}</td><td><span class="pill" style="background:${g[4]==='Critical'?'#fff0ed':g[4]==='High'?'#fff5e6':'#eef2f4'};color:${g[4]==='Critical'?'#b74d42':g[4]==='High'?'#98651e':'#52666e'}">${g[4]}</span></td><td>${g[5]}</td></tr>`).join('')}
+function filterFeed(){renderFeed()}
+function updateDistrict(){const d=document.getElementById('district').value;const bump=d.includes('Banaskantha')?3:d.includes('Jaipur')?-2:d.includes('Kolhapur')?2:0;incomeChart.data.datasets[0].data=[100,103+bump,106+bump,108+bump,113+bump,118+bump];incomeChart.data.datasets[1].data=[100,101,104+bump,107+bump,109+bump,112+bump];incomeChart.update()}
+function updatePeriod(){const p=+document.getElementById('period').value;showToast(`Period filter set to ${p===30?'30 days':p===90?'90 days':'12 months'} · connect backend data to recalculate metrics.`)}
+function updateRegion(){const r=document.getElementById('region').value;showToast(r==='all'?'Showing all-India demo view':`Region filter: ${r} · map markers remain illustrative`)}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.add('hidden'),3200)}
+document.addEventListener('DOMContentLoaded',()=>{initCharts();initMap();renderFeed();renderGrievances()});
+// ---------------------------------------------------------------------------
+// FUTURE API INTEGRATION
+// Point these functions to your authenticated backend (e.g. Python/Flask).
+// Do not place NewsAPI, X, or other secret API keys in browser-side code.
+// ---------------------------------------------------------------------------
+async function fetchDashboardData(){const API_BASE_URL='';if(!API_BASE_URL){console.info('Demo mode: configure API_BASE_URL to enable live data.');return mockData;}const response=await fetch(`${API_BASE_URL}/api/dashboard`,{headers:{'Accept':'application/json'}});if(!response.ok)throw new Error('Dashboard API request failed');return response.json();}
+async function submitFarmerFeedback(payload){const API_BASE_URL='';if(!API_BASE_URL){console.info('Demo mode: farmer feedback not submitted.',payload);return {demo:true};}const response=await fetch(`${API_BASE_URL}/api/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok)throw new Error('Feedback submission failed');return response.json();}
+</script>
+</body>
+</html>

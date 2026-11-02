@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Room Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#EEF1EC;
+    --paper-line: rgba(30,51,80,0.07);
+    --ink:#1E3350;
+    --ink-soft:#4C6079;
+    --card:#FBFAF6;
+    --tag-hole:#EEF1EC;
+    --amber:#C97F0A;
+    --amber-bg:#FBEBD3;
+    --teal:#2F6F5E;
+    --teal-bg:#DEEDE8;
+    --rust:#B4482F;
+    --rust-bg:#F6DFD8;
+    --border:#D8D2C0;
+    --shadow: 0 1px 0 rgba(30,51,80,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      repeating-linear-gradient(0deg, var(--paper-line) 0 1px, transparent 1px 28px),
+      repeating-linear-gradient(90deg, var(--paper-line) 0 1px, transparent 1px 28px),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    padding: 28px 32px 60px;
+    min-height:100vh;
+  }
+  a{color:inherit;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:18px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom:16px;
+    margin-bottom:22px;
+  }
+  .title-block h1{
+    font-family:'Roboto Slab', serif;
+    font-weight:700;
+    font-size:2.1rem;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .title-block p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:0.95rem;
+    max-width:52ch;
+  }
+  .controls{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .controls input[type=file]{ display:none; }
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.8rem;
+    font-weight:500;
+    border:1.5px solid var(--ink);
+    background:var(--card);
+    color:var(--ink);
+    padding:9px 14px;
+    border-radius:3px;
+    cursor:pointer;
+    transition: background .15s ease, color .15s ease, transform .05s ease;
+  }
+  .btn:hover{ background:var(--ink); color:var(--card); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.primary{ background:var(--ink); color:var(--card); }
+  .btn.primary:hover{ background:var(--ink-soft); }
+  #fileLabel{ font-size:0.75rem; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; }
+
+  /* KPI tag cards */
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:26px;
+  }
+  .tag{
+    position:relative;
+    background:var(--card);
+    border:1.5px solid var(--border);
+    border-radius:6px;
+    padding:16px 18px 16px 26px;
+    box-shadow: var(--shadow);
+  }
+  .tag::before{
+    content:"";
+    position:absolute;
+    left:10px; top:50%;
+    transform:translateY(-50%);
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--tag-hole);
+    border:1.5px solid var(--border);
+  }
+  .tag .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.68rem;
+    letter-spacing:0.03em;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .tag .value{
+    font-family:'Roboto Slab', serif;
+    font-weight:700;
+    font-size:1.7rem;
+    line-height:1;
+  }
+  .tag .value.rust{ color:var(--rust); }
+  .tag .value.teal{ color:var(--teal); }
+
+  /* Layout */
+  .layout{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .layout{ grid-template-columns:1fr; }
+    .kpis{ grid-template-columns:repeat(2,1fr); }
+  }
+
+  .panel{
+    background:var(--card);
+    border:1.5px solid var(--border);
+    border-radius:6px;
+    box-shadow: var(--shadow);
+    padding:18px 18px 20px;
+  }
+  .panel h2{
+    font-family:'Roboto Slab', serif;
+    font-size:1.05rem;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .panel .sub{
+    font-size:0.78rem;
+    color:var(--ink-soft);
+    margin:0 0 14px;
+  }
+
+  /* Table */
+  .table-tools{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+  .table-tools input, .table-tools select{
+    font-family:'Inter',sans-serif;
+    font-size:0.82rem;
+    padding:7px 10px;
+    border:1.3px solid var(--border);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .table-scroll{ overflow-x:auto; }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.85rem;
+  }
+  thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.68rem;
+    letter-spacing:0.02em;
+    color:var(--ink-soft);
+    border-bottom:1.5px solid var(--ink);
+    padding:6px 8px;
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  tbody tr:hover{ background:rgba(30,51,80,0.035); }
+  .item-name{ font-weight:600; }
+  .cat-pill{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;
+    padding:3px 8px;
+    border-radius:20px;
+    background:var(--teal-bg);
+    color:var(--teal);
+    white-space:nowrap;
+  }
+  td input[type=number]{
+    width:72px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.82rem;
+    padding:5px 6px;
+    border:1.3px solid var(--border);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+  }
+  td select.cat-select{
+    font-family:'Inter',sans-serif;
+    font-size:0.78rem;
+    padding:5px 6px;
+    border:1.3px solid var(--border);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .row-value{ font-family:'IBM Plex Mono', monospace; font-weight:500; }
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;
+    padding:3px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .status-ok{ background:var(--teal-bg); color:var(--teal); }
+  .status-low{ background:var(--rust-bg); color:var(--rust); font-weight:600; }
+
+  /* Charts + alerts */
+  .stack{ display:flex; flex-direction:column; gap:22px; }
+  canvas{ max-width:100%; }
+  .chart-wrap{ position:relative; height:230px; }
+
+  .alert-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .alert-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--rust-bg);
+    border:1px solid rgba(180,72,47,0.25);
+    border-radius:4px;
+    padding:8px 10px;
+    font-size:0.82rem;
+  }
+  .alert-list li span.qty{ font-family:'IBM Plex Mono',monospace; color:var(--rust); font-weight:600; }
+  .empty-alert{ color:var(--ink-soft); font-size:0.85rem; padding:6px 2px; }
+
+  footer{
+    margin-top:30px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    font-size:0.76rem;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  #toast{
+    position:fixed;
+    bottom:22px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--card);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;
+    padding:10px 16px;
+    border-radius:4px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .2s ease, transform .2s ease;
+    z-index:50;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-block">
+    <h1>Stock Room Ledger</h1>
+    <p>Live inventory dashboard for your 24 stationery items. Edit any cell below and every card, chart and alert updates immediately.</p>
+  </div>
+  <div class="controls">
+    <label class="btn" for="uploadInput">Upload updated .xlsx</label>
+    <input type="file" id="uploadInput" accept=".xlsx,.xls">
+    <button class="btn" id="exportBtn">Export to .xlsx</button>
+    <button class="btn primary" id="resetBtn">Reset starting values</button>
+  </div>
+</header>
+
+<section class="kpis">
+  <div class="tag">
+    <div class="label">TOTAL ITEMS TRACKED</div>
+    <div class="value" id="kpiItems">0</div>
+  </div>
+  <div class="tag">
+    <div class="label">TOTAL STOCK VALUE</div>
+    <div class="value teal" id="kpiValue">$0</div>
+  </div>
+  <div class="tag">
+    <div class="label">LOW STOCK ALERTS</div>
+    <div class="value rust" id="kpiLow">0</div>
+  </div>
+  <div class="tag">
+    <div class="label">CATEGORIES</div>
+    <div class="value" id="kpiCats">0</div>
+  </div>
+</section>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Inventory ledger</h2>
+    <p class="sub">Quantity, price and reorder level are starting placeholders — type over them to match your real stock. Everything else on the page reacts live.</p>
+    <div class="table-tools">
+      <input type="text" id="searchBox" placeholder="Search item...">
+      <select id="catFilter"><option value="all">All categories</option></select>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Qty</th>
+            <th>Price ($)</th>
+            <th>Reorder at</th>
+            <th>Row value</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="panel">
+      <h2>Stock value by category</h2>
+      <p class="sub">Share of total inventory value</p>
+      <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Quantity on hand</h2>
+      <p class="sub">Per item, sorted low to high</p>
+      <div class="chart-wrap" style="height:340px;"><canvas id="qtyChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Needs reordering</h2>
+      <p class="sub" id="alertSub">Items at or below their reorder level</p>
+      <ul class="alert-list" id="alertList"></ul>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>Source: Stock_Items.xlsx &middot; 24 items</span>
+  <span id="lastUpdated">Loaded starting values</span>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+/* ---------- Seed data (from Stock_Items.xlsx item list; qty/price/reorder are editable starting placeholders) ---------- */
+const SEED = [
+  {item:"A4 Paper", category:"Paper", qty:120, price:0.05, reorder:50},
+  {item:"A3 Paper", category:"Paper", qty:60, price:0.09, reorder:25},
+  {item:"Ball Pen - Blue", category:"Writing", qty:150, price:0.20, reorder:40},
+  {item:"Ball Pen - Black", category:"Writing", qty:140, price:0.20, reorder:40},
+  {item:"Ball Pen - Red", category:"Writing", qty:80, price:0.20, reorder:30},
+  {item:"Pencil", category:"Writing", qty:200, price:0.10, reorder:60},
+  {item:"Eraser", category:"Writing", qty:90, price:0.15, reorder:30},
+  {item:"Sharpener", category:"Writing", qty:70, price:0.25, reorder:25},
+  {item:"Marker - Permanent", category:"Writing", qty:45, price:0.60, reorder:20},
+  {item:"Whiteboard Marker", category:"Writing", qty:38, price:0.75, reorder:20},
+  {item:"Highlighter", category:"Writing", qty:55, price:0.50, reorder:20},
+  {item:"Stapler", category:"Office Tools", qty:22, price:2.50, reorder:10},
+  {item:"Staple Pins", category:"Office Tools", qty:65, price:0.80, reorder:20},
+  {item:"Paper Clips", category:"Office Tools", qty:100, price:0.30, reorder:30},
+  {item:"Binder Clips", category:"Office Tools", qty:85, price:0.35, reorder:25},
+  {item:"File Folder", category:"Filing", qty:110, price:0.40, reorder:35},
+  {item:"Register", category:"Filing", qty:30, price:1.80, reorder:12},
+  {item:"Notepad", category:"Paper", qty:75, price:0.90, reorder:25},
+  {item:"Glue Stick", category:"Adhesives", qty:40, price:0.45, reorder:15},
+  {item:"Scissors", category:"Office Tools", qty:18, price:1.20, reorder:10},
+  {item:"Correction Pen", category:"Writing", qty:25, price:0.55, reorder:15},
+  {item:"Cutter", category:"Office Tools", qty:20, price:0.95, reorder:10},
+  {item:"Scale 30 cm", category:"Office Tools", qty:15, price:0.40, reorder:10},
+  {item:"Sticky Notes", category:"Paper", qty:95, price:0.65, reorder:30},
+];
+
+let data = JSON.parse(JSON.stringify(SEED));
+let categoryChart, qtyChart;
+const CAT_COLORS = {
+  "Paper":"#1E3350", "Writing":"#2F6F5E", "Office Tools":"#C97F0A",
+  "Filing":"#7A5C8E", "Adhesives":"#B4482F"
+};
+function colorFor(cat){ return CAT_COLORS[cat] || "#4C6079"; }
+
+function fmtMoney(n){ return "$" + n.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function uniqueCategories(){ return [...new Set(data.map(d=>d.category))]; }
+
+function populateCategoryFilter(){
+  const sel = document.getElementById('catFilter');
+  const current = sel.value || "all";
+  sel.innerHTML = '<option value="all">All categories</option>' +
+    uniqueCategories().map(c=>`<option value="${c}">${c}</option>`).join("");
+  sel.value = current && [...sel.options].some(o=>o.value===current) ? current : "all";
+}
+
+function renderTable(){
+  const body = document.getElementById('tableBody');
+  const search = document.getElementById('searchBox').value.trim().toLowerCase();
+  const catFilter = document.getElementById('catFilter').value;
+  body.innerHTML = "";
+  data.forEach((row, idx)=>{
+    if(search && !row.item.toLowerCase().includes(search)) return;
+    if(catFilter !== "all" && row.category !== catFilter) return;
+    const low = row.qty <= row.reorder;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="item-name">${row.item}</td>
+      <td>
+        <select class="cat-select" data-idx="${idx}" data-field="category">
+          ${uniqueCategories().map(c=>`<option value="${c}" ${c===row.category?"selected":""}>${c}</option>`).join("")}
+        </select>
+      </td>
+      <td><input type="number" min="0" value="${row.qty}" data-idx="${idx}" data-field="qty"></td>
+      <td><input type="number" min="0" step="0.01" value="${row.price}" data-idx="${idx}" data-field="price"></td>
+      <td><input type="number" min="0" value="${row.reorder}" data-idx="${idx}" data-field="reorder"></td>
+      <td class="row-value">${fmtMoney(row.qty*row.price)}</td>
+      <td><span class="status-pill ${low?"status-low":"status-ok"}">${low?"Reorder":"OK"}</span></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('input, select').forEach(el=>{
+    el.addEventListener('input', onCellEdit);
+    el.addEventListener('change', onCellEdit);
+  });
+}
+
+function onCellEdit(e){
+  const idx = +e.target.dataset.idx;
+  const field = e.target.dataset.field;
+  let val = e.target.value;
+  if(field === "qty" || field === "reorder") val = Math.max(0, parseInt(val)||0);
+  if(field === "price") val = Math.max(0, parseFloat(val)||0);
+  data[idx][field] = val;
+  refreshAll(false);
+}
+
+function refreshAll(rebuildTable=true){
+  if(rebuildTable){ populateCategoryFilter(); renderTable(); }
+  updateKPIs();
+  updateCharts();
+  updateAlerts();
+  document.getElementById('lastUpdated').textContent = "Updated " + new Date().toLocaleTimeString();
+}
+
+function updateKPIs(){
+  const totalItems = data.length;
+  const totalValue = data.reduce((s,d)=>s+d.qty*d.price,0);
+  const lowCount = data.filter(d=>d.qty<=d.reorder).length;
+  const cats = uniqueCategories().length;
+  document.getElementById('kpiItems').textContent = totalItems;
+  document.getElementById('kpiValue').textContent = fmtMoney(totalValue);
+  document.getElementById('kpiLow').textContent = lowCount;
+  document.getElementById('kpiCats').textContent = cats;
+}
+
+function updateCharts(){
+  const cats = uniqueCategories();
+  const catValues = cats.map(c => data.filter(d=>d.category===c).reduce((s,d)=>s+d.qty*d.price,0));
+
+  const ctx1 = document.getElementById('categoryChart').getContext('2d');
+  if(categoryChart) categoryChart.destroy();
+  categoryChart = new Chart(ctx1, {
+    type:'doughnut',
+    data:{
+      labels: cats,
+      datasets:[{ data: catValues, backgroundColor: cats.map(colorFor), borderColor:"#FBFAF6", borderWidth:2 }]
+    },
+    options:{
+      plugins:{ legend:{ position:'bottom', labels:{ font:{family:"Inter", size:11}, color:"#1E3350", boxWidth:10, padding:12 } } },
+      cutout:'62%',
+      maintainAspectRatio:false
+    }
+  });
+
+  const sorted = [...data].sort((a,b)=>a.qty-b.qty);
+  const ctx2 = document.getElementById('qtyChart').getContext('2d');
+  if(qtyChart) qtyChart.destroy();
+  qtyChart = new Chart(ctx2, {
+    type:'bar',
+    data:{
+      labels: sorted.map(d=>d.item),
+      datasets:[{
+        data: sorted.map(d=>d.qty),
+        backgroundColor: sorted.map(d=> d.qty<=d.reorder ? "#B4482F" : "#2F6F5E"),
+        borderRadius:3,
+        barThickness:10
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ color:"rgba(30,51,80,0.08)" }, ticks:{ font:{family:"IBM Plex Mono", size:10}, color:"#4C6079" } },
+        y:{ grid:{ display:false }, ticks:{ font:{family:"Inter", size:10.5}, color:"#1E3350" } }
+      }
+    }
+  });
+}
+
+function updateAlerts(){
+  const list = document.getElementById('alertList');
+  const low = data.filter(d=>d.qty<=d.reorder).sort((a,b)=>a.qty-b.qty);
+  document.getElementById('alertSub').textContent = low.length
+    ? `${low.length} item${low.length>1?"s":""} at or below their reorder level`
+    : "Nothing needs reordering right now";
+  list.innerHTML = low.length
+    ? low.map(d=>`<li><span>${d.item}</span><span class="qty">${d.qty} / ${d.reorder}</span></li>`).join("")
+    : `<div class="empty-alert">All stock levels are healthy.</div>`;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* ---------- Upload / refresh from an .xlsx file ---------- */
+document.getElementById('uploadInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const wb = XLSX.read(evt.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:""});
+      if(!rows.length){ showToast("That file looks empty."); return; }
+      const newData = rows.map(r=>{
+        const item = r.Item ?? r.item ?? r.ITEM ?? "";
+        const category = r.Category ?? r.category ?? (data.find(d=>d.item===item)?.category) ?? "Uncategorized";
+        const qty = Number(r.Quantity ?? r.qty ?? r.Qty ?? 0) || 0;
+        const price = Number(r.Price ?? r.price ?? 0) || 0;
+        const reorder = Number(r["Reorder Level"] ?? r.reorder ?? r.Reorder ?? 0) || 0;
+        return { item: String(item).trim(), category: String(category).trim() || "Uncategorized", qty, price, reorder };
+      }).filter(r=>r.item);
+      if(!newData.length){ showToast("Couldn't find an Item column in that file."); return; }
+      data = newData;
+      refreshAll(true);
+      showToast(`Loaded ${data.length} items from ${file.name}`);
+    }catch(err){
+      showToast("Couldn't read that file — please upload a valid .xlsx");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = "";
+});
+
+/* ---------- Export current state back to .xlsx ---------- */
+document.getElementById('exportBtn').addEventListener('click', function(){
+  const exportRows = data.map(d=>({
+    Item: d.item, Category: d.category, Quantity: d.qty, Price: d.price, "Reorder Level": d.reorder
+  }));
+  const ws = XLSX.utils.json_to_sheet(exportRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Stock Items");
+  XLSX.writeFile(wb, "Stock_Items_updated.xlsx");
+  showToast("Exported Stock_Items_updated.xlsx");
+});
+
+document.getElementById('resetBtn').addEventListener('click', function(){
+  data = JSON.parse(JSON.stringify(SEED));
+  refreshAll(true);
+  showToast("Reset to starting values");
+});
+
+document.getElementById('searchBox').addEventListener('input', ()=>renderTable());
+document.getElementById('catFilter').addEventListener('change', ()=>renderTable());
+
+/* ---------- Init ---------- */
+populateCategoryFilter();
+refreshAll(true);
+</script>
+</body>
+</html>

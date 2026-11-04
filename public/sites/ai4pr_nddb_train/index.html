@@ -1096,6 +1096,59 @@ body::before{background:var(--bg)}
 .igtxt small{display:block;color:var(--red2);font-size:12.5px;font-weight:600}
 .igtxt b{display:block;font-size:20px;letter-spacing:-.01em;margin:2px 0}
 .igtxt span{color:var(--muted);font-size:13px}
+
+.jd{display:grid;gap:16px}
+.jfmt,.jcrit,.jresbox{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.jfmt h3,.jcrit h3{margin-bottom:10px}
+.jcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.jc{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface2)}
+.jc.star{box-shadow:inset 0 3px 0 var(--goldfill);grid-column:1/-1}
+.jcn{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--red2);color:#FFFFFF;font-size:12.5px;font-weight:700;margin-right:8px}
+.jc.star .jcn{background:var(--goldfill);color:#000}
+.jc b{font-size:15px}
+.jc p{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
+.jsetup{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.jsetup label,.jcomin label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.jsetup input,.jsheet input,.jcomin textarea{background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px}
+.jsheet input{width:90px;text-align:center}
+.jcomin{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.jcomin h4{margin:0 0 8px}
+.jcomin textarea{min-height:54px;margin-bottom:8px}
+.jbtns{display:flex;gap:8px;flex-wrap:wrap}
+.jwin{margin-top:14px;text-align:center;border-radius:18px;padding:22px;background:var(--surface2);border:1px solid var(--line);position:relative;overflow:hidden}
+.jwin::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--stripe)}
+.jwin small{display:block;color:var(--muted);font-size:13px}
+.jwin b{display:block;font-size:40px;letter-spacing:-.03em;margin:4px 0}
+.jwin span{color:var(--goldfill);font-weight:600}
+.jcom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.jcomt{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface2)}
+.jq{margin:8px 0 2px;font-weight:600;font-size:13.5px}
+.jcomt ul{margin:0;padding-left:18px;font-size:13.5px}
+@media (max-width:860px){.jsetup{grid-template-columns:1fr 1fr}.jcomin,.jcom{grid-template-columns:1fr}}
+
+.cphead{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:16px;align-items:start;margin-bottom:14px}
+.cpctl{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}
+.cpnames{grid-template-columns:1fr 1fr}
+.cpnow{font-size:15px}
+.cpcur{display:inline-block;margin-left:6px;padding:3px 12px;border-radius:999px;background:var(--c);color:#000;font-weight:700}
+.cptot{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.cpteam{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:inset 0 4px 0 var(--c)}
+.cpteam small{color:var(--c);font-weight:700;font-size:13px}
+.cpteam b{display:block;font-size:44px;letter-spacing:-.03em;margin:2px 0}
+.cpteam b span{font-size:18px;color:var(--muted);font-weight:500}
+.cpsub{color:var(--muted);font-size:13.5px}
+.cpbox{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}
+.cpbox h3{margin-bottom:8px}
+.cpchart{width:100%;height:auto;display:block;font-family:inherit}
+.cpleg{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:13.5px;margin-top:6px}
+.cpleg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.cptbl td,.cptbl th{white-space:nowrap}
+.cptbl tr.tA td:first-child{box-shadow:inset 3px 0 0 var(--red2)}
+.cptbl tr.tB td:first-child{box-shadow:inset 3px 0 0 var(--green2)}
+.cpsw{padding:3px 10px;font-size:12.5px}
+.cptbl tr.extra td{opacity:.5}
+.cptbl th{color:var(--muted)!important}
+@media (max-width:760px){.cphead,.cptot,.cpnames{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -2221,49 +2274,22 @@ const DATA = {
      "id": "d3-8",
      "time": "16:00-16:40",
      "min": 40,
-     "title": "Go-live and awards",
-     "lede": "The finished Command Centre is shown end to end. Then the awards and the Grand Finale quiz.",
+     "title": "Mission Control showcase and judging",
+     "lede": "Each team shows the whole platform: how every level of user works through it, the tech and AI behind it, and its impact. Three judges score it live, and the winner is revealed on screen.",
      "visual": {
-      "type": "grid",
-      "items": [
-       {
-        "k": "Workstream winners",
-        "v": "One per workstream, chosen by the room’s vote"
-       },
-       {
-        "k": "People’s Choice",
-        "v": "The entry with the most votes overall"
-       },
-       {
-        "k": "Fastest Response",
-        "v": "Quickest accurate answers in live operations"
-       },
-       {
-        "k": "Sharpest Checker",
-        "v": "Most real errors found in the peer check"
-       },
-       {
-        "k": "Best Language Version",
-        "v": "Hindi or Marathi that reads as if written by a native speaker"
-       },
-       {
-        "k": "Ready for Monday",
-        "v": "The module NDDB could start using first, chosen by the PR head"
-       }
+      "type": "judging"
+     },
+     "leave": "Scores, judges’ comments and the winning platform.",
+     "notes": "",
+     "exercise": {
+      "title": "Run the showcase",
+      "steps": [
+       "Team 1 presents for 10 minutes, then takes 5 minutes of questions",
+       "Team 2 does the same",
+       "Judges score each criterion out of 10 on their own sheet and write their comments",
+       "Enter the scores below, read the comments, then reveal the winner"
       ]
-     },
-     "pause": {
-      "q": "Quiz: Grand Finale. Which single habit matters most when AI does the making?",
-      "options": [
-       "Using the newest tool",
-       "Checking before it carries NDDB’s name",
-       "Making more content, faster"
-      ],
-      "answer": 1,
-      "why": "Making is cheap now. Checking is the job."
-     },
-     "leave": "The live platform, the awards and the final leaderboard.",
-     "notes": ""
+     }
     },
     {
      "id": "d3-9",
@@ -3703,6 +3729,114 @@ const DATA = {
     }).join("") + '</div>';
     return h + '<p class="plnote">Prompts work in Claude, Gemini or Grok. Sample data only: invented vendors, stakeholders by role, delegate counts, never personal details.</p></div>';
   }
+
+  var JC = [
+    ["Works for every user level", "Does each level, from the Chairman to the event-day desk to a delegate, get exactly what they need?", 1],
+    ["Tech integration", "Do the sheet, forms, dashboard, website, FAQ bot and alerts work together, live? Did the live challenge work?", 1],
+    ["Use of AI and tools", "Is AI used where it really helps? Is it clear which tool helps which team?", 1],
+    ["Innovation", "Something beyond the brief that made you think: I had not thought of that", 1],
+    ["Accuracy and data safety", "Facts only from the knowledge base, no personal data, sample data labelled", 1],
+    ["Design and clarity", "Easy to read, consistent red, amber and green, works on a phone, fit for an IDF and NDDB event", 1],
+    ["Impact", "Time saved, fewer missed tasks, faster response, and could NDDB adopt it?", 1],
+    ["Overall usefulness of the live system to leadership", "The single most important question. Counts three times.", 3]
+  ];
+  var JQ = ["What did you like best?", "What was the most innovative idea?", "What will really help NDDB?", "One thing to fix first"];
+  function jst(){ var j = store.judge || (store.judge = {}); j.teams = j.teams || ["Team 1", "Team 2"]; j.judges = j.judges || ["Judge 1", "Judge 2", "Judge 3"]; j.s = j.s || {}; j.pen = j.pen || {}; j.com = j.com || {}; j.cur = j.cur || 0; return j; }
+  function jTotal(j, ji, ti){ var t = 0, any = false; JC.forEach(function(c, ci){ var v = parseFloat(j.s[ji + "|" + ti + "|" + ci]); if (!isNaN(v)) { any = true; t += Math.max(0, Math.min(10, v)) * c[2]; } }); var p = parseFloat(j.pen[ji + "|" + ti]); if (!isNaN(p)) t -= Math.abs(p); return any ? Math.round(t * 10) / 10 : null; }
+  function jResults(){
+    var j = jst(), res = j.teams.map(function(tn, ti){ var tots = j.judges.map(function(jn, ji){ return jTotal(j, ji, ti); }), got = tots.filter(function(x){ return x != null; }); var avg = got.length ? Math.round(got.reduce(function(a, b){ return a + b; }, 0) / got.length * 10) / 10 : null; var ov = j.judges.map(function(jn, ji){ return parseFloat(j.s[ji + "|" + ti + "|7"]); }).filter(function(x){ return !isNaN(x); }); var ova = ov.length ? ov.reduce(function(a, b){ return a + b; }, 0) / ov.length : 0; return { tn: tn, tots: tots, avg: avg, ova: ova }; });
+    var h = '<div class="jrtbl"><table class="rtbl"><thead><tr><th>Team</th>' + j.judges.map(function(n){ return '<th>' + esc(n) + '</th>'; }).join("") + '<th>Average</th></tr></thead><tbody>' + res.map(function(r){ return '<tr><td><b>' + esc(r.tn) + '</b></td>' + r.tots.map(function(t){ return '<td>' + (t == null ? "-" : t) + '</td>'; }).join("") + '<td><b>' + (r.avg == null ? "-" : r.avg) + '</b> / 100</td></tr>'; }).join("") + '</tbody></table></div>';
+    if (j.revealed) {
+      var ok = res.filter(function(r){ return r.avg != null; });
+      if (ok.length) {
+        ok.sort(function(a, b){ return b.avg - a.avg || b.ova - a.ova; });
+        var tie = ok.length > 1 && ok[0].avg === ok[1].avg;
+        h += '<div class="jwin"><small>' + (tie && ok[0].ova === ok[1].ova ? "Tied on score and on overall usefulness: the PR head decides" : tie ? "Tied on score; decided on overall usefulness to leadership" : "The winner") + '</small><b>' + esc(ok[0].tn) + '</b><span>' + ok[0].avg + ' out of 100</span></div>';
+        h += '<div class="jcom">' + j.teams.map(function(tn, ti){ return '<div class="jcomt"><h4>' + esc(tn) + ': what the judges said</h4>' + JQ.map(function(q, qi){ var lines = j.judges.map(function(jn, ji){ var v = (j.com[ji + "|" + ti + "|" + qi] || "").trim(); return v ? '<li><b>' + esc(jn) + ':</b> ' + esc(v) + '</li>' : ""; }).join(""); return lines ? '<p class="jq">' + esc(q) + '</p><ul>' + lines + '</ul>' : ""; }).join("") + '</div>'; }).join("") + '</div>';
+      }
+    }
+    return h;
+  }
+  function paintJudge(){ var el = document.getElementById("jres"); if (el) el.innerHTML = jResults(); }
+  function vJudging(){
+    var j = jst(), ji = j.cur;
+    var h = '<div class="jd">';
+    h += '<div class="jfmt"><h3>Each team: 10-minute presentation, then 5 minutes of questions</h3><table class="rtbl"><thead><tr><th>Part</th><th>Time</th><th>What the team shows</th></tr></thead><tbody>' + [["The platform at a glance","1 min","Inputs, the sheet, the website and dashboard, and every integration"],["Walk-through by user level","5 min","Senior leadership (2 min), workstream leads (1 min), operations desk (1 min), delegates, media and public (1 min)"],["The AI and tools map","1.5 min","Which tools they used, where AI does the work, and which team each tool helps"],["Impact","1 min","What changes for NDDB if this runs for the next 12 months"],["Judges\u2019 live challenge","1.5 min","One quick live task from each judge"],["Questions","5 min","Judges ask anything; not counted for the time penalty"]].map(function(r){ return '<tr><td><b>' + r[0] + '</b></td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join("") + '</tbody></table></div>';
+    h += '<div class="jcrit"><h3>What the judges score, each out of 10</h3><div class="jcgrid">' + JC.map(function(c, ci){ return '<div class="jc' + (c[2] > 1 ? " star" : "") + '"><span class="jcn">' + (ci + 1) + '</span><b>' + esc(c[0]) + (c[2] > 1 ? " (counts three times)" : "") + '</b><p>' + esc(c[1]) + '</p></div>'; }).join("") + '</div><p class="plnote">Total 100: seven criteria out of 10, plus overall usefulness out of 10 counted three times. Penalties: real personal data -10; an invented fact presented as true -5 each, up to -15; real logos without approval -5; over time -2 per minute. Ties go to the higher overall usefulness score, then to the PR head.</p></div>';
+    h += '<div class="jsetup"><label>Team 1<input data-inp="jteam" data-i="0" value="' + esc(j.teams[0]) + '"></label><label>Team 2<input data-inp="jteam" data-i="1" value="' + esc(j.teams[1]) + '"></label>' + j.judges.map(function(n, k){ return '<label>Judge ' + (k + 1) + '<input data-inp="jname" data-i="' + k + '" value="' + esc(n) + '"></label>'; }).join("") + '</div>';
+    h += '<div class="chips">' + j.judges.map(function(n, k){ return '<button class="chip' + (k === ji ? " on" : "") + '" data-act="jcur" data-v="' + k + '">Score sheet: ' + esc(n) + '</button>'; }).join("") + '</div>';
+    h += '<div class="tblwrap"><table class="rtbl jsheet"><thead><tr><th>Criterion</th>' + j.teams.map(function(t){ return '<th>' + esc(t) + ' (0 to 10)</th>'; }).join("") + '</tr></thead><tbody>' + JC.map(function(c, ci){ return '<tr><td>' + (ci + 1) + ". " + esc(c[0]) + (c[2] > 1 ? " (\u00d73)" : "") + '</td>' + j.teams.map(function(t, ti){ var v = j.s[ji + "|" + ti + "|" + ci]; return '<td><input type="number" min="0" max="10" step="0.5" inputmode="decimal" data-inp="jscore" data-k="' + ji + "|" + ti + "|" + ci + '" value="' + (v == null ? "" : esc(v)) + '"></td>'; }).join("") + '</tr>'; }).join("") + '<tr><td>Penalties (points to deduct)</td>' + j.teams.map(function(t, ti){ var v = j.pen[ji + "|" + ti]; return '<td><input type="number" min="0" step="1" data-inp="jpen" data-k="' + ji + "|" + ti + '" value="' + (v == null ? "" : esc(v)) + '"></td>'; }).join("") + '</tr></tbody></table></div>';
+    h += '<div class="jcomin">' + j.teams.map(function(t, ti){ return '<div><h4>' + esc(j.judges[ji]) + ' on ' + esc(t) + '</h4>' + JQ.map(function(q, qi){ var v = j.com[ji + "|" + ti + "|" + qi] || ""; return '<label>' + esc(q) + '<textarea data-inp="jcom" data-k="' + ji + "|" + ti + "|" + qi + '">' + esc(v) + '</textarea></label>'; }).join("") + '</div>'; }).join("") + '</div>';
+    h += '<div class="jresbox"><div class="wchead"><h3>Results</h3><div class="jbtns"><button class="pill solid" data-act="jreveal">' + (j.revealed ? "Hide the winner" : "Reveal the winner") + '</button><button class="pill" data-act="jreset">Clear all scores</button></div></div><div id="jres">' + jResults() + '</div></div>';
+    return h + '<p class="plnote">Scores are saved on this laptop only. Enter each judge\u2019s sheet, or let each judge type into their own sheet tab here.</p></div>';
+  }
+
+  var COMP = { sheet: "1LIJOkTtMhvgZwzp3CgQUr2Pho-IJG6SPIY_64JRSOlg", form: "https://docs.google.com/forms/d/e/1FAIpQLSfEDBHtxb3DSbYZtZdRnqZSKVHRtqk0qwGm2MSfv56npeIy9w/viewform", qr: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45" width="100%" height="100%" class="segno"><path fill="#fff" d="M0 0h45v45h-45z"/><path class="qrline" stroke="#000" d="M2 2.5h7m1 0h2m2 0h2m3 0h3m5 0h1m1 0h1m3 0h1m2 0h7m-41 1h1m5 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m1 0h2m4 0h2m2 0h1m5 0h1m-41 1h1m1 0h3m1 0h1m1 0h2m1 0h2m1 0h2m5 0h1m2 0h5m2 0h1m2 0h1m1 0h3m1 0h1m-41 1h1m1 0h3m1 0h1m2 0h3m2 0h2m2 0h1m3 0h1m1 0h2m1 0h3m2 0h1m1 0h1m1 0h3m1 0h1m-41 1h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h3m3 0h3m1 0h1m3 0h3m4 0h1m1 0h3m1 0h1m-41 1h1m5 0h1m5 0h1m1 0h3m6 0h4m2 0h1m2 0h1m1 0h1m5 0h1m-41 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-30 1h1m8 0h1m1 0h1m2 0h1m4 0h3m-33 1h1m2 0h6m1 0h1m1 0h6m1 0h1m2 0h1m1 0h1m1 0h4m1 0h1m1 0h1m2 0h1m1 0h3m-39 1h1m1 0h1m4 0h1m1 0h1m1 0h1m2 0h1m1 0h3m1 0h2m1 0h3m2 0h2m3 0h2m2 0h1m-40 1h1m4 0h2m2 0h2m1 0h1m1 0h1m3 0h1m4 0h2m2 0h1m5 0h1m1 0h1m2 0h2m-38 1h1m2 0h1m1 0h1m4 0h2m2 0h2m2 0h1m1 0h2m3 0h1m1 0h4m1 0h2m1 0h1m-37 1h1m2 0h1m1 0h1m1 0h10m2 0h2m2 0h2m2 0h2m4 0h2m4 0h1m-41 1h1m1 0h4m1 0h4m1 0h8m3 0h1m1 0h1m1 0h4m1 0h1m1 0h1m1 0h1m2 0h1m-40 1h1m1 0h1m2 0h2m1 0h3m1 0h1m1 0h1m6 0h2m1 0h1m2 0h1m1 0h6m1 0h1m3 0h1m-37 1h2m2 0h1m1 0h3m3 0h1m2 0h1m3 0h2m1 0h1m1 0h1m1 0h1m1 0h2m1 0h4m-39 1h1m4 0h4m2 0h1m1 0h2m2 0h1m1 0h1m2 0h2m1 0h1m3 0h1m1 0h1m1 0h1m3 0h1m1 0h1m-39 1h2m1 0h2m1 0h1m2 0h7m2 0h1m4 0h1m1 0h1m2 0h1m1 0h3m2 0h1m1 0h1m-39 1h1m1 0h3m1 0h1m2 0h1m2 0h1m3 0h1m2 0h1m1 0h3m3 0h2m2 0h2m2 0h2m1 0h1m1 0h1m-38 1h1m1 0h1m1 0h1m2 0h3m1 0h6m3 0h3m1 0h2m4 0h2m1 0h1m1 0h1m1 0h1m-41 1h3m2 0h5m1 0h4m1 0h1m4 0h4m1 0h2m1 0h2m1 0h1m1 0h2m3 0h2m-41 1h1m2 0h3m2 0h3m1 0h1m3 0h1m1 0h2m1 0h2m2 0h2m2 0h4m2 0h4m-39 1h1m2 0h2m1 0h1m2 0h1m1 0h4m5 0h1m1 0h2m1 0h1m1 0h1m7 0h1m1 0h2m-38 1h1m1 0h2m2 0h1m1 0h1m1 0h3m1 0h1m1 0h2m3 0h2m2 0h1m1 0h2m1 0h2m1 0h1m4 0h1m-37 1h4m6 0h2m1 0h1m3 0h1m2 0h2m2 0h2m3 0h1m1 0h1m1 0h1m2 0h2m-38 1h1m4 0h2m4 0h3m1 0h1m2 0h1m1 0h1m1 0h3m2 0h1m1 0h2m1 0h2m1 0h3m-41 1h3m1 0h1m1 0h7m1 0h2m3 0h4m4 0h1m2 0h3m1 0h1m1 0h2m2 0h1m-40 1h2m1 0h1m3 0h1m1 0h2m1 0h1m4 0h2m2 0h2m3 0h2m2 0h1m1 0h6m-38 1h9m1 0h2m1 0h2m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h1m3 0h1m1 0h1m-38 1h2m7 0h2m1 0h4m1 0h1m9 0h1m1 0h4m1 0h1m1 0h1m-37 1h7m1 0h1m1 0h1m2 0h1m2 0h1m1 0h2m3 0h1m1 0h1m1 0h2m1 0h2m1 0h1m6 0h1m-41 1h3m2 0h1m2 0h3m2 0h3m3 0h2m1 0h2m1 0h4m2 0h2m1 0h2m1 0h4m-41 1h2m1 0h5m1 0h1m1 0h3m2 0h2m1 0h1m1 0h1m1 0h2m1 0h2m4 0h9m-33 1h1m1 0h1m2 0h1m4 0h2m1 0h3m5 0h2m1 0h1m3 0h1m2 0h1m-40 1h7m1 0h1m1 0h1m2 0h1m3 0h2m3 0h2m1 0h1m1 0h2m2 0h2m1 0h1m1 0h1m-37 1h1m5 0h1m1 0h4m1 0h1m3 0h1m1 0h6m2 0h3m1 0h2m3 0h2m1 0h1m-40 1h1m1 0h3m1 0h1m1 0h1m1 0h3m2 0h5m1 0h1m1 0h2m6 0h6m-37 1h1m1 0h3m1 0h1m1 0h2m2 0h1m3 0h2m8 0h3m2 0h1m3 0h1m2 0h1m1 0h1m-41 1h1m1 0h3m1 0h1m2 0h1m4 0h1m4 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h4m1 0h1m-41 1h1m5 0h1m2 0h1m1 0h2m3 0h3m4 0h1m4 0h1m4 0h2m1 0h3m1 0h1m-41 1h7m1 0h1m1 0h2m2 0h2m1 0h2m1 0h1m1 0h4m2 0h1m3 0h1m3 0h1"/></svg> ' };
+  var comp = { ok: null, at: "", busy: false, timer: null, cols: [], rows: [] };
+  function cst(){ var c = store.comp || (store.comp = {}); c.names = c.names || ["Team A", "Team B"]; c.override = c.override || {}; if (c.splitAt === undefined) c.splitAt = null; return c; }
+  function compTick(){
+    if (comp.busy) return; comp.busy = true;
+    var cb = "__ai4prComp" + Date.now(), sc = document.createElement("script"), done = false;
+    var fin = function(ok){ if (done) return; done = true; comp.busy = false; comp.ok = ok; try { delete window[cb]; } catch(e) { window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); paintComp(); };
+    window[cb] = function(res){ if (!res || res.status === "error") { fin(false); return; }
+      var cols = res.table.cols.map(function(c){ return c.label || c.id; });
+      var rows = (res.table.rows || []).map(function(r){ return (r.c || []).map(function(cell){ return cell ? (cell.f != null && typeof cell.v !== "number" ? cell.f : cell.v) : null; }); }).filter(function(r){ return r.slice(1).some(function(v){ return v != null && String(v).trim() !== ""; }); });
+      comp.cols = cols; comp.rows = rows; comp.at = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }); fin(true); };
+    sc.onerror = function(){ fin(false); }; setTimeout(function(){ fin(false); }, 9000);
+    sc.src = "https://docs.google.com/spreadsheets/d/" + COMP.sheet + "/gviz/tq?headers=1&tqx=out:json;responseHandler:" + cb + "&t=" + Date.now();
+    document.head.appendChild(sc);
+  }
+  function compWatch(){ var on = !!document.getElementById("cplive"); if (on && !comp.timer) { compTick(); comp.timer = setInterval(compTick, 10000); } if (!on && comp.timer) { clearInterval(comp.timer); comp.timer = null; } }
+  setInterval(compWatch, 1500);
+  function paintComp(){ var el = document.getElementById("cplive"); if (el) el.innerHTML = compInner(); }
+  function compData(){
+    var c = cst(), cats = [], idx = [], ei = -1;
+    comp.cols.forEach(function(h, k){ if (/e-?mail/i.test(h)) { ei = k; return; } if (/timestamp|name|team/i.test(h)) return; cats.push(h); idx.push(k); });
+    var seen = {}, order = [], auto = ei >= 0;
+    var resp = comp.rows.map(function(r, i){
+      var key = String(r[0] || "") + "#" + i, em = ei >= 0 ? String(r[ei] || "").trim().toLowerCase() : "", nth = 0, judge = null;
+      if (em) { seen[em] = (seen[em] || 0) + 1; nth = seen[em]; if (order.indexOf(em) < 0) order.push(em); judge = order.indexOf(em) + 1; }
+      var team = c.override[key] || (auto && em ? (nth === 1 ? "A" : "B") : (c.splitAt != null && i >= c.splitAt ? "B" : "A"));
+      var vals = idx.map(function(k){ var v = parseFloat(String(r[k] == null ? "" : r[k]).replace(/[^0-9.]/g, "")); return isNaN(v) ? null : Math.max(0, Math.min(5, v)); });
+      var tot = vals.reduce(function(a, b){ return a + (b || 0); }, 0);
+      return { i: i, key: key, ts: r[0], team: team, vals: vals, tot: tot, judge: judge, extra: auto && nth > 2 };
+    });
+    var teams = ["A", "B"].map(function(t){ var rs = resp.filter(function(x){ return x.team === t && !x.extra; }); var avg = cats.map(function(cn, ci){ var vs = rs.map(function(x){ return x.vals[ci]; }).filter(function(v){ return v != null; }); return vs.length ? vs.reduce(function(a, b){ return a + b; }, 0) / vs.length : null; }); var tavg = rs.length ? rs.reduce(function(a, b){ return a + b.tot; }, 0) / rs.length : null; return { t: t, n: rs.length, avg: avg, tavg: tavg }; });
+    return { cats: cats, resp: resp, teams: teams, max: cats.length * 5, auto: auto };
+  }
+  function r1(x){ return Math.round(x * 10) / 10; }
+  function compChart(d){
+    if (!d.cats.length) return "";
+    var c = cst(), W = 760, rowH = 46, top = 30, left = 230, bw = W - left - 60, H = top + d.cats.length * rowH + 10, col = { A: "var(--red2)", B: "var(--green2)" };
+    var g = '<svg class="cpchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Average stars by category for each team">';
+    for (var k = 0; k <= 5; k++) { var x = left + bw * k / 5; g += '<line x1="' + x + '" y1="' + (top - 8) + '" x2="' + x + '" y2="' + (H - 6) + '" stroke="var(--line)"/><text x="' + x + '" y="' + (top - 14) + '" font-size="11" fill="var(--muted)" text-anchor="middle">' + k + '</text>'; }
+    d.cats.forEach(function(cn, ci){ var y = top + ci * rowH; g += '<text x="' + (left - 10) + '" y="' + (y + 22) + '" font-size="13" fill="var(--ink)" text-anchor="end">' + esc(cn.length > 30 ? cn.slice(0, 29) + "\u2026" : cn) + '</text>';
+      ["A", "B"].forEach(function(t, ti){ var v = d.teams[ti].avg[ci]; var w = v == null ? 0 : bw * v / 5; var yy = y + 4 + ti * 18; g += '<rect x="' + left + '" y="' + yy + '" width="' + w.toFixed(1) + '" height="14" rx="4" fill="' + col[t] + '"><title>' + esc(c.names[ti]) + ': ' + (v == null ? "no scores" : r1(v)) + '</title></rect>' + (v == null ? "" : '<text x="' + (left + w + 6).toFixed(1) + '" y="' + (yy + 11) + '" font-size="11.5" fill="var(--ink)">' + r1(v) + '</text>'); }); });
+    return g + '</svg><div class="cpleg"><span><i style="background:var(--red2)"></i>' + esc(c.names[0]) + '</span><span><i style="background:var(--green2)"></i>' + esc(c.names[1]) + '</span><span class="plnote">Average stars out of 5, across all judges</span></div>';
+  }
+  function compInner(){
+    var c = cst(), d = compData();
+    var st = comp.ok === true ? '<span class="lvdot on"></span>Live: ' + d.resp.length + (d.resp.length === 1 ? " response" : " responses") + ', updated ' + esc(comp.at) + '. Refreshes every 10 seconds.' : comp.ok === false ? '<span class="lvdot off"></span>' + (location.protocol === "file:" ? "Could not read the judges\u2019 sheet. Check it is shared as Anyone with the link: Viewer, or sign in to Google in this browser." : "Live scores work in the downloaded HTML file on the presenting laptop.") : '<span class="lvdot"></span>Connecting to the judges\u2019 sheet...';
+    var h = '<p class="lvst">' + st + '</p>';
+    h += '<div class="cptot">' + d.teams.map(function(tm, ti){ return '<div class="cpteam" style="--c:' + (ti ? "var(--green2)" : "var(--red2)") + '"><small>' + esc(c.names[ti]) + '</small><b>' + (tm.tavg == null ? "-" : r1(tm.tavg)) + '<span> / ' + d.max + '</span></b><span class="cpsub">' + (tm.tavg == null ? "No scores yet" : r1(tm.tavg / d.max * 100) + " per cent, from " + tm.n + (tm.n === 1 ? " judge" : " judges")) + '</span></div>'; }).join("") + '</div>';
+    if (c.revealed) { var a = d.teams[0], b = d.teams[1]; if (a.tavg != null && b.tavg != null) { var w = a.tavg === b.tavg ? null : (a.tavg > b.tavg ? 0 : 1); h += '<div class="jwin"><small>' + (w == null ? "It is a tie" : "The winner") + '</small><b>' + (w == null ? esc(c.names[0]) + " and " + esc(c.names[1]) : esc(c.names[w])) + '</b><span>' + (w == null ? r1(a.tavg) : r1(d.teams[w].tavg)) + ' out of ' + d.max + '</span></div>'; } }
+    h += '<div class="cpbox"><h3>Scores by category</h3>' + (d.cats.length ? compChart(d) : '<div class="wcempty">The chart appears when the first scores arrive.</div>') + '</div>';
+    if (d.resp.length) h += '<div class="cpbox"><h3>Every response</h3><p class="plnote">' + (d.auto ? "Each judge\u2019s first response counts for " + esc(c.names[0]) + " and their second for " + esc(c.names[1]) + ", matched by the email the form records. Emails are never shown." : "Responses before the switch count for " + esc(c.names[0]) + ", after it for " + esc(c.names[1]) + ".") + ' Tap a team name to move a row if a judge scored out of turn.</p><div class="tblwrap"><table class="rtbl cptbl"><thead><tr><th>#</th><th>Judge</th><th>Team</th>' + d.cats.map(function(cn){ return '<th>' + esc(cn) + '</th>'; }).join("") + '<th>Total</th></tr></thead><tbody>' + d.resp.map(function(r){ return '<tr class="t' + r.team + (r.extra ? " extra" : "") + '"><td>' + (r.i + 1) + '</td><td>' + (r.judge ? "Judge " + r.judge : "-") + (r.extra ? " (extra, not counted)" : "") + '</td><td><button class="pill cpsw" data-act="cpteam" data-v="' + esc(r.key) + '">' + esc(c.names[r.team === "A" ? 0 : 1]) + '</button></td>' + r.vals.map(function(v){ return '<td>' + (v == null ? "-" : v) + '</td>'; }).join("") + '<td><b>' + r1(r.tot) + '</b></td></tr>'; }).join("") + '</tbody></table></div></div>';
+    return h;
+  }
+  function viewCompetition(){
+    var c = cst();
+    setTimeout(compWatch, 0);
+    var h = '<div class="wrap"><div class="dayhead"><div class="k">Day 3 showcase</div><h1>The Command Centre competition</h1><p>Each team shows its WDS 2027 event management platform to senior leadership: 10 minutes of presentation, then 5 minutes of questions. Every judge scores both teams on the form, out of 5 stars per category.</p></div>';
+    h += '<div class="cphead"><div class="qrbox"><div class="qrimg">' + COMP.qr + '</div><div><h3>Judges: scan to score</h3><p>One response per team. Score ' + esc(c.names[0]) + ' first, then ' + esc(c.names[1]) + '.</p><a class="pill solid" href="' + COMP.form + '" target="_blank" rel="noopener">' + IC_LINK + 'Open the scoring form</a></div></div>';
+    h += '<div class="cpctl"><div class="jsetup cpnames"><label>First team<input data-inp="cpname" data-i="0" value="' + esc(c.names[0]) + '"></label><label>Second team<input data-inp="cpname" data-i="1" value="' + esc(c.names[1]) + '"></label></div>';
+    h += '<div class="cpnow"><b>Now scoring:</b> <span class="cpcur" style="--c:' + (c.splitAt == null ? "var(--red2)" : "var(--green2)") + '">' + esc(c.names[c.splitAt == null ? 0 : 1]) + '</span></div>';
+    h += '<div class="jbtns">' + (c.splitAt == null ? '<button class="pill solid" data-act="cpsplit">Switch to scoring ' + esc(c.names[1]) + '</button>' : '<button class="pill" data-act="cpunsplit">Undo the switch</button>') + '<button class="pill' + (c.revealed ? "" : " solid") + '" data-act="cpreveal">' + (c.revealed ? "Hide the winner" : "Reveal the winner") + '</button><button class="pill" data-act="cpclear">Reset the competition</button></div>';
+    h += '<p class="plnote">Teams are assigned automatically: each judge\u2019s first response counts for ' + esc(c.names[0]) + ', their second for ' + esc(c.names[1]) + '. Use the switch only if the form stops recording emails.</p></div></div>';
+    h += '<div id="cplive">' + compInner() + '</div>';
+    h += '<div class="cpbox"><h3>What the judges score</h3><div class="jcgrid">' + [["Works for every user level","Does each level, from the Chairman to the event-day desk to a delegate, get what they need?"],["Tech integration","Do the sheet, forms, dashboard, website, FAQ bot and alerts work together, live?"],["Effective use of AI and tools","Is AI used where it really helps, and is it clear which tool helps which team?"],["Innovation in thought","Something beyond the brief that made you think: I had not thought of that"],["Accuracy and data safety","Facts only from the knowledge base, no personal data, sample data labelled"],["Design and clarity","Easy to read, consistent colours, works on a phone, fit for an IDF and NDDB event"],["Impact","Time saved, fewer missed tasks, faster response; could NDDB adopt it?"]].map(function(x, i){ return '<div class="jc"><span class="jcn">' + (i + 1) + '</span><b>' + x[0] + '</b><p>' + x[1] + '</p></div>'; }).join("") + '</div></div>';
+    return h + '</div>';
+  }
   function vPlatform(){
     var days = Math.max(0, Math.ceil((new Date(2027, 10, 16) - new Date()) / 86400000));
     var col = function(title, items, cls){ return '<div class="plcol ' + cls + '"><h4>' + title + '</h4>' + items.map(function(x){ return '<div class="plitem"><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></div>'; }).join("") + '</div>'; };
@@ -3766,6 +3900,7 @@ const DATA = {
       case "workstreams": return vWorkstreams();
       case "vote": return vVote();
       case "tasks": return vTasks();
+      case "judging": return vJudging();
     }
     return "";
   }
@@ -3791,7 +3926,7 @@ const DATA = {
   }
 
   /* ---------- Views ---------- */
-  var TABS = [["team","Team"]];
+  var TABS = [["competition","Competition"],["team","Team"]];
   var SIDENAV = [["agents","Agents"],["toolkit","Toolkit"],["references","References"],["scoreboard","Scoreboard"]];
   function curTab(){ var s = findSession(ui.view); return s ? s.day.id : ui.view; }
   function renderTabs(){ $("tabs").innerHTML = TABS.map(function(t){ return '<button class="tab" data-go="' + t[0] + '"' + (t[0] === curTab() ? ' aria-current="page"' : "") + '>' + t[1] + '</button>'; }).join(""); }
@@ -3994,6 +4129,7 @@ const DATA = {
     else if (v === "toolkit") html = viewToolkit();
     else if (v === "references") html = viewReferences();
     else if (v === "team") html = viewTeam();
+    else if (v === "competition") html = viewCompetition();
     else { var d = null; D.days.forEach(function(x){ if (x.id === v) d = x; }); if (d) html = viewDay(d); else { ui.view = "story"; html = viewStory(); } }
     $("main").innerHTML = html;
     window.scrollTo(0, scrollTop ? 0 : sy);
@@ -4124,6 +4260,14 @@ const DATA = {
       case "job": ui.toolJob = t.dataset.v; break;
       case "refgrp": ui.refGrp = t.dataset.v; break;
       case "taskws": ui.taskWs = t.dataset.v; break;
+      case "cpsplit": cst().splitAt = comp.rows.length; save(); break;
+      case "cpunsplit": cst().splitAt = null; save(); break;
+      case "cpreveal": cst().revealed = !cst().revealed; save(); break;
+      case "cpclear": if (confirm("Reset team names, the switch and row changes? Scores in the Google Sheet are not affected.")) { store.comp = null; cst(); save(); } break;
+      case "cpteam": (function(){ var cc = cst(), d = compData(), r = d.resp.filter(function(x){ return x.key === t.dataset.v; })[0]; if (r) { cc.override[r.key] = r.team === "A" ? "B" : "A"; save(); } })(); paintComp(); return;
+      case "jcur": jst().cur = +t.dataset.v; save(); break;
+      case "jreveal": jst().revealed = !jst().revealed; save(); break;
+      case "jreset": if (confirm("Clear all judges’ scores and comments?")) { store.judge = null; jst(); save(); } break;
       case "tasktick": store.tasks = store.tasks || {}; store.tasks[t.dataset.v] = !store.tasks[t.dataset.v]; save(); break;
       case "taskcopy": (function(){ var tk = (D.tasks || []).filter(function(x){ return x.id === t.dataset.v; })[0]; if (tk) copyText(taskPrompt(tk)); })(); return;
       case "cloudpaste": ui.cloudPaste = !ui.cloudPaste; break;
@@ -4171,6 +4315,9 @@ const DATA = {
     else if (k === "ask") { ui.ask = t.value; var ar = $("askres"); if (ar) ar.innerHTML = askResults(); }
     else if (k === "cloudtext") { ui.cloud = cloudWords(t.value); var keep = t.value; rerender(); var ta = document.querySelector(".wcta"); if (ta) { ta.value = keep; ta.focus(); } }
     else if (k === "voteform" || k === "votesheet") { vote[k === "voteform" ? "form" : "sheet"] = t.value.trim(); try { localStorage.setItem("ai4pr-vote-" + (k === "voteform" ? "form" : "sheet"), vote[k === "voteform" ? "form" : "sheet"]); } catch(e) {} clearTimeout(vote.deb); vote.deb = setTimeout(function(){ vote.ok = null; vote.data = null; if (vote.timer) { clearInterval(vote.timer); vote.timer = null; } var q = document.getElementById("vtqr"); if (q) { if (vote.form) makeQr(vote.form, q); else q.innerHTML = ""; } paintVote(); voteWatch(); }, 600); }
+    else if (k === "jscore" || k === "jpen" || k === "jcom") { var jj = jst(); (k === "jscore" ? jj.s : k === "jpen" ? jj.pen : jj.com)[t.dataset.k] = t.value; save(); paintJudge(); }
+    else if (k === "jteam" || k === "jname") { var jx = jst(); (k === "jteam" ? jx.teams : jx.judges)[+t.dataset.i] = t.value; save(); paintJudge(); }
+    else if (k === "cpname") { cst().names[+t.dataset.i] = t.value; save(); paintComp(); }
     else if (k === "plq") { ui.plq = t.value; $("plib").innerHTML = plibHtml(); }
     else if (k === "head") { ui.tpl.head = t.value; $("tplprev").innerHTML = tplPreview(); }
     else if (k === "occ") { ui.tpl.occ = +t.value; $("tplprev").innerHTML = tplPreview(); }
@@ -4191,9 +4338,9 @@ const DATA = {
   $("sNext").onclick = function(){ stepStage(1); };
   $("sFull").onclick = toggleFull;
   $("sExit").onclick = closeStage;
-  window.addEventListener("hashchange", function(){ var h = (location.hash || "").slice(1); if (h && h !== ui.view && (findSession(h) || /^(day[123]|agents|scoreboard|toolkit|story|references|team)$/.test(h))) go(h); });
+  window.addEventListener("hashchange", function(){ var h = (location.hash || "").slice(1); if (h && h !== ui.view && (findSession(h) || /^(day[123]|agents|scoreboard|toolkit|story|references|team|competition)$/.test(h))) go(h); });
   var h0 = (location.hash || "").slice(1);
-  if (h0 && (findSession(h0) || /^(day[123]|agents|scoreboard|toolkit|story|references|team)$/.test(h0))) ui.view = h0;
+  if (h0 && (findSession(h0) || /^(day[123]|agents|scoreboard|toolkit|story|references|team|competition)$/.test(h0))) ui.view = h0;
   render(true);
 })();
 

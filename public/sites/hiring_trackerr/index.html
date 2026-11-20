@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hiring Pipeline Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Hiring Pipeline Dashboard: live, read-only view of the Hiring Tracker.
+   Data comes from the tracker's own feed. Candidate IDs only: no names,
+   emails, phones, pay, Meet links or Drive links. */
+:root {
+  color-scheme: light;
+  --bg: #f3f6f7; --surface: #ffffff; --surface-2: #f6f9f9; --line: #dbe3e6;
+  --fg: #142027; --muted: #566670; --faint: #8b989f;
+  --accent: #0f6b6b; --accent-soft: #dff0ee; --bar: #0f6b6b; --track: #e8eff0;
+  --cool: #2456a6; --cool-soft: #e3ebf8;
+  --purple: #7a3fa0; --purple-soft: #f2e9f8;
+  --good: #1e7a3c; --good-bg: #e1f2e6; --warn: #8a5a00; --warn-bg: #fbf0d6; --crit: #a1361f; --crit-bg: #fbe6e0;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0d1316; --surface: #141c20; --surface-2: #192328; --line: #26333a;
+    --fg: #e6edf0; --muted: #98a8b1; --faint: #6b7a83;
+    --accent: #5cc4bf; --accent-soft: #15312f; --bar: #5cc4bf; --track: #1e2a2f;
+    --cool: #8fb4f2; --cool-soft: #1a2a44; --purple: #cfa3ea; --purple-soft: #2d1f38;
+    --good: #6fd08e; --good-bg: #16301f; --warn: #f0c060; --warn-bg: #352a10; --crit: #f19a85; --crit-bg: #3a1c15;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0d1316; --surface: #141c20; --surface-2: #192328; --line: #26333a;
+  --fg: #e6edf0; --muted: #98a8b1; --faint: #6b7a83;
+  --accent: #5cc4bf; --accent-soft: #15312f; --bar: #5cc4bf; --track: #1e2a2f;
+  --cool: #8fb4f2; --cool-soft: #1a2a44; --purple: #cfa3ea; --purple-soft: #2d1f38;
+  --good: #6fd08e; --good-bg: #16301f; --warn: #f0c060; --warn-bg: #352a10; --crit: #f19a85; --crit-bg: #3a1c15;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 var(--font-body);
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); }
+.wrap { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+button, input, select { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Top bar */
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-top: max(20px, env(safe-area-inset-top, 0px)); }
+.top-inner { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.brand-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; }
+.eyebrow { font: 600 11.5px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 4px 0 0; font: 700 clamp(22px, 3.2vw, 30px)/1.1 var(--font-display); letter-spacing: -.02em; }
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.live { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.live.ok .dot { background: var(--good); box-shadow: 0 0 0 3px var(--good-bg); }
+.live.stale .dot { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-bg); }
+.live.err .dot { background: var(--crit); box-shadow: 0 0 0 3px var(--crit-bg); }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; width: 34px; height: 34px; cursor: pointer; display: grid; place-items: center; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 600; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+nav.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+nav.tabs a { text-decoration: none; color: var(--muted); font-weight: 600; font-size: 13.5px; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+nav.tabs a:hover { color: var(--fg); }
+.banner { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+
+/* Cards */
+main { padding-top: 18px; }
+.page { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.card h2 { margin: 0; font: 700 16px/1.2 var(--font-display); }
+.card .hint { color: var(--muted); font-size: 12.5px; margin-top: 3px; }
+.card-head { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.lede { margin: 0; max-width: 75ch; font-size: 15px; }
+.lede b { font-family: var(--font-mono); }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+.s12 { grid-column: span 12; } .s8 { grid-column: span 8; } .s6 { grid-column: span 6; } .s4 { grid-column: span 4; } .s3 { grid-column: span 3; }
+
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.kpi { display: flex; flex-direction: column; gap: 4px; }
+.kpi .label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.kpi .value { font: 700 32px/1.05 var(--font-mono); letter-spacing: -.02em; }
+.kpi .foot { font-size: 12px; color: var(--muted); }
+.kpi.lead { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.kpi.lead .label, .kpi.lead .foot { color: color-mix(in srgb, var(--bg) 72%, transparent); }
+.kpi.lead .value { color: var(--accent); }
+.kpi.alert { border-color: var(--warn); } .kpi.alert .value { color: var(--warn); }
+
+.hbar { display: grid; grid-template-columns: minmax(90px, 160px) 1fr 34px; gap: 10px; align-items: center; margin-bottom: 9px; font-size: 13px; }
+.hbar .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar .lab small { color: var(--faint); margin-left: 4px; }
+.hbar .trk { height: 18px; background: var(--track); border-radius: 6px; overflow: hidden; }
+.hbar .trk span { display: block; height: 100%; background: var(--bar); border-radius: 0 6px 6px 0; transition: width .5s ease; }
+.hbar.exit .trk span { background: var(--crit); opacity: .6; }
+.hbar.hold .trk span { background: var(--warn); opacity: .7; }
+.hbar .n { font: 700 13px var(--font-mono); text-align: right; }
+.divider { border-top: 1px dashed var(--line); margin: 12px 0; }
+
+.list { display: flex; flex-direction: column; }
+.item { display: grid; grid-template-columns: 50px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; padding-top: 0; }
+.date-chip { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; text-align: center; padding: 4px 0 5px; }
+.date-chip .d { font: 700 17px/1.1 var(--font-mono); }
+.date-chip .m { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.item .t { font-weight: 600; font-size: 13.5px; }
+.item .s, .s { color: var(--muted); font-size: 12.5px; }
+.pill { font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--accent-soft); color: var(--accent); display: inline-block; }
+.pill.r2, .pill.cool { background: var(--cool-soft); color: var(--cool); }
+.pill.good { background: var(--good-bg); color: var(--good); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.crit { background: var(--crit-bg); color: var(--crit); }
+.pill.plain { background: var(--surface-2); color: var(--muted); }
+.empty { color: var(--muted); font-size: 13px; padding: 14px 0 4px; }
+
+.obtiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.obtile { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.obtile .l { font-size: 12px; color: var(--muted); }
+.obtile .v { font: 700 22px var(--font-mono); }
+
+.tbl-wrap { overflow-x: auto; margin: 0 -18px -18px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 9px 18px; border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+td { padding: 10px 18px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+.id { font: 700 12.5px var(--font-mono); white-space: nowrap; }
+.muted { color: var(--muted); }
+td.muted { white-space: nowrap; }
+.co { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.co i { width: 8px; height: 8px; border-radius: 50%; }
+.steps { display: flex; gap: 3px; }
+.steps i { width: 14px; height: 6px; border-radius: 3px; background: var(--track); }
+.steps i.on { background: var(--bar); }
+.steps i.now { background: var(--bar); box-shadow: 0 0 0 2px var(--accent-soft); }
+.steps i.off { background: var(--crit); opacity: .55; }
+.tick { font: 700 12px var(--font-mono); }
+.tick.yes { color: var(--good); } .tick.no { color: var(--faint); }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.filters input, .filters select { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 13px; min-width: 0; }
+.filters input { width: 220px; max-width: 100%; }
+
+/* Process flow */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.c-team { color: var(--cool); background: var(--cool-soft); }
+.c-approver { color: var(--purple); background: var(--purple-soft); }
+.c-cand { color: var(--warn); background: var(--warn-bg); }
+.c-auto { color: var(--accent); background: var(--accent-soft); }
+.c-claude { color: var(--good); background: var(--good-bg); }
+.flow-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.fstep { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
+.fstep::before { content: ""; position: absolute; left: 19px; top: 34px; bottom: 0; width: 2px; background: var(--line); }
+.fstep:last-child::before { display: none; }
+.fnum { width: 40px; height: 32px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); display: grid; place-items: center; font: 600 12.5px var(--font-mono); color: var(--muted); position: relative; z-index: 1; }
+.fbody { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fbody h3 { margin: 0; font: 600 15px/1.25 var(--font-display); }
+.ftop { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: center; }
+.fwho { display: flex; flex-wrap: wrap; gap: 6px; }
+.fbody ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.fmeta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+.fmeta code { font: 600 12px var(--font-mono); color: var(--accent); }
+.stop { font-size: 12.5px; color: var(--crit); background: var(--crit-bg); padding: 6px 10px; border-radius: 6px; }
+.fstep.dim .fbody, .fstep.dim .fnum { opacity: .35; }
+.send-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; counter-reset: sf; }
+.send-flow div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); }
+.send-flow div.hl { border-color: var(--accent); background: var(--accent-soft); }
+.send-flow b { display: block; font-size: 13.5px; }
+.send-flow span { font-size: 12px; color: var(--muted); }
+.send-flow small { font: 600 11px var(--font-mono); color: var(--accent); letter-spacing: .06em; text-transform: uppercase; }
+
+footer { color: var(--faint); font-size: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-top: 6px; }
+
+@media (max-width: 1020px) {
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .s8, .s6, .s4, .s3 { grid-column: span 12; }
+  .send-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi .value { font-size: 26px; }
+  .obtiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .send-flow { grid-template-columns: 1fr; }
+  .fstep { grid-template-columns: 32px minmax(0, 1fr); gap: 8px; }
+  .fnum { width: 32px; } .fstep::before { left: 15px; }
+}
+@media (prefers-reduced-motion: reduce) { .hbar .trk span { transition: none; } }
+@media print { .top { position: static; } .controls, nav.tabs { display: none; } .card { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="top-inner">
+    <div class="brand-row">
+      <div>
+        <div class="eyebrow">Agility AI · Lyfshilp Academy</div>
+        <h1>Hiring pipeline</h1>
+      </div>
+      <div class="controls">
+        <span class="live" id="live" role="status"><span class="dot"></span><span id="live-text">Connecting to the Hiring Tracker</span></span>
+        <div class="seg" role="group" aria-label="Company">
+          <button type="button" data-co="all" aria-pressed="true">All</button>
+          <button type="button" data-co="Agility AI" aria-pressed="false">Agility AI</button>
+          <button type="button" data-co="Lyfshilp Academy" aria-pressed="false">Lyfshilp</button>
+        </div>
+        <button type="button" class="icon-btn" id="refresh" aria-label="Refresh now" title="Refresh now">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="theme" aria-label="Switch light or dark" title="Light or dark">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#overview" data-tab="overview">Overview</a>
+      <a href="#candidates" data-tab="candidates">Candidates</a>
+      <a href="#interviews" data-tab="interviews">Interviews</a>
+      <a href="#outbox" data-tab="outbox">Outbox</a>
+      <a href="#activity" data-tab="activity">Activity</a>
+      <a href="#process" data-tab="process">Process flow</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="banner" id="banner" hidden></div>
+
+  <!-- OVERVIEW -->
+  <section class="page" id="page-overview">
+    <p class="lede" id="lede">Loading the pipeline…</p>
+    <div class="kpis" id="kpis" aria-label="Headline numbers"></div>
+    <div class="grid">
+      <div class="card s8">
+        <div class="card-head"><div><h2>Where candidates are now</h2><div class="hint">Each candidate counted once, at their current status</div></div></div>
+        <div id="stages"></div>
+      </div>
+      <div class="card s4">
+        <div class="card-head"><div><h2>Next interviews</h2><div class="hint">From today on, soonest first (IST)</div></div></div>
+        <div class="list" id="upcoming-mini"></div>
+      </div>
+      <div class="card s3"><div class="card-head"><div><h2>By company</h2><div class="hint">All candidates</div></div></div><div id="b-company"></div></div>
+      <div class="card s3"><div class="card-head"><div><h2>By hire type</h2><div class="hint">All candidates</div></div></div><div id="b-type"></div></div>
+      <div class="card s3"><div class="card-head"><div><h2>Owner workload</h2><div class="hint">Candidates in progress</div></div></div><div id="b-owner"></div></div>
+      <div class="card s3"><div class="card-head"><div><h2>By final approver</h2><div class="hint">Candidates in progress</div></div></div><div id="b-approver"></div></div>
+      <div class="card s6">
+        <div class="card-head"><div><h2>Waiting for approval</h2><div class="hint">Status set, approval box not yet ticked</div></div></div>
+        <div class="list" id="approvals"></div>
+      </div>
+      <div class="card s6">
+        <div class="card-head"><div><h2>Needs attention</h2><div class="hint">Latest system note on a candidate</div></div></div>
+        <div class="list" id="attention"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANDIDATES -->
+  <section class="page" id="page-candidates" hidden>
+    <div class="card">
+      <div class="card-head">
+        <div><h2>All candidates</h2><div class="hint">Candidate IDs only. Names and contact details stay in the Hiring Tracker.</div></div>
+        <div class="filters">
+          <input type="search" id="q" placeholder="Search ID, role or owner" aria-label="Search candidates">
+          <select id="f-stage" aria-label="Filter by stage"><option value="">All stages</option></select>
+          <select id="f-type" aria-label="Filter by hire type"><option value="">All hire types</option></select>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Candidate</th><th>Added</th><th>Company</th><th>Type</th><th>Role</th><th>Journey</th><th>Status</th><th>Owner</th><th>Approver</th><th>Appr. 1</th><th>Appr. 2</th><th>Last action</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- INTERVIEWS -->
+  <section class="page" id="page-interviews" hidden>
+    <div class="grid">
+      <div class="card s6">
+        <div class="card-head"><div><h2>Upcoming</h2><div class="hint">Round 1 (Technical) and Round 2 (Cultural Fit), soonest first</div></div></div>
+        <div class="list" id="upcoming"></div>
+      </div>
+      <div class="card s6">
+        <div class="card-head"><div><h2>Results so far</h2><div class="hint">Recorded interview results</div></div></div>
+        <div id="results"></div>
+      </div>
+      <div class="card s12">
+        <div class="card-head"><div><h2>Past interviews</h2><div class="hint">Most recent first</div></div></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>When</th><th>Round</th><th>Candidate</th><th>Role</th><th>Interviewer</th><th>Result</th></tr></thead>
+          <tbody id="past"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTBOX -->
+  <section class="page" id="page-outbox" hidden>
+    <div class="card">
+      <div class="card-head"><div><h2>Outbox</h2><div class="hint">Emails the tracker has prepared. Ready ones wait for Pooja or Bhawna to send them through the Claude Project.</div></div></div>
+      <div class="obtiles" id="ob-tiles"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><h2>All prepared emails</h2><div class="hint">Newest first. Addresses and message text are not shown.</div></div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Outbox ID</th><th>Prepared</th><th>Candidate</th><th>Email</th><th>Sender</th><th>Mode</th><th>Status</th><th>Sent</th></tr></thead>
+        <tbody id="ob-rows"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section class="page" id="page-activity" hidden>
+    <div class="card">
+      <div class="card-head"><div><h2>Audit Log</h2><div class="hint">Every email recorded by the tracker, newest first (last 200)</div></div></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>When</th><th>Candidate</th><th>Action</th><th>Email</th><th>Mode</th></tr></thead>
+        <tbody id="audit-rows"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- PROCESS FLOW -->
+  <section class="page" id="page-process" hidden>
+    <div class="card">
+      <div class="card-head"><div><h2>How the hiring process runs</h2><div class="hint">Every step from Round 1 shortlist to Day 1: who does what, and what the system does on its own.</div></div></div>
+      <div class="legend" style="margin-bottom:12px">
+        <span class="chip c-team">Pooja or Bhawna</span>
+        <span class="chip c-approver">Final approver: Shreya, Sharad or Aryan</span>
+        <span class="chip c-cand">Candidate</span>
+        <span class="chip c-auto">Automatic</span>
+        <span class="chip c-claude">Claude Project</span>
+      </div>
+      <div class="seg" role="group" aria-label="Highlight steps by who acts" id="who-seg">
+        <button type="button" data-who="all" aria-pressed="true">Everyone</button>
+        <button type="button" data-who="team" aria-pressed="false">Pooja or Bhawna</button>
+        <button type="button" data-who="approver" aria-pressed="false">Final approver</button>
+        <button type="button" data-who="cand" aria-pressed="false">Candidate</button>
+        <button type="button" data-who="auto" aria-pressed="false">Automatic</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><h2>How every email goes out</h2><div class="hint">Approved in the sheet, sent from the sender's own Gmail</div></div></div>
+      <div class="send-flow">
+        <div><small>Hiring Tracker</small><b>Approve the row</b><span>Set Status, tick Approval 1 (and Approval 2 for offers and contracts)</span></div>
+        <div><small>Automatic</small><b>Sheet writes the email</b><span>Checks every field, fills the approved template</span></div>
+        <div><small>Outbox tab</small><b>Email waits as Ready</b><span>Nothing is sent from the sheet</span></div>
+        <div><small>Claude Project</small><b>"send my ready emails"</b><span>Claude shows each email exactly as written</span></div>
+        <div class="hl"><small>Sender's own Gmail</small><b>Draft or send</b><span>Draft mode today; live sending once Shreya switches it on</span></div>
+        <div><small>Automatic</small><b>Recorded in 5 minutes</b><span>Status moves on, Audit Log updated</span></div>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-head"><div><h2>Round 1: Technical</h2><div class="hint">Steps 1 to 4</div></div></div>
+      <ol class="flow-steps">
+        <li class="fstep" data-who="team auto"><div class="fnum">01</div><div class="fbody"><div class="ftop"><h3>Add the shortlisted candidate</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>Add a row in the Candidates tab once the candidate is shortlisted for Round 1.</li><li>Required: name, email, phone, company, category, role, sender, process owner, final approver, Round 1 interviewer.</li><li>The system assigns the Candidate ID and creates the candidate's private folder.</li></ul>
+          <p class="stop">If any required field is blank, nothing happens. The reason is written in the row's Notes.</p>
+          <div class="fmeta"><span>Status after: <code>Shortlisted R1</code></span></div></div></li>
+        <li class="fstep" data-who="team auto"><div class="fnum">02</div><div class="fbody"><div class="ftop"><h3>Approve and send two slot options</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span><span class="chip c-claude">Claude Project</span></div></div>
+          <ul><li>The process owner ticks Approval 1. The system finds two free slots in the interviewer's calendar and prepares the slot-choice email in the Outbox.</li><li>The sender sends it from their own Gmail through the Claude Project.</li></ul>
+          <div class="fmeta"><span>Status after: <code>R1 slots sent</code></span><span>Arrives in Phase 2</span></div></div></li>
+        <li class="fstep" data-who="cand auto"><div class="fnum">03</div><div class="fbody"><div class="ftop"><h3>Candidate picks a slot</h3><div class="fwho"><span class="chip c-cand">Candidate</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>The candidate chooses Slot 1, Slot 2 or "Neither works" from a link. No Google account needed.</li><li>The system books the Technical round with a Google Meet link and prepares the confirmation in the Outbox.</li><li>"Neither works" or no reply in time alerts the sender.</li></ul>
+          <div class="fmeta"><span>Status after: <code>R1 scheduled</code></span><span>Today the time and Meet link are typed in by hand</span></div></div></li>
+        <li class="fstep" data-who="team auto"><div class="fnum">04</div><div class="fbody"><div class="ftop"><h3>Record the Round 1 result</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>Pass: set Shortlisted R2 and fill the Round 2 interviewer.</li><li>Not selected: set Rejected and approve. The regret email is prepared in the Outbox.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Shortlisted R2</code> or <code>Rejected</code></span></div></div></li>
+      </ol>
+    </div>
+
+    <div class="card"><div class="card-head"><div><h2>Round 2: Cultural Fit</h2><div class="hint">Steps 5 to 7</div></div></div>
+      <ol class="flow-steps">
+        <li class="fstep" data-who="team auto"><div class="fnum">05</div><div class="fbody"><div class="ftop"><h3>Approve and send two Round 2 slots</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>Same as step 2, using the Round 2 interviewer's calendar and the Cultural Fit email.</li></ul>
+          <div class="fmeta"><span>Status after: <code>R2 slots sent</code></span></div></div></li>
+        <li class="fstep" data-who="cand auto"><div class="fnum">06</div><div class="fbody"><div class="ftop"><h3>Candidate picks a Round 2 slot</h3><div class="fwho"><span class="chip c-cand">Candidate</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>Same as step 3: the Cultural Fit round is booked with a Meet link and the confirmation is prepared.</li></ul>
+          <div class="fmeta"><span>Status after: <code>R2 scheduled</code></span></div></div></li>
+        <li class="fstep" data-who="team"><div class="fnum">07</div><div class="fbody"><div class="ftop"><h3>Final decision</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span></div></div>
+          <ul><li>Selected: move to the offer steps. Not selected: regret email, as in step 4.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Selected</code> or <code>Rejected</code></span></div></div></li>
+      </ol>
+    </div>
+
+    <div class="card"><div class="card-head"><div><h2>Offer and joining documents</h2><div class="hint">Steps 8 to 11</div></div></div>
+      <ol class="flow-steps">
+        <li class="fstep" data-who="team"><div class="fnum">08</div><div class="fbody"><div class="ftop"><h3>Fill in the offer details</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span></div></div>
+          <ul><li>Stipend or CTC, pay period, start date, end date (interns and fixed-term), reporting manager, probation, work mode, signatory.</li><li>The process owner ticks Approval 1.</li></ul></div></li>
+        <li class="fstep" data-who="approver"><div class="fnum">09</div><div class="fbody"><div class="ftop"><h3>Final approval</h3><div class="fwho"><span class="chip c-approver">Final approver</span></div></div>
+          <ul><li>The final approver named on the row ticks Approval 2. The system checks who ticked it.</li></ul>
+          <p class="stop">No offer letter or contract is ever issued without this approval.</p></div></li>
+        <li class="fstep" data-who="auto"><div class="fnum">10</div><div class="fbody"><div class="ftop"><h3>Selection email, offer letter and joining form</h3><div class="fwho"><span class="chip c-auto">Automatic</span><span class="chip c-claude">Claude Project</span></div></div>
+          <ul><li>The offer letter is made from the company's approved template and saved as a PDF.</li><li>The selection email with the offer and the Joining Details Form link waits in the Outbox for the sender.</li><li>The offer expires after 3 working days, with a reminder the day before.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Offer sent</code></span><span>Arrives in Phase 3</span></div></div></li>
+        <li class="fstep" data-who="cand team auto"><div class="fnum">11</div><div class="fbody"><div class="ftop"><h3>Candidate accepts and submits joining documents</h3><div class="fwho"><span class="chip c-cand">Candidate</span><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>The candidate signs in with their personal Google account and enters address, PAN, Aadhaar and bank details, and uploads a cancelled cheque, PAN card, Aadhaar card and passport photo.</li><li>Files go to the candidate's folder; details go to the restricted Joining Details Register.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Docs submitted</code></span></div></div></li>
+      </ol>
+    </div>
+
+    <div class="card"><div class="card-head"><div><h2>Contract and joining</h2><div class="hint">Steps 12 to 14</div></div></div>
+      <ol class="flow-steps">
+        <li class="fstep" data-who="team"><div class="fnum">12</div><div class="fbody"><div class="ftop"><h3>Verify documents</h3><div class="fwho"><span class="chip c-team">Pooja or Bhawna</span></div></div>
+          <ul><li>Check the uploads against the typed details, then tick Docs verified.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Docs verified</code></span></div></div></li>
+        <li class="fstep" data-who="approver auto"><div class="fnum">13</div><div class="fbody"><div class="ftop"><h3>Approve and send the contract</h3><div class="fwho"><span class="chip c-approver">Final approver</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>Internship Agreement, Appointment Letter, Fixed-Term Appointment Letter or Consultancy Agreement, by category.</li><li>Governing law India; jurisdiction the courts at Ghaziabad, Uttar Pradesh.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Contract sent</code></span></div></div></li>
+        <li class="fstep" data-who="cand team auto"><div class="fnum">14</div><div class="fbody"><div class="ftop"><h3>Signed contract back, then Day 1</h3><div class="fwho"><span class="chip c-cand">Candidate</span><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+          <ul><li>Pooja or Bhawna saves the signed copy and ticks Contract signed.</li><li>The Day 1 welcome email is prepared and the person is added to the Employee Register.</li></ul>
+          <div class="fmeta"><span>Status after: <code>Contract signed</code>, then <code>Joined</code></span></div></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <footer><span id="src-note"></span><span>Read-only view of the Hiring Tracker.</span></footer>
+</main>
+
+<script>
+/* ---------- Live feed ----------
+   The Hiring Tracker's read-only data feed (Google Apps Script web app).
+   It returns candidate IDs, roles, statuses and dates only. */
+const FEED_URL = "https://script.google.com/macros/s/AKfycbw_g27YQQDuXsnhc04dU1FpwGNWe65u7qP6pI3ZeV38adky1W4lhafezLrO876K_OdiFQ/exec";
+const REFRESH_SECONDS = 30;
+
+/* Shown only if the feed cannot be reached. */
+const SNAPSHOT = {
+  generatedAt: "2026-11-20T20:56:10+05:30",
+  candidates: [
+    { id: "AG-2026-001", added: "2026-11-20", company: "Agility AI", type: "Intern", role: "AI Research Intern", status: "R1 scheduled", owner: "Pooja", approver: "Shreya", r1: "2026-11-27T11:00", r1min: 45, r1by: "Sharad", r1result: "", r2: "", r2min: 0, r2by: "", r2result: "", a1: false, a2: false, lastAction: "", lastActionAt: "", note: "" },
+    { id: "LA-2026-001", added: "2026-11-20", company: "Lyfshilp Academy", type: "Full-time", role: "Program Associate", status: "R2 scheduled", owner: "Pooja", approver: "Aryan", r1: "2026-11-25T11:00", r1min: 45, r1by: "Sharad", r1result: "Pass", r2: "2026-11-30T15:00", r2min: 30, r2by: "Aryan", r2result: "", a1: false, a2: false, lastAction: "", lastActionAt: "", note: "" },
+    { id: "AG-2026-002", added: "2026-11-20", company: "Agility AI", type: "Fixed-term", role: "Content Writer", status: "Rejected", owner: "Pooja", approver: "Sharad", r1: "", r1min: 0, r1by: "Bhawna", r1result: "Not selected", r2: "", r2min: 0, r2by: "", r2result: "", a1: false, a2: false, lastAction: "", lastActionAt: "", note: "" }
+  ],
+  outbox: [],
+  audit: []
+};
+
+/* ---------- Process model (matches the tracker's Status list) ---------- */
+const STAGES = [
+  { name: "Shortlisted", sub: "Round 1 not booked", s: ["Shortlisted R1", "R1 slots sent"] },
+  { name: "Round 1", sub: "Technical", s: ["R1 scheduled"] },
+  { name: "Round 2", sub: "Cultural fit", s: ["Shortlisted R2", "R2 slots sent", "R2 scheduled"] },
+  { name: "Offer", sub: "Selected to accepted", s: ["Selected", "Offer sent", "Offer accepted"] },
+  { name: "Joining documents", sub: "Form and checks", s: ["Docs submitted", "Docs verified"] },
+  { name: "Contract", sub: "Sent for signature", s: ["Contract sent"] },
+  { name: "Joined", sub: "Signed or started", s: ["Contract signed", "Joined"] }
+];
+const CLOSED = ["Rejected", "Offer declined", "Offer expired", "Withdrawn"];
+const NEEDS = { "Shortlisted R1": 1, "R1 scheduled": 1, "Shortlisted R2": 1, "R2 scheduled": 1, "Selected": 2, "Docs verified": 2, "Contract signed": 1, "Rejected": 1 };
+const TEMPLATE = { "Shortlisted R1": "R1_SLOTS", "R1 scheduled": "R1_CONFIRM", "Shortlisted R2": "R2_SLOTS", "R2 scheduled": "R2_CONFIRM", "Selected": "SELECTION_OFFER", "Docs verified": "CONTRACT", "Contract signed": "DAY1", "Rejected": "REGRET" };
+const NEXT_EMAIL = { "Shortlisted R1": "Round 1 slot options", "R1 scheduled": "Round 1 confirmation", "Shortlisted R2": "Round 2 slot options", "R2 scheduled": "Round 2 confirmation", "Selected": "Offer letter and joining form", "Docs verified": "Contract for signature", "Contract signed": "Day 1 welcome", "Rejected": "Regret email" };
+const stageIndex = (status) => STAGES.findIndex((g) => g.s.includes(status));
+const stageName = (r) => isClosed(r) ? "Closed" : isHold(r) ? "On hold" : (STAGES[stageIndex(r.status)] || { name: "No status" }).name;
+const isClosed = (r) => CLOSED.includes(r.status);
+const isHold = (r) => r.status === "On hold";
+const isJoined = (r) => stageIndex(r.status) === STAGES.length - 1;
+const inProgress = (r) => !isClosed(r) && !isHold(r) && !isJoined(r) && stageIndex(r.status) >= 0;
+
+/* ---------- Helpers ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const coColor = (c) => c === "Agility AI" ? "var(--accent)" : "var(--cool)";
+const toDate = (s) => s ? new Date(s.length <= 10 ? s + "T00:00" : s) : null;
+const day = (d) => d.toLocaleDateString("en-IN", { day: "2-digit" });
+const mon = (d) => d.toLocaleDateString("en-IN", { month: "short" });
+const time = (d) => d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+const when = (s) => { const d = toDate(s); return d ? d.toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: s.length > 10 ? "numeric" : undefined, minute: s.length > 10 ? "2-digit" : undefined }) : ""; };
+const state = { co: "all", tab: "overview", who: "all", data: null, live: false, lastOk: 0, error: "" };
+
+function bars(el, items) {
+  if (!items.length) { el.innerHTML = '<div class="empty">No candidates.</div>'; return; }
+  const max = Math.max(1, ...items.map((x) => x.n));
+  el.innerHTML = items.map((x) => `<div class="hbar ${x.cls || ""}" title="${esc(x.label)}: ${x.n}"><span class="lab">${esc(x.label)}${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span><div class="trk"><span style="width:${x.n / max * 100}%"></span></div><span class="n">${x.n}</span></div>`).join("");
+}
+function groupCount(rows, key) {
+  const m = new Map();
+  rows.forEach((r) => m.set(r[key] || "Not set", (m.get(r[key] || "Not set") || 0) + 1));
+  return [...m].map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
+}
+function journey(r) {
+  const gi = stageIndex(r.status), exited = gi < 0;
+  const reached = exited ? (r.r2 || r.r2result ? 2 : r.r1 || r.r1result ? 1 : 0) : gi;
+  return `<div class="steps" aria-label="Journey">${STAGES.map((g, i) => `<i class="${exited ? (i < reached ? "on" : i === reached ? "off" : "") : (i < gi ? "on" : i === gi ? "now" : "")}"></i>`).join("")}</div>`;
+}
+const statusPill = (r) => `<span class="pill ${isClosed(r) ? "crit" : isJoined(r) ? "good" : isHold(r) ? "warn" : ""}">${esc(r.status || "No status")}</span>`;
+const tick = (b) => `<span class="tick ${b ? "yes" : "no"}">${b ? "Yes" : "No"}</span>`;
+
+/* ---------- Data loading ---------- */
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = "hpFeed" + Date.now();
+    const s = document.createElement("script");
+    const t = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 30000);
+    function cleanup() { clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb] = (body) => { cleanup(); resolve(body); };
+    s.onerror = () => { cleanup(); reject(new Error("load failed")); };
+    s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+    document.head.append(s);
+  });
+}
+async function load() {
+  setLive("loading");
+  try {
+    let body;
+    try {
+      const res = await fetch(FEED_URL, { cache: "no-store" });
+      body = await res.json();
+    } catch (e) {
+      body = await jsonp(FEED_URL);
+    }
+    if (!body || !body.ok) throw new Error(body && body.error || "The feed returned no data");
+    state.data = body.data; state.live = true; state.lastOk = Date.now(); state.error = "";
+  } catch (e) {
+    state.error = e.message || String(e);
+    if (!state.data) { state.data = SNAPSHOT; state.live = false; }
+  }
+  render();
+}
+function setLive(mode) {
+  const el = $("#live"), txt = $("#live-text");
+  el.classList.remove("ok", "stale", "err");
+  if (mode === "loading" && !state.lastOk) { txt.textContent = "Connecting to the Hiring Tracker"; return; }
+  if (state.live && !state.error) {
+    el.classList.add("ok");
+    const secs = Math.round((Date.now() - state.lastOk) / 1000);
+    txt.textContent = "Live · updated " + (secs < 5 ? "just now" : secs < 60 ? secs + "s ago" : Math.round(secs / 60) + " min ago");
+  } else if (state.live) {
+    el.classList.add("stale"); txt.textContent = "Live data paused · retrying";
+  } else {
+    el.classList.add("err"); txt.textContent = "Offline · showing snapshot";
+  }
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const d = state.data;
+  if (!d) return;
+  const all = d.candidates || [];
+  const rows = state.co === "all" ? all : all.filter((r) => r.company === state.co);
+  const ids = new Set(rows.map((r) => r.id));
+  const outbox = (d.outbox || []).filter((o) => state.co === "all" || ids.has(o.candidate));
+  const audit = (d.audit || []).filter((a) => state.co === "all" || ids.has(a.candidate));
+  document.querySelectorAll("[data-co]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.co === state.co));
+
+  const banner = $("#banner");
+  banner.hidden = state.live && !state.error ? true : false;
+  if (!state.live) banner.textContent = "The live feed could not be reached, so this shows the snapshot from " + when(d.generatedAt) + ". It will switch to live data as soon as the feed answers.";
+  else if (state.error) banner.textContent = "The last refresh failed (" + state.error + "). Showing data from " + when(d.generatedAt) + "; retrying every " + REFRESH_SECONDS + " seconds.";
+  $("#src-note").textContent = `Hiring Tracker data as of ${when(d.generatedAt)}. ${all.length} candidates, ${(d.outbox || []).length} Outbox emails, ${(d.audit || []).length} Audit Log entries.`;
+  setLive();
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const prog = rows.filter(inProgress);
+  const interviewing = rows.filter((r) => ["Round 1", "Round 2"].includes(stageName(r)));
+  const offer = rows.filter((r) => stageName(r) === "Offer");
+  const joined = rows.filter(isJoined);
+  const closed = rows.filter(isClosed);
+  const ready = outbox.filter((o) => o.status === "Ready").length;
+  const where = state.co === "all" ? "across Agility AI and Lyfshilp Academy" : "at " + state.co;
+
+  // Overview
+  $("#lede").innerHTML = `<b>${rows.length}</b> candidates ${esc(where)}: <b>${prog.length}</b> in progress, <b>${joined.length}</b> joined and <b>${closed.length}</b> closed. <b>${ready}</b> ${ready === 1 ? "email is" : "emails are"} waiting in the Outbox to be sent.`;
+  const kpis = [
+    { label: "In progress", value: prog.length, foot: rows.length + " candidates in total", cls: "lead" },
+    { label: "In interviews", value: interviewing.length, foot: "Round 1 or Round 2" },
+    { label: "Offer stage", value: offer.length, foot: "Selected, offer sent or accepted" },
+    { label: "Joined", value: joined.length, foot: "Contract signed or joined" },
+    { label: "Closed", value: closed.length, foot: "Rejected, declined, expired or withdrawn" },
+    { label: "Emails to send", value: ready, foot: "Ready in the Outbox", cls: ready ? "alert" : "" }
+  ];
+  $("#kpis").innerHTML = kpis.map((k) => `<div class="card kpi ${k.cls || ""}"><div class="label">${k.label}</div><div class="value">${k.value}</div><div class="foot">${esc(k.foot)}</div></div>`).join("");
+
+  const stageItems = STAGES.map((g) => ({ label: g.name, sub: g.sub, n: rows.filter((r) => g.s.includes(r.status)).length }));
+  const extras = [{ label: "On hold", n: rows.filter(isHold).length, cls: "hold" }, { label: "Closed", sub: "not selected or withdrawn", n: closed.length, cls: "exit" }];
+  const max = Math.max(1, ...stageItems.map((x) => x.n), ...extras.map((x) => x.n));
+  const hrow = (x) => `<div class="hbar ${x.cls || ""}" title="${esc(x.label)}: ${x.n}"><span class="lab">${esc(x.label)}${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span><div class="trk"><span style="width:${x.n / max * 100}%"></span></div><span class="n">${x.n}</span></div>`;
+  $("#stages").innerHTML = stageItems.map(hrow).join("") + '<div class="divider"></div>' + extras.map(hrow).join("");
+
+  const ints = rows.flatMap((r) => [
+    r.r1 ? { r, at: toDate(r.r1), round: 1, min: r.r1min, by: r.r1by, result: r.r1result } : null,
+    r.r2 ? { r, at: toDate(r.r2), round: 2, min: r.r2min, by: r.r2by, result: r.r2result } : null
+  ].filter((x) => x && x.at && !isNaN(x.at)));
+  const upcoming = ints.filter((x) => x.at >= today).sort((a, b) => a.at - b.at);
+  const past = ints.filter((x) => x.at < today).sort((a, b) => b.at - a.at);
+  const intItem = (x) => `<div class="item"><div class="date-chip"><div class="d">${day(x.at)}</div><div class="m">${mon(x.at)}</div></div>
+    <div><div class="t">${esc(x.r.role)}</div><div class="s"><span class="id">${esc(x.r.id)}</span> · ${time(x.at)} · ${x.min || "?"} min · ${esc(x.by || "Interviewer not set")}</div></div>
+    <span class="pill ${x.round === 2 ? "r2" : ""}">${x.round === 1 ? "Technical" : "Cultural fit"}</span></div>`;
+  $("#upcoming-mini").innerHTML = upcoming.length ? upcoming.slice(0, 5).map(intItem).join("") : '<div class="empty">No interviews scheduled from today on.</div>';
+
+  bars($("#b-company"), groupCount(rows, "company"));
+  bars($("#b-type"), groupCount(rows, "type"));
+  bars($("#b-owner"), groupCount(prog, "owner"));
+  bars($("#b-approver"), groupCount(prog, "approver"));
+
+  // Waiting for approval: the status needs an email, that email is not in the Outbox or done yet, and the approvals are not ticked.
+  const prepared = new Set((d.outbox || []).filter((o) => o.status !== "Cancelled").map((o) => o.candidate + "|" + o.template));
+  const pending = rows.filter((r) => {
+    const tpl = TEMPLATE[r.status];
+    if (!tpl || prepared.has(r.id + "|" + tpl) || (r.lastAction || "").startsWith(tpl)) return false;
+    return NEEDS[r.status] === 1 ? !r.a1 : !(r.a1 && r.a2);
+  });
+  $("#approvals").innerHTML = pending.length ? pending.slice(0, 6).map((r) => `<div class="item" style="grid-template-columns:auto 1fr auto"><span class="id">${esc(r.id)}</span>
+      <div><div class="t">${esc(NEXT_EMAIL[r.status])}</div><div class="s">${NEEDS[r.status] === 2 ? "Needs Approval 1 from " + esc(r.owner) + " and Approval 2 from " + esc(r.approver) : "Needs Approval 1 from " + esc(r.owner)}</div></div>
+      <span class="pill ${NEEDS[r.status] === 2 ? "warn" : ""}">${NEEDS[r.status] === 2 ? "Founder" : "Owner"}</span></div>`).join("") + (pending.length > 6 ? `<div class="s" style="padding-top:8px">and ${pending.length - 6} more</div>` : "")
+    : '<div class="empty">Nothing waiting for approval.</div>';
+
+  const att = rows.filter((r) => r.note);
+  $("#attention").innerHTML = att.length ? att.map((r) => `<div class="item" style="grid-template-columns:auto 1fr"><span class="id">${esc(r.id)}</span><div class="s">${esc(r.note)}</div></div>`).join("")
+    : '<div class="empty">Nothing needs attention.</div>';
+
+  // Candidates
+  const fStage = $("#f-stage"), fType = $("#f-type");
+  const stageOpts = [...STAGES.map((g) => g.name), "On hold", "Closed", "No status"];
+  if (fStage.options.length === 1) stageOpts.forEach((s) => fStage.add(new Option(s, s)));
+  const types = [...new Set(all.map((r) => r.type).filter(Boolean))].sort();
+  const curType = fType.value;
+  fType.replaceChildren(new Option("All hire types", ""), ...types.map((t) => new Option(t, t)));
+  fType.value = types.includes(curType) ? curType : "";
+  const q = $("#q").value.trim().toLowerCase();
+  const shown = rows.filter((r) => (!fStage.value || stageName(r) === fStage.value) && (!fType.value || r.type === fType.value) &&
+    (!q || [r.id, r.role, r.owner, r.approver, r.status, r.company].join(" ").toLowerCase().includes(q))).slice().reverse();
+  $("#rows").innerHTML = shown.map((r) => `<tr><td class="id">${esc(r.id)}</td><td class="muted">${esc(when(r.added))}</td>
+      <td><span class="co"><i style="background:${coColor(r.company)}"></i>${esc(r.company)}</span></td>
+      <td>${esc(r.type)}</td><td>${esc(r.role)}</td><td>${journey(r)}</td><td>${statusPill(r)}</td>
+      <td>${esc(r.owner)}</td><td>${esc(r.approver)}</td><td>${tick(r.a1)}</td><td>${tick(r.a2)}</td>
+      <td class="muted">${esc(r.lastAction || "None yet")}${r.lastActionAt ? `<div class="s">${esc(when(r.lastActionAt))}</div>` : ""}</td></tr>`).join("")
+    || '<tr><td colspan="12" class="empty">No candidates match.</td></tr>';
+
+  // Interviews
+  $("#upcoming").innerHTML = upcoming.length ? upcoming.map(intItem).join("") : '<div class="empty">No interviews scheduled from today on.</div>';
+  const resCount = (round, val) => rows.filter((r) => (round === 1 ? r.r1result : r.r2result) === val).length;
+  const resItems = [];
+  ["Pass", "Not selected", "No-show", "On hold"].forEach((v) => {
+    resItems.push({ label: "Round 1: " + v, n: resCount(1, v), cls: v === "Not selected" ? "exit" : v === "Pass" ? "" : "hold" });
+  });
+  ["Pass", "Not selected", "No-show", "On hold"].forEach((v) => {
+    resItems.push({ label: "Round 2: " + v, n: resCount(2, v), cls: v === "Not selected" ? "exit" : v === "Pass" ? "" : "hold" });
+  });
+  bars($("#results"), resItems);
+  $("#past").innerHTML = past.length ? past.map((x) => `<tr><td>${esc(when(x.r["r" + x.round]))}</td><td>${x.round === 1 ? "Technical" : "Cultural fit"}</td><td class="id">${esc(x.r.id)}</td><td>${esc(x.r.role)}</td><td>${esc(x.by)}</td><td>${x.result ? `<span class="pill ${x.result === "Pass" ? "good" : x.result === "Not selected" ? "crit" : "warn"}">${esc(x.result)}</span>` : '<span class="muted">Not recorded</span>'}</td></tr>`).join("")
+    : '<tr><td colspan="6" class="empty">No past interviews yet.</td></tr>';
+
+  // Outbox
+  $("#ob-tiles").innerHTML = ["Ready", "Drafted", "Sent", "Cancelled"].map((s) => `<div class="obtile"><div class="l">${s}</div><div class="v">${outbox.filter((o) => o.status === s).length}</div></div>`).join("");
+  $("#ob-rows").innerHTML = outbox.length ? outbox.slice().reverse().map((o) => `<tr><td class="id">${esc(o.id)}</td><td class="muted">${esc(when(o.preparedAt))}</td><td class="id">${esc(o.candidate)}</td><td>${esc(o.action || o.template)}</td><td>${esc(o.sender)}</td><td>${esc(o.mode)}</td>
+      <td><span class="pill ${o.status === "Ready" ? "warn" : o.status === "Cancelled" ? "plain" : "good"}">${esc(o.status)}</span></td><td class="muted">${esc(when(o.sentAt))}</td></tr>`).join("")
+    : '<tr><td colspan="8" class="empty">No emails prepared yet.</td></tr>';
+
+  // Activity
+  $("#audit-rows").innerHTML = audit.length ? audit.slice().reverse().map((a) => `<tr><td class="muted">${esc(when(a.at))}</td><td class="id">${esc(a.candidate)}</td><td>${esc(a.action)}</td><td>${esc(a.template)}</td><td>${esc(a.mode)}</td></tr>`).join("")
+    : '<tr><td colspan="5" class="empty">No activity logged yet.</td></tr>';
+}
+
+/* ---------- Tabs, filters and controls ---------- */
+const TABS = ["overview", "candidates", "interviews", "outbox", "activity", "process"];
+function showTab() {
+  const t = (location.hash || "#overview").slice(1);
+  state.tab = TABS.includes(t) ? t : "overview";
+  TABS.forEach((name) => { $("#page-" + name).hidden = name !== state.tab; });
+  document.querySelectorAll("nav.tabs a").forEach((a) => { if (a.dataset.tab === state.tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+}
+window.addEventListener("hashchange", showTab);
+document.querySelectorAll("[data-co]").forEach((b) => b.addEventListener("click", () => { state.co = b.dataset.co; render(); }));
+["#q", "#f-stage", "#f-type"].forEach((s) => $(s).addEventListener("input", render));
+document.querySelectorAll("#who-seg [data-who]").forEach((b) => b.addEventListener("click", () => {
+  state.who = b.dataset.who;
+  document.querySelectorAll("#who-seg [data-who]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+  document.querySelectorAll(".fstep").forEach((s) => s.classList.toggle("dim", state.who !== "all" && !s.dataset.who.split(" ").includes(state.who)));
+}));
+$("#refresh").addEventListener("click", load);
+$("#theme").addEventListener("click", () => {
+  const dark = document.documentElement.dataset.theme === "dark" || (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+});
+
+showTab();
+load();
+setInterval(() => { if (!document.hidden) load(); }, REFRESH_SECONDS * 1000);
+setInterval(() => setLive(), 5000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - state.lastOk > REFRESH_SECONDS * 1000) load(); });
+</script>
+</body>
+</html>

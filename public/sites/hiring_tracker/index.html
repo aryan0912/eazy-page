@@ -1,0 +1,449 @@
+<title>Virtual Recruiter Hiring Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a single reading column; the hiring journey runs as a numbered spine, grouped by phase, with a role filter on top. */
+:root {
+  --bg: #f6f7f8;
+  --surface: #ffffff;
+  --fg: #16202a;
+  --muted: #5a6875;
+  --line: #dde3e8;
+  --accent: #0f6b6b;
+  --accent-soft: #e2f1f0;
+  --team: #2456a6;      --team-bg: #e6eefb;
+  --approver: #7a3fa0;  --approver-bg: #f2e9f8;
+  --cand: #9a5a00;      --cand-bg: #fbf0dc;
+  --auto: #3d5a5a;      --auto-bg: #e7eeee;
+  --warn: #a1361f;      --warn-bg: #fbe9e4;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1418; --surface: #161d22; --fg: #e4eaee; --muted: #93a2ad; --line: #27323a;
+    --accent: #5cc4bf; --accent-soft: #15312f;
+    --team: #8fb4f2; --team-bg: #1a2a44;
+    --approver: #cfa3ea; --approver-bg: #2d1f38;
+    --cand: #f0bb6a; --cand-bg: #3a2a12;
+    --auto: #a8c4c3; --auto-bg: #1e2a2a;
+    --warn: #f19a85; --warn-bg: #3a1c15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1418; --surface: #161d22; --fg: #e4eaee; --muted: #93a2ad; --line: #27323a;
+  --accent: #5cc4bf; --accent-soft: #15312f;
+  --team: #8fb4f2; --team-bg: #1a2a44;
+  --approver: #cfa3ea; --approver-bg: #2d1f38;
+  --cand: #f0bb6a; --cand-bg: #3a2a12;
+  --auto: #a8c4c3; --auto-bg: #1e2a2a;
+  --warn: #f19a85; --warn-bg: #3a1c15;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+}
+.wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 64ch; font-size: 16px; }
+header { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+
+.banner {
+  background: var(--accent-soft); border-radius: 10px; padding: 14px 16px;
+  display: flex; gap: 12px; align-items: flex-start; font-size: 14px;
+}
+.banner strong { color: var(--accent); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+}
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.c-team { color: var(--team); background: var(--team-bg); }
+.c-approver { color: var(--approver); background: var(--approver-bg); }
+.c-cand { color: var(--cand); background: var(--cand-bg); }
+.c-auto { color: var(--auto); background: var(--auto-bg); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filter span { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.filter button {
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  padding: 6px 12px; border-radius: 999px;
+}
+.filter button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.filter button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.phase { display: flex; flex-direction: column; gap: 14px; }
+.phase-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.phase-head .eyebrow { color: var(--muted); }
+
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.step {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px;
+  position: relative; padding-bottom: 18px;
+}
+.step::before {
+  content: ""; position: absolute; left: 21px; top: 36px; bottom: 0; width: 2px; background: var(--line);
+}
+.step:last-child::before { display: none; }
+.num {
+  width: 44px; height: 36px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line);
+  display: grid; place-items: center; font-family: var(--font-mono); font-size: 13px; color: var(--muted);
+  font-variant-numeric: tabular-nums; position: relative; z-index: 1;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.card-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; align-items: center; }
+.who { display: flex; flex-wrap: wrap; gap: 6px; }
+.card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.card li::marker { color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+.meta b { color: var(--fg); font-weight: 600; }
+.status { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+.stop { font-size: 13px; color: var(--warn); background: var(--warn-bg); padding: 6px 10px; border-radius: 6px; }
+.step.dim .card { opacity: 0.35; }
+.step.dim .num { opacity: 0.35; }
+
+.daily {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.panel ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+
+.tree {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.7; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; white-space: pre; margin: 0;
+}
+.tree .note { color: var(--muted); }
+
+.build { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.build li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.build .ph { font-family: var(--font-mono); font-size: 12px; color: var(--accent); padding-top: 2px; }
+.open li { color: var(--fg); }
+.open li span { color: var(--muted); }
+
+@media (max-width: 480px) {
+  .step { grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
+  .num { width: 34px; height: 30px; font-size: 12px; }
+  .step::before { left: 16px; top: 30px; }
+  .build li { grid-template-columns: 1fr; gap: 4px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .step .card, .step .num { transition: opacity 0.2s ease; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Agility AI · Lyfshilp Academy</div>
+  <h1>Virtual Recruiter hiring flow</h1>
+  <p class="lede">Every step from a Round 1 shortlist to the new hire's first day: who does what, what the system does on its own, and where each file is saved. Pooja and Bhawna run every step from the Hiring Tracker and send emails from their own Gmail through the Virtual Recruiter Claude Project.</p>
+</header>
+
+<div class="banner">
+  <div><strong>How emails go out.</strong> Once a row is approved, the Hiring Tracker puts the finished email in its Outbox tab. Pooja or Bhawna then send it from their own Gmail by asking the Virtual Recruiter Claude Project to "send my ready emails". Until Shreya switches on live sending, Claude saves each one as a draft in the sender's Gmail.</div>
+</div>
+
+<section style="display:flex;flex-direction:column;gap:12px">
+  <div class="legend">
+    <span class="chip c-team">Pooja or Bhawna</span>
+    <span class="chip c-approver">Final approver: Shreya, Sharad or Aryan</span>
+    <span class="chip c-cand">Candidate</span>
+    <span class="chip c-auto">Automatic</span>
+  </div>
+  <div class="filter" role="group" aria-label="Highlight steps by who acts">
+    <span>Highlight:</span>
+    <button type="button" id="f-all" data-f="all" aria-pressed="true">Everyone</button>
+    <button type="button" id="f-team" data-f="team" aria-pressed="false">Pooja or Bhawna</button>
+    <button type="button" id="f-approver" data-f="approver" aria-pressed="false">Final approver</button>
+    <button type="button" id="f-cand" data-f="cand" aria-pressed="false">Candidate</button>
+    <button type="button" id="f-auto" data-f="auto" aria-pressed="false">Automatic</button>
+  </div>
+</section>
+
+<!-- PHASE 1 -->
+<section class="phase">
+  <div class="phase-head"><h2>Round 1: Technical</h2><span class="eyebrow">Steps 1 to 4</span></div>
+  <ol class="steps">
+    <li class="step" data-who="team auto">
+      <div class="num">01</div>
+      <div class="card">
+        <div class="card-top"><h3>Add the shortlisted candidate</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>Add a row in the Hiring Tracker once the candidate is shortlisted for Round 1.</li>
+          <li>Required, no defaults: name, email, phone, <b>company</b> (Agility AI or Lyfshilp Academy), category, role, <b>sender</b> (Pooja or Bhawna), <b>process owner</b> (Pooja or Bhawna), <b>final approver</b> (Shreya, Sharad or Aryan), Round 1 interviewer.</li>
+          <li>The system assigns a Candidate ID (AG-2026-001 or LA-2026-001) and creates the candidate's folder.</li>
+        </ul>
+        <p class="stop">If any required field is blank, nothing happens. The reason is written in the row's Notes and appears in the daily digest.</p>
+        <div class="meta"><span>Status after: <span class="status">Shortlisted R1</span></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="team auto">
+      <div class="num">02</div>
+      <div class="card">
+        <div class="card-top"><h3>Approve and send two slot options</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>The process owner ticks Approval 1. The email appears in the Outbox tab, ready for the sender to send from their own Gmail through the Claude Project.</li>
+          <li>The system finds two free slots in the interviewer's calendar, within working hours and skipping holidays, and holds both so nobody else books them.</li>
+          <li>The email goes from the sender (Pooja or Bhawna): "You are shortlisted, please pick a slot", with a link to the slot picker.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">R1 slots sent</span></span><span>Approval: <b>Process owner</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="cand auto">
+      <div class="num">03</div>
+      <div class="card">
+        <div class="card-top"><h3>Candidate picks a slot</h3><div class="who"><span class="chip c-cand">Candidate</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>The candidate opens the link and chooses Slot 1, Slot 2, or "Neither works". No Google account needed.</li>
+          <li>On a pick, the system books the Technical round with a Google Meet link, invites the candidate and interviewer, releases the other hold and sends a confirmation from the sender.</li>
+          <li>"Neither works" alerts the sender to offer new slots. No answer within the reply window sends the sender a reminder and releases both holds.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">R1 scheduled</span></span><span>Saved to: <b>Interviews</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="team auto">
+      <div class="num">04</div>
+      <div class="card">
+        <div class="card-top"><h3>Record the Round 1 result</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li><b>Pass:</b> set the status to Shortlisted R2 and fill in the Round 2 interviewer.</li>
+          <li><b>Not selected:</b> set Rejected and approve. The regret email goes from the sender.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">Shortlisted R2</span> or <span class="status">Rejected</span></span></div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- PHASE 2 -->
+<section class="phase">
+  <div class="phase-head"><h2>Round 2: Cultural Fit</h2><span class="eyebrow">Steps 5 to 7</span></div>
+  <ol class="steps">
+    <li class="step" data-who="team auto">
+      <div class="num">05</div>
+      <div class="card">
+        <div class="card-top"><h3>Approve and send two Round 2 slots</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul><li>Same as step 2, using the Round 2 interviewer's calendar and the Cultural Fit email.</li></ul>
+        <div class="meta"><span>Status after: <span class="status">R2 slots sent</span></span><span>Approval: <b>Process owner</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="cand auto">
+      <div class="num">06</div>
+      <div class="card">
+        <div class="card-top"><h3>Candidate picks a Round 2 slot</h3><div class="who"><span class="chip c-cand">Candidate</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul><li>Same as step 3: the system books the Cultural Fit round with a Meet link and sends the confirmation.</li></ul>
+        <div class="meta"><span>Status after: <span class="status">R2 scheduled</span></span><span>Saved to: <b>Interviews</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="team">
+      <div class="num">07</div>
+      <div class="card">
+        <div class="card-top"><h3>Final decision</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span></div></div>
+        <ul>
+          <li><b>Selected:</b> move to the offer steps.</li>
+          <li><b>Not selected:</b> regret email, as in step 4.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">Selected</span> or <span class="status">Rejected</span></span></div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- PHASE 3 -->
+<section class="phase">
+  <div class="phase-head"><h2>Offer and joining documents</h2><span class="eyebrow">Steps 8 to 11</span></div>
+  <ol class="steps">
+    <li class="step" data-who="team">
+      <div class="num">08</div>
+      <div class="card">
+        <div class="card-top"><h3>Fill in the offer details</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span></div></div>
+        <ul>
+          <li>Stipend or CTC, pay period, start date, end date (interns and fixed-term), reporting manager, probation, work mode and location.</li>
+          <li><b>Signatory:</b> Pooja or Bhawna, chosen for this letter.</li>
+          <li>The process owner ticks Approval 1.</li>
+        </ul>
+        <div class="meta"><span>Approval: <b>Process owner</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="approver">
+      <div class="num">09</div>
+      <div class="card">
+        <div class="card-top"><h3>Final approval</h3><div class="who"><span class="chip c-approver">Final approver</span></div></div>
+        <ul>
+          <li>The final approver named on the row (Shreya, Sharad or Aryan) reviews and ticks Approval 2.</li>
+          <li>The system records who ticked. If it is not the named approver, nothing is issued.</li>
+        </ul>
+        <p class="stop">No offer letter or contract is ever issued without this approval.</p>
+        <div class="meta"><span>Approval: <b>Final approver</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="auto">
+      <div class="num">10</div>
+      <div class="card">
+        <div class="card-top"><h3>Selection email, offer letter and joining form go out</h3><div class="who"><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>The offer letter is generated from the company's approved template, with legal name, CIN, registered address and signatory, and saved as a PDF.</li>
+          <li>The selection email goes from the sender with the offer PDF and the Joining Details Form link.</li>
+          <li>The offer expires after 3 working days. A reminder goes out the day before; on expiry the status changes and the sender is told.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">Offer sent</span></span><span>Saved to: <b>Contracts</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="cand team auto">
+      <div class="num">11</div>
+      <div class="card">
+        <div class="card-top"><h3>Candidate accepts and submits joining documents</h3><div class="who"><span class="chip c-cand">Candidate</span><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>The candidate replies to accept; Pooja or Bhawna sets <span class="status">Offer accepted</span>.</li>
+          <li>The candidate signs in to the form with their <b>personal Google email</b> and types: personal email, name as on PAN, date of birth, phone, current and permanent address, PAN number, Aadhaar number, account holder name, account number, IFSC, bank and branch.</li>
+          <li>Uploads: cancelled cheque, PAN card, full Aadhaar card (front and back), passport-size photo. Plus a consent checkbox.</li>
+          <li>The system saves the uploads to the candidate's folder, adds the typed details to the Joining Details Register, and emails the sender a list of anything missing, with ID numbers masked to the last 4 digits.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">Docs submitted</span></span><span>Saved to: <b>Official Documents</b></span></div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- PHASE 4 -->
+<section class="phase">
+  <div class="phase-head"><h2>Contract and joining</h2><span class="eyebrow">Steps 12 to 14</span></div>
+  <ol class="steps">
+    <li class="step" data-who="team">
+      <div class="num">12</div>
+      <div class="card">
+        <div class="card-top"><h3>Verify documents</h3><div class="who"><span class="chip c-team">Pooja or Bhawna</span></div></div>
+        <ul><li>Check the uploads against the typed details, then tick Docs verified.</li></ul>
+        <div class="meta"><span>Status after: <span class="status">Docs verified</span></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="approver auto">
+      <div class="num">13</div>
+      <div class="card">
+        <div class="card-top"><h3>Approve and send the contract</h3><div class="who"><span class="chip c-approver">Final approver</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>The final approver ticks Approval 2 for the contract.</li>
+          <li>The system picks the right contract: Intern gets the Internship Agreement, Full-time the Appointment Letter, Fixed-term the Fixed-Term Appointment Letter, Consultant the Consultancy Agreement.</li>
+          <li>Governing law India; jurisdiction the courts at Ghaziabad, Uttar Pradesh.</li>
+          <li>The PDF is saved and emailed from the sender.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">Contract sent</span></span><span>Saved to: <b>Contracts</b></span></div>
+      </div>
+    </li>
+    <li class="step" data-who="cand team auto">
+      <div class="num">14</div>
+      <div class="card">
+        <div class="card-top"><h3>Signed contract back, then Day 1</h3><div class="who"><span class="chip c-cand">Candidate</span><span class="chip c-team">Pooja or Bhawna</span><span class="chip c-auto">Automatic</span></div></div>
+        <ul>
+          <li>The candidate returns the signed contract. Pooja or Bhawna saves it and ticks Contract signed.</li>
+          <li>The system sends the Day 1 email, adds the person to the Employee Register, and sets reminders at 30, 60 and 90 days, plus 7 days before an intern's end date.</li>
+          <li>On the start date the status changes to Joined.</li>
+        </ul>
+        <div class="meta"><span>Status after: <span class="status">Contract signed</span>, then <span class="status">Joined</span></span><span>Saved to: <b>Contracts</b></span></div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<div class="daily">
+  <h3>Every working day at 8 am</h3>
+  <p>A digest to Shreya: approvals waiting, rows stopped for missing data, today's interviews, unanswered slot links, offers expiring, and joining forms received.</p>
+</div>
+
+<section class="grid2">
+  <div class="panel">
+    <h3>Rules that always apply</h3>
+    <ul>
+      <li>Nothing goes to a candidate without the right approval ticked.</li>
+      <li>The same email is never sent twice. Every action is checked against the Audit Log first.</li>
+      <li>PAN, Aadhaar and bank numbers show only the last 4 digits in emails, the Tracker, logs and file names.</li>
+      <li>The Joining Details Register holds full numbers. Only Shreya, Sharad, Aryan, Pooja and Bhawna can open it.</li>
+      <li>No emojis and no long dashes in any email or letter.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h3>Statuses in order</h3>
+    <p class="status" style="line-height:1.9">Shortlisted R1, R1 slots sent, R1 scheduled, Shortlisted R2, R2 slots sent, R2 scheduled, Selected, Offer sent, Offer accepted, Docs submitted, Docs verified, Contract sent, Contract signed, Joined</p>
+    <p style="font-size:13px;color:var(--muted)">Exits at any point: Rejected, Offer declined, Offer expired, Withdrawn, On hold.</p>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px">
+  <h2>Where everything is saved</h2>
+  <p class="lede">In Google Drive, under one "Hiring &amp; Docs" folder. Install Google Drive for desktop to see the same folders on your Mac.</p>
+<pre class="tree">Hiring &amp; Docs/
+├── Hiring Tracker                        <span class="note">the sheet everyone works in</span>
+├── Agility AI/
+│   ├── Official Documents/
+│   │   ├── Certificate of Incorporation
+│   │   ├── Joining Details Register      <span class="note">full numbers, restricted</span>
+│   │   └── AG-2026-001 - Candidate Name/ <span class="note">cheque, PAN, Aadhaar, photo</span>
+│   ├── Contracts/                        <span class="note">offer letters, contracts, signed copies</span>
+│   └── Interviews/                       <span class="note">slot picks, interview notes</span>
+└── Lyfshilp Academy/
+    └── (same three folders)</pre>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px">
+  <h2>How I will build it</h2>
+  <p class="lede">Four phases. I stop after each for you to test with three dummy candidates on your own email before moving on.</p>
+  <ol class="build">
+    <li><span class="ph">Phase 1</span><span>Hiring Tracker, Drive folders, the "Virtual Recruiter" menu, both approvals, Audit Log, and draft-mode emails (slot options, confirmation, regret, selection).</span></li>
+    <li><span class="ph">Phase 2</span><span>Free-slot finding, the slot-picker link, automatic booking with Google Meet, reminders for unanswered links.</span></li>
+    <li><span class="ph">Phase 3</span><span>Offer letter and contract PDFs, the Joining Details Form, document filing, the Register, the 8 am digest.</span></li>
+    <li><span class="ph">Phase 4</span><span>Leave requests, leave balances and the holiday calendar.</span></li>
+  </ol>
+</section>
+
+<section class="panel open">
+  <h3>Still needed from Shreya</h3>
+  <ul>
+    <li>Interview timings <span>(default: Mon to Fri, 10:00 to 18:00; 45 min Technical, 30 min Cultural Fit, 15 min gap)</span></li>
+    <li>Interviewers for each round <span>(fixed, or chosen per candidate)</span></li>
+    <li>How long a candidate has to pick a slot <span>(default: 24 hours)</span></li>
+    <li>Email wording <span>(I draft, you approve)</span></li>
+    <li>How the contract is signed <span>(default: sign, scan and reply)</span></li>
+    <li>Lyfshilp Academy HR email, and whether both companies use the same PIN</li>
+    <li>Approved offer letter and contract templates for each company</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.filter button');
+  var steps = document.querySelectorAll('.step');
+  function apply(f) {
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.f === f)); });
+    steps.forEach(function (s) {
+      var who = (s.dataset.who || '').split(' ');
+      s.classList.toggle('dim', f !== 'all' && who.indexOf(f) === -1);
+    });
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { apply(b.dataset.f); }); });
+})();
+</script>
